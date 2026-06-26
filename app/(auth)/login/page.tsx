@@ -26,11 +26,16 @@ export default function LoginPage() {
 
     try {
       // 1. chama a API de login, mandando cpf e senha
-      const resposta = await fetch('https://conecta-dnjh.onrender.com/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cpf, senha }),  // dobra o objeto em texto
-      })
+ const resposta = await fetch(
+  `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ cpf, senha }),
+  }
+);
 
       // 2. se a resposta não foi ok (ex: 401 senha errada), mostra erro
       if (!resposta.ok) {
