@@ -1,0 +1,92 @@
+.pagina {
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: #f5f5f5;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  max-width: 500px;
+}
+
+.titulo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #5b21b6;
+}
+
+.botaoNovo {
+  background-color: #5b21b6;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoNovo:hover {
+  background-color: #4c1d95;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 500px;
+}
+
+.item {
+  background-color: #ffffff;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.nome {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.contagem {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.status {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+}
+
+.statusAtivo {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+}
+
+.statusInativo {
+  color: #555;
+  background-color: #eeeeee;
+}
+
+.mensagem {
+  color: #555;
+  font-size: 1rem;
+}

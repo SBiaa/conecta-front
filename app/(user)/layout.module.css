@@ -1,0 +1,14 @@
+.layout {
+  min-height: 100vh;
+}
+
+.conteudo {
+  padding-bottom: 4.5rem;
+}
+
+@media (min-width: 768px) {
+  .conteudo {
+    margin-left: 220px;
+    padding-bottom: 0;
+  }
+}
