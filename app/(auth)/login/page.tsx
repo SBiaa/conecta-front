@@ -26,7 +26,7 @@ export default function LoginPage() {
 
     try {
       // 1. chama a API de login, mandando cpf e senha
-      const resposta = await fetch('http://localhost:3001/auth/login', {
+      const resposta = await fetch('https://conecta-dnjh.onrender.com/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cpf, senha }),  // dobra o objeto em texto
