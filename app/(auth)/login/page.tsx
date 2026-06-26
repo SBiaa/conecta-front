@@ -1,6 +1,6 @@
 'use client'  // esta tela roda no navegador (reage a clique/digitação)
 
-import { useState } from 'react'
+import { useState, FormEvent  } from 'react'
 import { useRouter } from 'next/navigation'  // pra redirecionar depois do login
 import { salvarSessao } from '../../lib/auth'  // o helper que VOCÊ fez
 import styles from './login.module.css'
@@ -15,7 +15,11 @@ export default function LoginPage() {
   const router = useRouter()  // ferramenta de redirecionamento
 
   // função que roda quando o formulário é enviado
-  async function handleSubmit(evento) {
+  async function handleSubmit(evento: React.FormEvent<HTMLFormElement>) {
+      evento.preventDefault();
+
+  setErro('');
+  setCarregando(true);
     evento.preventDefault()  // impede a página de recarregar (comportamento padrão do form)
     setErro('')              // limpa erro anterior
     setCarregando(true)      // trava o botão
