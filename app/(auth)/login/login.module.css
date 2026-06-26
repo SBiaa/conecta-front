@@ -18,7 +18,7 @@
 .titulo {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #5b21b6;
+  color: #2a62a2;
   margin-bottom: 1.5rem;
   text-align: center;
 }
@@ -45,13 +45,13 @@
 }
 
 .campo input:focus {
-  border-color: #5b21b6;
+  border-color: #2a62a2;
 }
 
 .botao {
   width: 100%;
   padding: 0.75rem;
-  background-color: #5b21b6;
+  background-color: #2a62a2;
   color: white;
   border: none;
   border-radius: 8px;

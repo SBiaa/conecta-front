@@ -19,7 +19,7 @@
 .titulo {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #5b21b6;
+  color: #2a62a2;
   margin-bottom: 1.5rem;
   text-align: center;
 }
@@ -27,7 +27,7 @@
 .subtitulo {
   font-size: 1rem;
   font-weight: 700;
-  color: #5b21b6;
+  color: #2a62a2;
   margin: 1.5rem 0 1rem;
 }
 
@@ -55,7 +55,7 @@
 
 .campo input:focus,
 .campo select:focus {
-  border-color: #5b21b6;
+  border-color: #2a62a2;
 }
 
 .campo input:disabled,
@@ -127,13 +127,13 @@
 
 .associadaNome {
   font-weight: 600;
-  color: #5b21b6;
+  color: #2a62a2;
 }
 
 .botaoTrocar {
   background: none;
   border: none;
-  color: #5b21b6;
+  color: #2a62a2;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -149,7 +149,7 @@
 .botao {
   width: 100%;
   padding: 0.75rem;
-  background-color: #5b21b6;
+  background-color: #2a62a2;
   color: white;
   border: none;
   border-radius: 8px;

@@ -7,7 +7,7 @@
 .titulo {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #5b21b6;
+  color: #2a62a2;
   margin-bottom: 1.5rem;
 }
 
@@ -22,7 +22,7 @@
 .subtitulo {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #5b21b6;
+  color: #2a62a2;
   margin-bottom: 1rem;
 }
 
@@ -50,7 +50,7 @@
 
 .campo input:focus,
 .campo select:focus {
-  border-color: #5b21b6;
+  border-color: #2a62a2;
 }
 
 .erro {
@@ -62,7 +62,7 @@
 .botao {
   width: 100%;
   padding: 0.75rem;
-  background-color: #5b21b6;
+  background-color: #2a62a2;
   color: white;
   border: none;
   border-radius: 8px;
@@ -201,7 +201,7 @@
 .cardValor {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #5b21b6;
+  color: #2a62a2;
 }
 
 .contagem {
@@ -237,7 +237,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #5b21b6;
+  color: #2a62a2;
   background-color: #ede9fe;
   border: none;
   border-radius: 999px;
@@ -274,7 +274,7 @@
 .modalTitulo {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #5b21b6;
+  color: #2a62a2;
   margin-bottom: 1.25rem;
   text-align: center;
 }
@@ -288,7 +288,7 @@
 .botaoConfirmar {
   flex: 1;
   padding: 0.7rem;
-  background-color: #5b21b6;
+  background-color: #2a62a2;
   color: white;
   border: none;
   border-radius: 8px;
