@@ -245,237 +245,249 @@ export default function FinanceiroPage() {
     <div className={styles.pagina}>
       <h1 className={styles.titulo}>Financeiro</h1>
 
-      <div className={styles.card}>
-        <h2 className={styles.subtitulo}>Gerar mensalidades</h2>
+      <div className={styles.barraGerar}>
+        <h2 className={styles.subtituloDiscreto}>Gerar mensalidades</h2>
 
-        <form onSubmit={onSubmit}>
-          <div className={styles.campo}>
-            <label htmlFor="projetoId">Projeto</label>
-            <select
-              id="projetoId"
-              value={projetoId}
-              onChange={(evento) => setProjetoId(evento.target.value)}
-            >
-              <option value="">Selecione...</option>
-              {projetos.map((projeto) => (
-                <option key={projeto.id} value={projeto.id}>
-                  {projeto.nome}
-                </option>
-              ))}
-            </select>
-          </div>
+        <form className={styles.formGerar} onSubmit={onSubmit}>
+          <div className={styles.camposGerarLinha}>
+            <div className={styles.campo}>
+              <label htmlFor="projetoId">Projeto</label>
+              <select
+                id="projetoId"
+                value={projetoId}
+                onChange={(evento) => setProjetoId(evento.target.value)}
+              >
+                <option value="">Selecione...</option>
+                {projetos.map((projeto) => (
+                  <option key={projeto.id} value={projeto.id}>
+                    {projeto.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className={styles.campo}>
-            <label htmlFor="mes">Mês</label>
-            <input
-              type="month"
-              id="mes"
-              value={mes}
-              onChange={(evento) => setMes(evento.target.value)}
-            />
-          </div>
+            <div className={styles.campo}>
+              <label htmlFor="mes">Mês</label>
+              <input
+                type="month"
+                id="mes"
+                value={mes}
+                onChange={(evento) => setMes(evento.target.value)}
+              />
+            </div>
 
-          <div className={styles.campo}>
-            <label htmlFor="valor">Valor</label>
-            <input
-              type="number"
-              id="valor"
-              value={valor}
-              onChange={(evento) => setValor(evento.target.value)}
-            />
-          </div>
+            <div className={styles.campo}>
+              <label htmlFor="valor">Valor</label>
+              <input
+                type="number"
+                id="valor"
+                value={valor}
+                onChange={(evento) => setValor(evento.target.value)}
+              />
+            </div>
 
-          <div className={styles.campo}>
-            <label htmlFor="vencimento">Vencimento</label>
-            <input
-              type="date"
-              id="vencimento"
-              value={vencimento}
-              onChange={(evento) => setVencimento(evento.target.value)}
-            />
+            <div className={styles.campo}>
+              <label htmlFor="vencimento">Vencimento</label>
+              <input
+                type="date"
+                id="vencimento"
+                value={vencimento}
+                onChange={(evento) => setVencimento(evento.target.value)}
+              />
+            </div>
+
+            <button className={styles.botaoGerar} disabled={gerando}>
+              {gerando ? 'Gerando...' : 'Gerar mensalidades'}
+            </button>
           </div>
 
           {erroValidacao && <span className={styles.erro}>{erroValidacao}</span>}
-
-          <button className={styles.botao} disabled={gerando}>
-            {gerando ? 'Gerando...' : 'Gerar mensalidades'}
-          </button>
         </form>
 
         {sucesso && <p className={styles.sucesso}>{sucesso}</p>}
         {erro && <p className={styles.mensagemErro}>{erro}</p>}
       </div>
 
-      <div className={styles.card}>
-        <h2 className={styles.subtitulo}>Pagamentos do mês</h2>
+      <div className={styles.grid}>
+        <div className={`${styles.card} ${styles.cardSecundario} ${styles.blocoResumo}`}>
+          <h2 className={styles.subtituloSecundario}>Resumo do mês</h2>
 
-        {!carregandoPagamentos && pagamentos.length > 0 && (
-          <>
-            <div className={styles.resumo}>
-              <div className={styles.cardResumo}>
-                <span className={styles.cardLabel}>Total recebido</span>
-                <span className={styles.cardValor}>{formatarMoeda(totalRecebido)}</span>
+          {!carregandoPagamentos && pagamentos.length > 0 && (
+            <>
+              <div className={styles.resumo}>
+                <div className={styles.cardResumo}>
+                  <span className={styles.cardLabel}>Total recebido</span>
+                  <span className={styles.cardValor}>{formatarMoeda(totalRecebido)}</span>
+                </div>
+                <div className={styles.cardResumo}>
+                  <span className={styles.cardLabel}>Total pendente</span>
+                  <span className={styles.cardValor}>{formatarMoeda(totalPendente)}</span>
+                </div>
+                <div className={styles.cardResumo}>
+                  <span className={styles.cardLabel}>Total geral</span>
+                  <span className={styles.cardValor}>{formatarMoeda(totalGeral)}</span>
+                </div>
               </div>
-              <div className={styles.cardResumo}>
-                <span className={styles.cardLabel}>Total pendente</span>
-                <span className={styles.cardValor}>{formatarMoeda(totalPendente)}</span>
+
+              <p className={styles.contagem}>
+                {pagas.length} pagas, {pendentes.length} pendentes
+              </p>
+
+              <div className={styles.resumoFormas}>
+                <span className={styles.cardLabel}>Recebido por forma de pagamento</span>
+                {porFormaPagamento.size === 0 && (
+                  <p className={styles.mensagem}>Nenhum pagamento pago neste filtro</p>
+                )}
+                {porFormaPagamento.size > 0 && (
+                  <ul className={styles.listaFormas}>
+                    {Array.from(porFormaPagamento.entries()).map(([forma, total]) => (
+                      <li key={forma} className={styles.linhaForma}>
+                        <span>{LABELS_FORMA_PAGAMENTO[forma as FormaPagamento] ?? forma}</span>
+                        <span>{formatarMoeda(total)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-              <div className={styles.cardResumo}>
-                <span className={styles.cardLabel}>Total geral</span>
-                <span className={styles.cardValor}>{formatarMoeda(totalGeral)}</span>
-              </div>
-            </div>
-
-            <p className={styles.contagem}>
-              {pagas.length} pagas, {pendentes.length} pendentes
-            </p>
-
-            <div className={styles.resumoFormas}>
-              <span className={styles.cardLabel}>Recebido por forma de pagamento</span>
-              {porFormaPagamento.size === 0 && (
-                <p className={styles.mensagem}>Nenhum pagamento pago neste filtro</p>
-              )}
-              {porFormaPagamento.size > 0 && (
-                <ul className={styles.listaFormas}>
-                  {Array.from(porFormaPagamento.entries()).map(([forma, total]) => (
-                    <li key={forma} className={styles.linhaForma}>
-                      <span>{LABELS_FORMA_PAGAMENTO[forma as FormaPagamento] ?? forma}</span>
-                      <span>{formatarMoeda(total)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </>
-        )}
-
-        <div className={styles.filtros}>
-          <div className={styles.campo}>
-            <label htmlFor="mesFiltro">Mês</label>
-            <input
-              type="month"
-              id="mesFiltro"
-              value={mesFiltro}
-              onChange={(evento) => setMesFiltro(evento.target.value)}
-            />
-          </div>
-
-          <div className={styles.campo}>
-            <label htmlFor="projetoIdFiltro">Projeto</label>
-            <select
-              id="projetoIdFiltro"
-              value={projetoIdFiltro}
-              onChange={(evento) => setProjetoIdFiltro(evento.target.value)}
-            >
-              <option value="">Todos</option>
-              {projetos.map((projeto) => (
-                <option key={projeto.id} value={projeto.id}>
-                  {projeto.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.campo}>
-            <label htmlFor="statusFiltro">Status</label>
-            <select
-              id="statusFiltro"
-              value={statusFiltro}
-              onChange={(evento) => setStatusFiltro(evento.target.value)}
-            >
-              <option value="">Todos</option>
-              <option value="PENDENTE">Pendente</option>
-              <option value="PAGA">Paga</option>
-            </select>
-          </div>
+            </>
+          )}
         </div>
 
-        {carregandoPagamentos && <p className={styles.mensagem}>Carregando...</p>}
+        <div className={`${styles.card} ${styles.cardDestaque} ${styles.blocoLista}`}>
+          <h2 className={styles.subtitulo}>Pagamentos do mês</h2>
 
-        {!carregandoPagamentos && pagamentos.length === 0 && (
-          <p className={styles.mensagem}>Nenhum pagamento neste filtro</p>
-        )}
+          <div className={styles.filtros}>
+            <div className={styles.campo}>
+              <label htmlFor="mesFiltro">Mês</label>
+              <input
+                type="month"
+                id="mesFiltro"
+                value={mesFiltro}
+                onChange={(evento) => setMesFiltro(evento.target.value)}
+              />
+            </div>
 
-        {!carregandoPagamentos && pagamentos.length > 0 && (
-          <ul className={styles.lista}>
-            {pagamentos.map((pagamento) => (
-              <li key={pagamento.id} className={styles.item}>
-                <div className={styles.infoPagamento}>
-                  <span className={styles.nomeUsuario}>{pagamento.matricula.usuario.nome}</span>
-                  <span className={styles.detalhe}>
-                    {pagamento.matricula.turma.projeto.nome} — {pagamento.matricula.turma.nome}
-                  </span>
-                  <span className={styles.detalhe}>{formatarMoeda(Number(pagamento.valor))}</span>
-                  {pagamento.formaPagamento && (
+            <div className={styles.campo}>
+              <label htmlFor="projetoIdFiltro">Projeto</label>
+              <select
+                id="projetoIdFiltro"
+                value={projetoIdFiltro}
+                onChange={(evento) => setProjetoIdFiltro(evento.target.value)}
+              >
+                <option value="">Todos</option>
+                {projetos.map((projeto) => (
+                  <option key={projeto.id} value={projeto.id}>
+                    {projeto.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="statusFiltro">Status</label>
+              <select
+                id="statusFiltro"
+                value={statusFiltro}
+                onChange={(evento) => setStatusFiltro(evento.target.value)}
+              >
+                <option value="">Todos</option>
+                <option value="PENDENTE">Pendente</option>
+                <option value="PAGA">Paga</option>
+              </select>
+            </div>
+          </div>
+
+          {carregandoPagamentos && <p className={styles.mensagem}>Carregando...</p>}
+
+          {!carregandoPagamentos && pagamentos.length === 0 && (
+            <p className={styles.mensagem}>Nenhum pagamento neste filtro</p>
+          )}
+
+          {!carregandoPagamentos && pagamentos.length > 0 && (
+            <ul className={styles.lista}>
+              {pagamentos.map((pagamento) => (
+                <li key={pagamento.id} className={styles.item}>
+                  <div className={styles.infoPagamento}>
+                    <span className={styles.nomeUsuario}>{pagamento.matricula.usuario.nome}</span>
                     <span className={styles.detalhe}>
-                      {LABELS_FORMA_PAGAMENTO[pagamento.formaPagamento]}
+                      {pagamento.matricula.turma.projeto.nome} — {pagamento.matricula.turma.nome}
                     </span>
-                  )}
-                </div>
-                <div className={styles.acoesItem}>
-                  {pagamento.status === 'PAGA' && (
-                    <span className={`${styles.status} ${styles.statusPaga}`}>Paga</span>
-                  )}
-                  {pagamento.status === 'PENDENTE' && (
-                    <>
-                      <span className={`${styles.status} ${styles.statusPendente}`}>
-                        Pendente
+                    <span className={styles.detalhe}>
+                      {formatarMoeda(Number(pagamento.valor))}
+                    </span>
+                    {pagamento.formaPagamento && (
+                      <span className={styles.detalhe}>
+                        {LABELS_FORMA_PAGAMENTO[pagamento.formaPagamento]}
                       </span>
-                      <button
-                        className={styles.botaoRegistrar}
-                        onClick={() => abrirModalRegistro(pagamento)}
-                        aria-label="Registrar pagamento"
-                        title="Registrar pagamento"
-                      >
-                        <CirclePlus size={20} />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                    )}
+                  </div>
+                  <div className={styles.acoesItem}>
+                    {pagamento.status === 'PAGA' && (
+                      <span className={`${styles.status} ${styles.statusPaga}`}>Paga</span>
+                    )}
+                    {pagamento.status === 'PENDENTE' && (
+                      <>
+                        <span className={`${styles.status} ${styles.statusPendente}`}>
+                          Pendente
+                        </span>
+                        <button
+                          className={styles.botaoRegistrar}
+                          onClick={() => abrirModalRegistro(pagamento)}
+                          aria-label="Registrar pagamento"
+                          title="Registrar pagamento"
+                        >
+                          <CirclePlus size={20} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-      <div className={styles.card}>
-        <h2 className={styles.subtitulo}>Atrasados</h2>
+        <div className={`${styles.card} ${styles.cardSecundario} ${styles.blocoAtrasados}`}>
+          <h2 className={styles.subtituloSecundario}>Atrasados</h2>
 
-        {carregandoAtrasados && <p className={styles.mensagem}>Carregando...</p>}
+          {carregandoAtrasados && <p className={styles.mensagem}>Carregando...</p>}
 
-        {!carregandoAtrasados && atrasados.length === 0 && (
-          <p className={styles.mensagem}>Nenhum pagamento atrasado</p>
-        )}
+          {!carregandoAtrasados && atrasados.length === 0 && (
+            <p className={styles.mensagem}>Nenhum pagamento atrasado</p>
+          )}
 
-        {!carregandoAtrasados && atrasados.length > 0 && (
-          <ul className={styles.lista}>
-            {atrasados.map((atrasado) => (
-              <li key={atrasado.id} className={styles.item}>
-                <div className={styles.infoPagamento}>
-                  <span className={styles.nomeUsuario}>{atrasado.matricula.usuario.nome}</span>
-                  <span className={styles.detalhe}>
-                    {atrasado.matricula.turma.projeto.nome} — {atrasado.matricula.turma.nome}
-                  </span>
-                  <span className={styles.detalhe}>{atrasado.mesReferencia}</span>
-                  <span className={styles.detalhe}>{formatarMoeda(Number(atrasado.valor))}</span>
-                  <span className={styles.vencimentoAtrasado}>
-                    Venceu em {formatarData(atrasado.vencimento)}
-                  </span>
-                </div>
-                <div className={styles.acoesItem}>
-                  <button
-                    className={styles.botaoRegistrar}
-                    onClick={() => abrirModalRegistro(atrasado)}
-                    aria-label="Registrar pagamento"
-                    title="Registrar pagamento"
-                  >
-                    <CirclePlus size={20} />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+          {!carregandoAtrasados && atrasados.length > 0 && (
+            <ul className={styles.lista}>
+              {atrasados.map((atrasado) => (
+                <li key={atrasado.id} className={styles.item}>
+                  <div className={styles.infoPagamento}>
+                    <span className={styles.nomeUsuario}>{atrasado.matricula.usuario.nome}</span>
+                    <span className={styles.detalhe}>
+                      {atrasado.matricula.turma.projeto.nome} — {atrasado.matricula.turma.nome}
+                    </span>
+                    <span className={styles.detalhe}>{atrasado.mesReferencia}</span>
+                    <span className={styles.detalhe}>
+                      {formatarMoeda(Number(atrasado.valor))}
+                    </span>
+                    <span className={styles.vencimentoAtrasado}>
+                      Venceu em {formatarData(atrasado.vencimento)}
+                    </span>
+                  </div>
+                  <div className={styles.acoesItem}>
+                    <button
+                      className={styles.botaoRegistrar}
+                      onClick={() => abrirModalRegistro(atrasado)}
+                      aria-label="Registrar pagamento"
+                      title="Registrar pagamento"
+                    >
+                      <CirclePlus size={20} />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
       {pagamentoSelecionado && (

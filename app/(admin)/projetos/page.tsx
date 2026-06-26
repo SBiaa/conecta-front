@@ -42,20 +42,22 @@ export default function ProjetosPage() {
       {!carregando && projetos.length > 0 && (
         <ul className={styles.lista}>
           {projetos.map((projeto) => (
-            <li key={projeto.id} className={styles.item}>
-              <div className={styles.info}>
-                <span className={styles.nome}>{projeto.nome}</span>
-                <span className={styles.contagem}>
-                  {projeto._count.turmas} turma{projeto._count.turmas === 1 ? '' : 's'}
+            <li key={projeto.id}>
+              <Link href={`/projetos/${projeto.id}/turmas`} className={styles.item}>
+                <div className={styles.info}>
+                  <span className={styles.nome}>{projeto.nome}</span>
+                  <span className={styles.contagem}>
+                    {projeto._count.turmas} turma{projeto._count.turmas === 1 ? '' : 's'}
+                  </span>
+                </div>
+                <span
+                  className={`${styles.status} ${
+                    projeto.ativo ? styles.statusAtivo : styles.statusInativo
+                  }`}
+                >
+                  {projeto.ativo ? 'Ativo' : 'Inativo'}
                 </span>
-              </div>
-              <span
-                className={`${styles.status} ${
-                  projeto.ativo ? styles.statusAtivo : styles.statusInativo
-                }`}
-              >
-                {projeto.ativo ? 'Ativo' : 'Inativo'}
-              </span>
+              </Link>
             </li>
           ))}
         </ul>

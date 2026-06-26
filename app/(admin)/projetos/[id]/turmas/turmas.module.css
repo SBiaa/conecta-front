@@ -48,19 +48,6 @@
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  text-decoration: none;
-  cursor: pointer;
-  transition: box-shadow 0.2s;
-}
-
-.item:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
-}
-
-.info {
-  display: flex;
   flex-direction: column;
   gap: 0.2rem;
 }
@@ -71,26 +58,9 @@
   color: #333;
 }
 
-.contagem {
+.detalhe {
   font-size: 0.85rem;
   color: #555;
-}
-
-.status {
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-}
-
-.statusAtivo {
-  color: #2e7d32;
-  background-color: #e8f5e9;
-}
-
-.statusInativo {
-  color: #555;
-  background-color: #eeeeee;
 }
 
 .mensagem {

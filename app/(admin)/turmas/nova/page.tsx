@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -32,6 +33,9 @@ const DIAS_OPCOES = [
 ]
 
 export default function NovaTurmaPage() {
+  const searchParams = useSearchParams()
+  const projetoIdParam = searchParams.get('projetoId')
+
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [diasSelecionados, setDiasSelecionados] = useState<string[]>([])
   const [erroDias, setErroDias] = useState('')
@@ -42,14 +46,20 @@ export default function NovaTurmaPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<TurmaFormInput, unknown, TurmaFormOutput>({
     resolver: zodResolver(turmaSchema),
   })
 
   useEffect(() => {
-    apiGet<Projeto[]>('/projetos').then(setProjetos)
-  }, [])
+    apiGet<Projeto[]>('/projetos').then((lista) => {
+      setProjetos(lista)
+      if (projetoIdParam) {
+        setValue('projetoId', Number(projetoIdParam))
+      }
+    })
+  }, [projetoIdParam, setValue])
 
   function alternarDia(dia: string) {
     setDiasSelecionados((atual) =>
