@@ -1,0 +1,361 @@
+.pagina {
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.titulo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2a62a2;
+}
+
+.card {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+}
+
+.subtitulo {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2a62a2;
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.85rem;
+}
+
+.mensagem {
+  color: #777;
+  font-size: 0.95rem;
+}
+
+.erro {
+  color: #d32f2f;
+  font-size: 0.95rem;
+}
+
+/* Dados pessoais */
+
+.grade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem;
+  margin: 0;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.campo dt {
+  font-size: 0.78rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.campo dd {
+  font-size: 0.95rem;
+  color: #222;
+  margin: 0;
+}
+
+.campoLargo {
+  grid-column: 1 / -1;
+}
+
+/* Matrículas */
+
+.listaMatriculas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.itemMatricula {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  gap: 1rem;
+}
+
+.infoMatricula {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.nomeProjeto {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.nomeTurma {
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.detalhe {
+  font-size: 0.82rem;
+  color: #666;
+}
+
+.badgesMatricula {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
+.exameAPTO {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+}
+
+.exameNAO_APTO {
+  color: #c62828;
+  background-color: #ffebee;
+}
+
+.exameAGUARDANDO {
+  color: #e65100;
+  background-color: #fff3e0;
+}
+
+.badgeAtiva {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+}
+
+.badgeInativa {
+  color: #757575;
+  background-color: #f0f0f0;
+}
+
+/* Extrato */
+
+.listaPagamentos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.itemPagamento {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  gap: 1rem;
+}
+
+.infoPagamento {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.mesPagamento {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.acoesPagamento {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.valorPagamento {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.statusBadge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
+.statusPaga {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+}
+
+.statusPendente {
+  color: #c62828;
+  background-color: #ffebee;
+}
+
+.botaoRegistrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2a62a2;
+  background-color: #ede9fe;
+  border: none;
+  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoRegistrar:hover {
+  background-color: #ddd6fe;
+}
+
+/* Modal */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.modal {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 400px;
+}
+
+.modalTitulo {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2a62a2;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.campo label {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+.campo input,
+.campo select {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+  box-sizing: border-box;
+}
+
+.campo input:focus,
+.campo select:focus {
+  border-color: #2a62a2;
+}
+
+.erroModal {
+  font-size: 0.85rem;
+  color: #d32f2f;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.acoesModal {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.botaoConfirmar {
+  flex: 1;
+  padding: 0.7rem;
+  background-color: #2a62a2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoConfirmar:hover {
+  background-color: #4c1d95;
+}
+
+.botaoConfirmar:disabled {
+  background-color: #b3a1d9;
+  cursor: not-allowed;
+}
+
+.botaoCancelar {
+  flex: 1;
+  padding: 0.7rem;
+  background-color: #eeeeee;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoCancelar:hover {
+  background-color: #e0e0e0;
+}
+
+@media (max-width: 480px) {
+  .grade {
+    grid-template-columns: 1fr;
+  }
+
+  .campoLargo {
+    grid-column: 1;
+  }
+
+  .itemPagamento {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .acoesPagamento {
+    align-self: flex-end;
+  }
+}
