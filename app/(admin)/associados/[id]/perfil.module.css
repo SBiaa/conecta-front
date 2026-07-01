@@ -242,6 +242,26 @@
   background-color: #ffebee;
 }
 
+.botaoEditar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 999px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 0.25rem;
+}
+
+.botaoEditar:hover {
+  background-color: #e0e0e0;
+}
+
 .botaoRegistrar {
   display: flex;
   align-items: center;

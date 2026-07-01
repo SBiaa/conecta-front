@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { CirclePlus } from 'lucide-react'
+import { CirclePlus, Pencil } from 'lucide-react'
 import { apiGet, apiPatch } from '../../../lib/api'
 import styles from './perfil.module.css'
 
@@ -60,6 +60,12 @@ type Pagamento = {
 type PagamentoParaRegistrar = {
   id: string
   valor: string
+}
+
+type TurmaOpcao = {
+  id: string
+  nome: string
+  horario: string | null
 }
 
 const NOMES_MESES = [
@@ -145,11 +151,24 @@ export default function PerfilAssociadoPage() {
   const [enviando, setEnviando] = useState(false)
   const [erroModal, setErroModal] = useState('')
 
-  useEffect(() => {
-    apiGet<Associado>(`/usuarios/${id}`)
+  const [matriculaParaEditar, setMatriculaParaEditar] = useState<Matricula | null>(null)
+  const [turmasModal, setTurmasModal] = useState<TurmaOpcao[]>([])
+  const [carregandoTurmasModal, setCarregandoTurmasModal] = useState(false)
+  const [exameModal, setExameModal] = useState('AGUARDANDO')
+  const [ativaModal, setAtivaModal] = useState(true)
+  const [turmaIdModal, setTurmaIdModal] = useState('')
+  const [enviandoEdicao, setEnviandoEdicao] = useState(false)
+  const [erroModalEdicao, setErroModalEdicao] = useState('')
+
+  function buscarAssociado() {
+    return apiGet<Associado>(`/usuarios/${id}`)
       .then(setAssociado)
       .catch(() => setErroAssociado('Associado não encontrado'))
-      .finally(() => setCarregandoAssociado(false))
+  }
+
+  useEffect(() => {
+    setCarregandoAssociado(true)
+    buscarAssociado().finally(() => setCarregandoAssociado(false))
   }, [id])
 
   function buscarPagamentos() {
@@ -191,6 +210,42 @@ export default function PerfilAssociadoPage() {
       setErroModal('Não foi possível registrar o pagamento')
     } finally {
       setEnviando(false)
+    }
+  }
+
+  function abrirModalEdicao(matricula: Matricula) {
+    setMatriculaParaEditar(matricula)
+    setExameModal(matricula.exameMedico ?? 'AGUARDANDO')
+    setAtivaModal(matricula.ativa)
+    setTurmaIdModal(matricula.turma.id)
+    setErroModalEdicao('')
+    setTurmasModal([])
+    setCarregandoTurmasModal(true)
+    apiGet<TurmaOpcao[]>(`/turmas?projetoId=${matricula.turma.projeto.id}`)
+      .then(setTurmasModal)
+      .finally(() => setCarregandoTurmasModal(false))
+  }
+
+  function fecharModalEdicao() {
+    setMatriculaParaEditar(null)
+  }
+
+  async function confirmarEdicao() {
+    if (!matriculaParaEditar) return
+    setEnviandoEdicao(true)
+    setErroModalEdicao('')
+    try {
+      await apiPatch(`/matriculas/${matriculaParaEditar.id}`, {
+        exameMedico: exameModal,
+        ativa: ativaModal,
+        turmaId: Number(turmaIdModal),
+      })
+      await buscarAssociado()
+      fecharModalEdicao()
+    } catch {
+      setErroModalEdicao('Não foi possível salvar a matrícula')
+    } finally {
+      setEnviandoEdicao(false)
     }
   }
 
@@ -282,6 +337,13 @@ export default function PerfilAssociadoPage() {
                   <span className={`${styles.badge} ${matricula.ativa ? styles.badgeAtiva : styles.badgeInativa}`}>
                     {matricula.ativa ? 'Ativa' : 'Inativa'}
                   </span>
+                  <button
+                    className={styles.botaoEditar}
+                    onClick={() => abrirModalEdicao(matricula)}
+                    title="Editar matrícula"
+                  >
+                    <Pencil size={14} />
+                  </button>
                 </div>
               </li>
             ))}
@@ -337,6 +399,75 @@ export default function PerfilAssociadoPage() {
           </ul>
         )}
       </div>
+
+      {/* Modal editar matrícula */}
+      {matriculaParaEditar && (
+        <div className={styles.overlay} onClick={fecharModalEdicao}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitulo}>Editar matrícula</h3>
+
+            <div className={styles.campo}>
+              <label htmlFor="exameModal">Exame médico</label>
+              <select
+                id="exameModal"
+                value={exameModal}
+                onChange={(e) => setExameModal(e.target.value)}
+              >
+                <option value="APTO">Apto</option>
+                <option value="NAO_APTO">Não apto</option>
+                <option value="AGUARDANDO">Aguardando</option>
+              </select>
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="ativaModal">Situação</label>
+              <select
+                id="ativaModal"
+                value={ativaModal ? 'true' : 'false'}
+                onChange={(e) => setAtivaModal(e.target.value === 'true')}
+              >
+                <option value="true">Ativa</option>
+                <option value="false">Inativa</option>
+              </select>
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="turmaModal">Turma</label>
+              <select
+                id="turmaModal"
+                value={turmaIdModal}
+                onChange={(e) => setTurmaIdModal(e.target.value)}
+                disabled={carregandoTurmasModal}
+              >
+                {carregandoTurmasModal ? (
+                  <option>Carregando...</option>
+                ) : (
+                  turmasModal.map((turma) => (
+                    <option key={turma.id} value={turma.id}>
+                      {turma.nome}{turma.horario ? ` — ${turma.horario}` : ''}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            {erroModalEdicao && <p className={styles.erroModal}>{erroModalEdicao}</p>}
+
+            <div className={styles.acoesModal}>
+              <button className={styles.botaoCancelar} onClick={fecharModalEdicao}>
+                Cancelar
+              </button>
+              <button
+                className={styles.botaoConfirmar}
+                onClick={confirmarEdicao}
+                disabled={enviandoEdicao || carregandoTurmasModal}
+              >
+                {enviandoEdicao ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal registrar pagamento */}
       {pagamentoSelecionado && (
