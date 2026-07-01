@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { CirclePlus } from 'lucide-react'
 import { apiGet, apiPatch } from '../../../lib/api'
 import styles from './perfil.module.css'
@@ -247,7 +248,12 @@ export default function PerfilAssociadoPage() {
 
       {/* Bloco 2 — Matrículas */}
       <div className={styles.card}>
-        <h2 className={styles.subtitulo}>Matrículas</h2>
+        <div className={styles.cabecalhoSecao}>
+          <h2 className={styles.subtitulo}>Matrículas</h2>
+          <Link href={`/matriculas/nova?associadoId=${id}`} className={styles.botaoNovaMatricula}>
+            Nova matrícula
+          </Link>
+        </div>
 
         {associado.matriculas.length === 0 ? (
           <p className={styles.mensagem}>Nenhuma matrícula</p>

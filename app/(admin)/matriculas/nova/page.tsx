@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -58,6 +59,9 @@ const VALORES_PADRAO: MatriculaFormInput = {
 }
 
 export default function NovaMatriculaPage() {
+  const searchParams = useSearchParams()
+  const associadoIdParam = searchParams.get('associadoId')
+
   const [buscaTexto, setBuscaTexto] = useState('')
   const [resultadosBusca, setResultadosBusca] = useState<AssociadaResumo[]>([])
   const [buscando, setBuscando] = useState(false)
@@ -90,6 +94,24 @@ export default function NovaMatriculaPage() {
   useEffect(() => {
     apiGet<Projeto[]>('/projetos').then(setProjetos)
   }, [])
+
+  useEffect(() => {
+    if (!associadoIdParam) return
+
+    apiGet<AssociadaCompleta>(`/usuarios/${associadoIdParam}`)
+      .then((dados) => {
+        setAssociadaSelecionada(dados)
+        setBuscaTexto(dados.nome)
+        reset({
+          ...VALORES_PADRAO,
+          rg: dados.rg ?? '',
+          dataNascimento: dados.dataNascimento ? dados.dataNascimento.slice(0, 10) : '',
+          tomaMedicamento: dados.tomaMedicamento,
+          qualMedicamento: dados.qualMedicamento ?? '',
+        })
+      })
+      .catch(() => setErroAssociada('Não foi possível carregar a associada'))
+  }, [associadoIdParam, reset])
 
   useEffect(() => {
     if (associadaSelecionada) return
