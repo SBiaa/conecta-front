@@ -71,11 +71,13 @@ export default function TurmasDoProjetoPage() {
       {!carregando && turmas.length > 0 && (
         <ul className={styles.lista}>
           {turmas.map((turma) => (
-            <li key={turma.id} className={styles.item}>
-              <span className={styles.nome}>{turma.nome}</span>
-              <span className={styles.detalhe}>
-                {formatarDias(turma.dias)} — {turma.horario}
-              </span>
+            <li key={turma.id}>
+              <Link href={`/turmas/${turma.id}/alunas`} className={styles.item}>
+                <span className={styles.nome}>{turma.nome}</span>
+                <span className={styles.detalhe}>
+                  {formatarDias(turma.dias)} — {turma.horario}
+                </span>
+              </Link>
             </li>
           ))}
         </ul>
