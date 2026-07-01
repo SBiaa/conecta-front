@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -61,6 +61,7 @@ const VALORES_PADRAO: MatriculaFormInput = {
 export default function NovaMatriculaPage() {
   const searchParams = useSearchParams()
   const associadoIdParam = searchParams.get('associadoId')
+  const router = useRouter()
 
   const [buscaTexto, setBuscaTexto] = useState('')
   const [resultadosBusca, setResultadosBusca] = useState<AssociadaResumo[]>([])
@@ -193,8 +194,7 @@ export default function NovaMatriculaPage() {
         exameMedico: dados.exameMedico,
       })
 
-      setSucesso(true)
-      trocarAssociada()
+      router.push(`/associados/${associadaSelecionada.id}`)
     } catch {
       setErro('Não foi possível matricular a aluna')
     }
