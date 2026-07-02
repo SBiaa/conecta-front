@@ -64,6 +64,6 @@
   }
 
   .linkAtivo {
-    background-color: var(--primary);
+    background-color: var(--primary-soft);
   }
 }

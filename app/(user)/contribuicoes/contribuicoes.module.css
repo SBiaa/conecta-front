@@ -1,0 +1,135 @@
+.pagina {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background-color: var(--background);
+}
+
+.titulo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 1.25rem;
+}
+
+/* Resumo ----------------------------------------------------------------- */
+
+.resumo {
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.resumoEmDia {
+  background-color: #e8f5e9;
+  color: var(--success);
+}
+
+.resumoPendente {
+  background-color: #fff3e0;
+  color: var(--warning);
+}
+
+/* Lista ------------------------------------------------------------------ */
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  max-width: 540px;
+}
+
+/* Card ------------------------------------------------------------------- */
+
+.card {
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem 1.375rem;
+}
+
+.atividade {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0 0 0.6rem;
+}
+
+.projeto {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.turma {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.mes {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.875rem;
+}
+
+.rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.valor {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.situacao {
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.situacaoPaga {
+  color: var(--success);
+  background-color: #e8f5e9;
+}
+
+.situacaoPendente {
+  color: var(--warning);
+  background-color: #fff3e0;
+}
+
+.situacaoAtrasada {
+  color: var(--danger);
+  background-color: #ffebee;
+}
+
+.formaPagamento {
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  margin: 0.6rem 0 0;
+}
+
+/* Estados --------------------------------------------------------------- */
+
+.mensagem {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.mensagemErro {
+  font-size: 1rem;
+  color: var(--danger);
+}
