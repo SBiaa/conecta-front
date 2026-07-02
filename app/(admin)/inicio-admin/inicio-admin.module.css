@@ -70,3 +70,47 @@
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
   transform: translateY(-2px);
 }
+
+/* Painel de resumo */
+
+.resumoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.resumoCard {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-left: 4px solid transparent;
+}
+
+.resumoSuccess { border-left-color: var(--success); }
+.resumoWarning { border-left-color: var(--warning); }
+.resumoDanger  { border-left-color: var(--danger); }
+.resumoPrimary { border-left-color: var(--primary); }
+
+.resumoLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.resumoValor {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.resumoSuccess .resumoValor { color: var(--success); }
+.resumoWarning .resumoValor { color: var(--warning); }
+.resumoDanger  .resumoValor { color: var(--danger); }
+.resumoPrimary .resumoValor { color: var(--primary); }
