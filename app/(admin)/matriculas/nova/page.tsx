@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -61,7 +61,13 @@ const VALORES_PADRAO: MatriculaFormInput = {
 export default function NovaMatriculaPage() {
   const searchParams = useSearchParams()
   const associadoIdParam = searchParams.get('associadoId')
+  const turmaIdParam = searchParams.get('turmaId')
   const router = useRouter()
+
+  // When turmaId param is given, we find the project, set projetoId, then need to
+  // set turmaId AFTER the projetoId effect loads turmas. This ref stores the
+  // pending turmaId so the projetoId effect can apply it instead of clearing.
+  const pendingTurmaIdRef = useRef<number | null>(null)
 
   const [buscaTexto, setBuscaTexto] = useState('')
   const [resultadosBusca, setResultadosBusca] = useState<AssociadaResumo[]>([])
@@ -96,6 +102,7 @@ export default function NovaMatriculaPage() {
     apiGet<Projeto[]>('/projetos').then(setProjetos)
   }, [])
 
+  // Pre-fill associada when ?associadoId= is given
   useEffect(() => {
     if (!associadoIdParam) return
 
@@ -114,6 +121,7 @@ export default function NovaMatriculaPage() {
       .catch(() => setErroAssociada('Não foi possível carregar a associada'))
   }, [associadoIdParam, reset])
 
+  // Debounced search for associada
   useEffect(() => {
     if (associadaSelecionada) return
 
@@ -134,15 +142,44 @@ export default function NovaMatriculaPage() {
     return () => clearTimeout(timeout)
   }, [buscaTexto, associadaSelecionada])
 
+  // Load turmas when projetoId changes.
+  // If pendingTurmaIdRef has a value (set by the ?turmaId= preselect effect),
+  // apply it instead of clearing turmaId.
   useEffect(() => {
     if (!projetoId) {
       setTurmas([])
       return
     }
 
-    apiGet<Turma[]>(`/turmas?projetoId=${projetoId}`).then(setTurmas)
-    setValue('turmaId', '' as unknown as number)
+    apiGet<Turma[]>(`/turmas?projetoId=${projetoId}`).then((data) => {
+      setTurmas(data)
+      if (pendingTurmaIdRef.current !== null) {
+        setValue('turmaId', pendingTurmaIdRef.current)
+        pendingTurmaIdRef.current = null
+      } else {
+        setValue('turmaId', '' as unknown as number)
+      }
+    })
   }, [projetoId, setValue])
+
+  // Pre-select project + turma when ?turmaId= is given.
+  // Searches projects sequentially until the turma is found.
+  useEffect(() => {
+    if (!turmaIdParam || projetos.length === 0) return
+
+    const turmaId = Number(turmaIdParam)
+
+    ;(async () => {
+      for (const projeto of projetos) {
+        const turmasDP = await apiGet<Turma[]>(`/turmas?projetoId=${projeto.id}`)
+        if (turmasDP.some((t) => Number(t.id) === turmaId)) {
+          pendingTurmaIdRef.current = turmaId
+          setValue('projetoId', Number(projeto.id))
+          break
+        }
+      }
+    })()
+  }, [turmaIdParam, projetos, setValue])
 
   async function selecionarAssociada(resumo: AssociadaResumo) {
     setErroAssociada('')

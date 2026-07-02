@@ -38,9 +38,14 @@ export default function AlunasDaTurmaPage() {
 
   return (
     <div className={styles.pagina}>
-      <h1 className={styles.titulo}>
-        {nomeTurma ? `Alunas — ${nomeTurma}` : 'Alunas da turma'}
-      </h1>
+      <div className={styles.header}>
+        <h1 className={styles.titulo}>
+          {nomeTurma ? `Alunas — ${nomeTurma}` : 'Alunas da turma'}
+        </h1>
+        <Link href={`/matriculas/nova?turmaId=${id}`} className={styles.botaoNovo}>
+          Nova aluna nesta turma
+        </Link>
+      </div>
 
       {carregando && <p className={styles.mensagem}>Carregando...</p>}
 

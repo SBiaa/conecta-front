@@ -4,11 +4,36 @@
   background-color: var(--background);
 }
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  max-width: 500px;
+}
+
 .titulo {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--primary);
-  margin-bottom: 1.5rem;
+  margin: 0;
+}
+
+.botaoNovo {
+  background-color: var(--primary);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.botaoNovo:hover {
+  background-color: var(--primary-dark);
 }
 
 .mensagem {

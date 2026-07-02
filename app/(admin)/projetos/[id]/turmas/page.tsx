@@ -10,7 +10,9 @@ type Turma = {
   id: string
   nome: string
   dias: string[]
-  horario: string
+  horario: string | null
+  ativas: number
+  inativas: number
 }
 
 type Projeto = {
@@ -30,6 +32,13 @@ const DIAS_LABELS: Record<string, string> = {
 
 function formatarDias(dias: string[]) {
   return dias.map((dia) => DIAS_LABELS[dia] ?? dia).join(', ')
+}
+
+function formatarInfo(turma: Turma): string {
+  const partes: string[] = []
+  if (turma.dias?.length) partes.push(formatarDias(turma.dias))
+  if (turma.horario) partes.push(turma.horario)
+  return partes.join(' — ')
 }
 
 export default function TurmasDoProjetoPage() {
@@ -74,8 +83,11 @@ export default function TurmasDoProjetoPage() {
             <li key={turma.id}>
               <Link href={`/turmas/${turma.id}/alunas`} className={styles.item}>
                 <span className={styles.nome}>{turma.nome}</span>
-                <span className={styles.detalhe}>
-                  {formatarDias(turma.dias)} — {turma.horario}
+                {formatarInfo(turma) && (
+                  <span className={styles.detalhe}>{formatarInfo(turma)}</span>
+                )}
+                <span className={styles.contagem}>
+                  {turma.ativas} ativas · {turma.inativas} inativas
                 </span>
               </Link>
             </li>
