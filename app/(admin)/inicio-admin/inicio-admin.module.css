@@ -4,43 +4,134 @@
   background-color: var(--background);
 }
 
-.saudacao {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 1.5rem;
-}
+/* Topo ------------------------------------------------------------------- */
 
-.destaques {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+.topo {
   margin-bottom: 2rem;
 }
 
-.botaoDestaque {
+.saudacao {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.3rem;
+}
+
+.subtituloSaudacao {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Botões de ação --------------------------------------------------------- */
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+}
+
+.botaoPrimario {
   background-color: var(--primary);
   color: #ffffff;
-  border: none;
+  border: 2px solid var(--primary);
   border-radius: 8px;
-  padding: 0.75rem 1.25rem;
+  padding: 0.625rem 1.25rem;
   font-size: 0.95rem;
   font-weight: 600;
   text-decoration: none;
-  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.botaoPrimario:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+.botaoSecundario {
+  background-color: #ffffff;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
   transition: background-color 0.2s;
 }
 
-.botaoDestaque:hover {
-  background-color: var(--primary-dark);
+.botaoSecundario:hover {
+  background-color: var(--primary-soft);
 }
 
-.subtitulo {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 1rem;
+/* Seções ----------------------------------------------------------------- */
+
+.secao {
+  margin-bottom: 2.5rem;
 }
+
+.tituloSecao {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 0 0 1rem;
+}
+
+/* Cards de resumo -------------------------------------------------------- */
+
+.resumoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.resumoCard {
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.iconeWrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.875rem;
+  flex-shrink: 0;
+}
+
+.resumoSuccess .iconeWrap { background-color: #e8f5e9; color: var(--success); }
+.resumoWarning .iconeWrap { background-color: #fff3e0; color: var(--warning); }
+.resumoDanger  .iconeWrap { background-color: #ffebee; color: var(--danger); }
+.resumoPrimary .iconeWrap { background-color: var(--primary-soft); color: var(--primary); }
+
+.resumoValor {
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 0.3rem;
+  word-break: break-word;
+}
+
+.resumoSuccess .resumoValor { color: var(--success); }
+.resumoWarning .resumoValor { color: var(--warning); }
+.resumoDanger  .resumoValor { color: var(--danger); }
+.resumoPrimary .resumoValor { color: var(--primary); }
+
+.resumoLabel {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* Cards de acesso rápido ------------------------------------------------- */
 
 .cards {
   display: flex;
@@ -54,63 +145,37 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  width: 140px;
-  height: 100px;
+  width: 130px;
+  height: 96px;
   background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
   color: var(--primary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
-  transition: box-shadow 0.2s, transform 0.2s;
+  transition: border-color 0.2s, background-color 0.2s;
 }
 
 .card:hover {
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  border-color: var(--primary);
+  background-color: var(--primary-soft);
 }
 
-/* Painel de resumo */
+/* Responsivo ------------------------------------------------------------- */
 
-.resumoGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+@media (max-width: 640px) {
+  .resumoGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.resumoCard {
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
-  padding: 1rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  border-left: 4px solid transparent;
+@media (max-width: 380px) {
+  .pagina {
+    padding: 1.5rem 1rem;
+  }
+
+  .resumoGrid {
+    grid-template-columns: 1fr;
+  }
 }
-
-.resumoSuccess { border-left-color: var(--success); }
-.resumoWarning { border-left-color: var(--warning); }
-.resumoDanger  { border-left-color: var(--danger); }
-.resumoPrimary { border-left-color: var(--primary); }
-
-.resumoLabel {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.resumoValor {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.resumoSuccess .resumoValor { color: var(--success); }
-.resumoWarning .resumoValor { color: var(--warning); }
-.resumoDanger  .resumoValor { color: var(--danger); }
-.resumoPrimary .resumoValor { color: var(--primary); }

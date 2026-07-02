@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Users, FolderKanban, Wallet } from 'lucide-react'
+import {
+  Users,
+  FolderKanban,
+  Wallet,
+  DollarSign,
+  Clock,
+  AlertCircle,
+  FolderOpen,
+} from 'lucide-react'
 import { getUsuario } from '../../lib/auth'
 import { apiGet } from '../../lib/api'
 import styles from './inicio-admin.module.css'
@@ -99,76 +107,100 @@ export default function InicioAdminPage() {
 
   return (
     <div className={styles.pagina}>
-      <h1 className={styles.saudacao}>Olá, {usuario?.nome ?? '...'}</h1>
 
-      <div className={styles.destaques}>
-        <Link href="/matriculas/nova" className={styles.botaoDestaque}>
+      <header className={styles.topo}>
+        <h1 className={styles.saudacao}>Olá, {usuario?.nome ?? '...'} 👋</h1>
+        <p className={styles.subtituloSaudacao}>Aqui está o resumo da sua ONG hoje.</p>
+      </header>
+
+      <div className={styles.acoes}>
+        <Link href="/matriculas/nova" className={styles.botaoPrimario}>
           Nova aluna
         </Link>
-        <Link href="/associados/novo" className={styles.botaoDestaque}>
+        <Link href="/associados/novo" className={styles.botaoSecundario}>
           Novo associado
         </Link>
       </div>
 
-      <h2 className={styles.subtitulo}>Resumo do mês</h2>
+      <section className={styles.secao}>
+        <h2 className={styles.tituloSecao}>Resumo do mês</h2>
+        <div className={styles.resumoGrid}>
 
-      <div className={styles.resumoGrid}>
-        <div className={`${styles.resumoCard} ${styles.resumoSuccess}`}>
-          <span className={styles.resumoLabel}>Recebido no mês</span>
-          <span className={styles.resumoValor}>
-            {carregando ? '...' : valorOuErro(resumo.recebidoMes, moeda)}
-          </span>
+          <div className={`${styles.resumoCard} ${styles.resumoSuccess}`}>
+            <div className={styles.iconeWrap}>
+              <DollarSign size={20} />
+            </div>
+            <span className={styles.resumoValor}>
+              {carregando ? '...' : valorOuErro(resumo.recebidoMes, moeda)}
+            </span>
+            <span className={styles.resumoLabel}>Recebido no mês</span>
+          </div>
+
+          <div className={`${styles.resumoCard} ${styles.resumoWarning}`}>
+            <div className={styles.iconeWrap}>
+              <Clock size={20} />
+            </div>
+            <span className={styles.resumoValor}>
+              {carregando ? '...' : valorOuErro(resumo.pendenteMes, moeda)}
+            </span>
+            <span className={styles.resumoLabel}>Pendente no mês</span>
+          </div>
+
+          <div className={`${styles.resumoCard} ${styles.resumoDanger}`}>
+            <div className={styles.iconeWrap}>
+              <AlertCircle size={20} />
+            </div>
+            <span className={styles.resumoValor}>
+              {carregando
+                ? '...'
+                : resumo.atrasadosQtd === 'erro'
+                ? '—'
+                : `${resumo.atrasadosQtd} · ${typeof resumo.atrasadosTotal === 'number' ? moeda(resumo.atrasadosTotal) : '—'}`}
+            </span>
+            <span className={styles.resumoLabel}>Atrasados</span>
+          </div>
+
+          <div className={`${styles.resumoCard} ${styles.resumoPrimary}`}>
+            <div className={styles.iconeWrap}>
+              <FolderOpen size={20} />
+            </div>
+            <span className={styles.resumoValor}>
+              {carregando ? '...' : valorOuErro(resumo.projetosAtivos, String)}
+            </span>
+            <span className={styles.resumoLabel}>Projetos ativos</span>
+          </div>
+
+          <div className={`${styles.resumoCard} ${styles.resumoPrimary}`}>
+            <div className={styles.iconeWrap}>
+              <Users size={20} />
+            </div>
+            <span className={styles.resumoValor}>
+              {carregando ? '...' : valorOuErro(resumo.totalAssociados, String)}
+            </span>
+            <span className={styles.resumoLabel}>Total de associados</span>
+          </div>
+
         </div>
+      </section>
 
-        <div className={`${styles.resumoCard} ${styles.resumoWarning}`}>
-          <span className={styles.resumoLabel}>Pendente no mês</span>
-          <span className={styles.resumoValor}>
-            {carregando ? '...' : valorOuErro(resumo.pendenteMes, moeda)}
-          </span>
+      <section className={styles.secao}>
+        <h2 className={styles.tituloSecao}>Acesso rápido</h2>
+        <div className={styles.cards}>
+          <Link href="/associados" className={styles.card}>
+            <Users size={26} />
+            <span>Associados</span>
+          </Link>
+          <Link href="/projetos" className={styles.card}>
+            <FolderKanban size={26} />
+            <span>Projetos</span>
+          </Link>
+          <Link href="/financeiro" className={styles.card}>
+            <Wallet size={26} />
+            <span>Financeiro</span>
+          </Link>
         </div>
+      </section>
 
-        <div className={`${styles.resumoCard} ${styles.resumoDanger}`}>
-          <span className={styles.resumoLabel}>Atrasados</span>
-          <span className={styles.resumoValor}>
-            {carregando
-              ? '...'
-              : resumo.atrasadosQtd === 'erro'
-              ? '—'
-              : `${resumo.atrasadosQtd} · ${typeof resumo.atrasadosTotal === 'number' ? moeda(resumo.atrasadosTotal) : '—'}`}
-          </span>
-        </div>
-
-        <div className={`${styles.resumoCard} ${styles.resumoPrimary}`}>
-          <span className={styles.resumoLabel}>Projetos ativos</span>
-          <span className={styles.resumoValor}>
-            {carregando ? '...' : valorOuErro(resumo.projetosAtivos, String)}
-          </span>
-        </div>
-
-        <div className={`${styles.resumoCard} ${styles.resumoPrimary}`}>
-          <span className={styles.resumoLabel}>Total de associados</span>
-          <span className={styles.resumoValor}>
-            {carregando ? '...' : valorOuErro(resumo.totalAssociados, String)}
-          </span>
-        </div>
-      </div>
-
-      <h2 className={styles.subtitulo}>Acesso rápido</h2>
-
-      <div className={styles.cards}>
-        <Link href="/associados" className={styles.card}>
-          <Users size={28} />
-          <span>Associados</span>
-        </Link>
-        <Link href="/projetos" className={styles.card}>
-          <FolderKanban size={28} />
-          <span>Projetos</span>
-        </Link>
-        <Link href="/financeiro" className={styles.card}>
-          <Wallet size={28} />
-          <span>Financeiro</span>
-        </Link>
-      </div>
     </div>
   )
 }
