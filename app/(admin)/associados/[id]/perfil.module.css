@@ -1,7 +1,7 @@
 .pagina {
   min-height: 100vh;
   padding: 2rem;
-  background-color: #f5f5f5;
+  background-color: var(--background);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -10,7 +10,7 @@
 .titulo {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2a62a2;
+  color: var(--primary);
 }
 
 .card {
@@ -34,8 +34,8 @@
 .botaoNovaMatricula {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #2a62a2;
-  background-color: #ede9fe;
+  color: var(--primary);
+  background-color: var(--primary-soft);
   border-radius: 8px;
   padding: 0.35rem 0.75rem;
   text-decoration: none;
@@ -49,19 +49,19 @@
 .subtitulo {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #2a62a2;
+  color: var(--primary);
   margin-bottom: 1.25rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .mensagem {
-  color: #777;
+  color: var(--text-secondary);
   font-size: 0.95rem;
 }
 
 .erro {
-  color: #d32f2f;
+  color: var(--danger);
   font-size: 0.95rem;
 }
 
@@ -82,14 +82,14 @@
 
 .campo dt {
   font-size: 0.78rem;
-  color: #888;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .campo dd {
   font-size: 0.95rem;
-  color: #222;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -127,17 +127,17 @@
 .nomeProjeto {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #222;
+  color: var(--text-primary);
 }
 
 .nomeTurma {
   font-size: 0.9rem;
-  color: #444;
+  color: var(--text-primary);
 }
 
 .detalhe {
   font-size: 0.82rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .badgesMatricula {
@@ -155,27 +155,27 @@
 }
 
 .exameAPTO {
-  color: #2e7d32;
+  color: var(--success);
   background-color: #e8f5e9;
 }
 
 .exameNAO_APTO {
-  color: #c62828;
+  color: var(--danger);
   background-color: #ffebee;
 }
 
 .exameAGUARDANDO {
-  color: #e65100;
+  color: var(--warning);
   background-color: #fff3e0;
 }
 
 .badgeAtiva {
-  color: #2e7d32;
+  color: var(--success);
   background-color: #e8f5e9;
 }
 
 .badgeInativa {
-  color: #757575;
+  color: var(--text-secondary);
   background-color: #f0f0f0;
 }
 
@@ -209,7 +209,7 @@
 .mesPagamento {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #222;
+  color: var(--text-primary);
 }
 
 .acoesPagamento {
@@ -222,7 +222,7 @@
 .valorPagamento {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .statusBadge {
@@ -233,12 +233,12 @@
 }
 
 .statusPaga {
-  color: #2e7d32;
+  color: var(--success);
   background-color: #e8f5e9;
 }
 
 .statusPendente {
-  color: #c62828;
+  color: var(--danger);
   background-color: #ffebee;
 }
 
@@ -246,7 +246,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #555;
+  color: var(--text-secondary);
   background-color: #f0f0f0;
   border: none;
   border-radius: 999px;
@@ -266,8 +266,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2a62a2;
-  background-color: #ede9fe;
+  color: var(--primary);
+  background-color: var(--primary-soft);
   border: none;
   border-radius: 999px;
   width: 32px;
@@ -305,14 +305,14 @@
 .modalTitulo {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #2a62a2;
+  color: var(--primary);
   margin-bottom: 1.25rem;
   text-align: center;
 }
 
 .campo label {
   font-size: 0.85rem;
-  color: #555;
+  color: var(--text-secondary);
   margin-bottom: 0.4rem;
   display: block;
 }
@@ -321,7 +321,7 @@
 .campo select {
   width: 100%;
   padding: 0.6rem 0.8rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 1rem;
   outline: none;
@@ -331,12 +331,12 @@
 
 .campo input:focus,
 .campo select:focus {
-  border-color: #2a62a2;
+  border-color: var(--primary);
 }
 
 .erroModal {
   font-size: 0.85rem;
-  color: #d32f2f;
+  color: var(--danger);
   margin-top: 0.5rem;
   text-align: center;
 }
@@ -350,7 +350,7 @@
 .botaoConfirmar {
   flex: 1;
   padding: 0.7rem;
-  background-color: #2a62a2;
+  background-color: var(--primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -361,7 +361,7 @@
 }
 
 .botaoConfirmar:hover {
-  background-color: #4c1d95;
+  background-color: var(--primary-dark);
 }
 
 .botaoConfirmar:disabled {
@@ -373,7 +373,7 @@
   flex: 1;
   padding: 0.7rem;
   background-color: #eeeeee;
-  color: #333;
+  color: var(--text-primary);
   border: none;
   border-radius: 8px;
   font-size: 1rem;

@@ -1,18 +1,18 @@
 .pagina {
   min-height: 100vh;
   padding: 2rem;
-  background-color: #f5f5f5;
+  background-color: var(--background);
 }
 
 .titulo {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2a62a2;
+  color: var(--primary);
   margin-bottom: 1.5rem;
 }
 
 .mensagem {
-  color: #555;
+  color: var(--text-secondary);
   font-size: 1rem;
 }
 
@@ -37,12 +37,12 @@
 }
 
 .item:hover {
-  background-color: #f5f3ff;
+  background-color: var(--primary-soft);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .nome {
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }

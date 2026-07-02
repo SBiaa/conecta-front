@@ -4,7 +4,7 @@
   bottom: 0;
   width: 100%;
   background-color: #ffffff;
-  border-top: 1px solid #eeeeee;
+  border-top: 1px solid var(--border);
   z-index: 20;
 }
 
@@ -22,7 +22,7 @@
   align-items: center;
   gap: 0.2rem;
   padding: 0.3rem 0.5rem;
-  color: #555;
+  color: var(--text-secondary);
   text-decoration: none;
   font-size: 0.7rem;
   border-radius: 8px;
@@ -30,7 +30,7 @@
 }
 
 .linkAtivo {
-  color: #2A62A2;
+  color: var(--primary);
 }
 
 .label {
@@ -44,7 +44,7 @@
     width: 220px;
     height: 100vh;
     border-top: none;
-    border-right: 1px solid #eeeeee;
+    border-right: 1px solid var(--border);
     padding-top: 2rem;
   }
 
@@ -64,6 +64,6 @@
   }
 
   .linkAtivo {
-    background-color: #074ca7;
+    background-color: var(--primary);
   }
 }

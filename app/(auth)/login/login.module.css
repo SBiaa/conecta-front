@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #2A62A2;
+  background-color: var(--primary);
 }
 
 .card {
@@ -18,7 +18,7 @@
 .titulo {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2a62a2;
+  color: var(--primary);
   margin-bottom: 1.5rem;
   text-align: center;
 }
@@ -31,13 +31,13 @@
 
 .campo label {
   font-size: 0.85rem;
-  color: #555;
+  color: var(--text-secondary);
   margin-bottom: 0.4rem;
 }
 
 .campo input {
   padding: 0.6rem 0.8rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 1rem;
   outline: none;
@@ -45,13 +45,13 @@
 }
 
 .campo input:focus {
-  border-color: #2a62a2;
+  border-color: var(--primary);
 }
 
 .botao {
   width: 100%;
   padding: 0.75rem;
-  background-color: #2a62a2;
+  background-color: var(--primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -63,5 +63,5 @@
 }
 
 .botao:hover {
-  background-color: #4c1d95;
+  background-color: var(--primary-dark);
 }

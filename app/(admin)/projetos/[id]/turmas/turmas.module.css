@@ -1,7 +1,7 @@
 .pagina {
   min-height: 100vh;
   padding: 2rem;
-  background-color: #f5f5f5;
+  background-color: var(--background);
 }
 
 .header {
@@ -15,11 +15,11 @@
 .titulo {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2a62a2;
+  color: var(--primary);
 }
 
 .botaoNovo {
-  background-color: #2a62a2;
+  background-color: var(--primary);
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -32,7 +32,7 @@
 }
 
 .botaoNovo:hover {
-  background-color: #4c1d95;
+  background-color: var(--primary-dark);
 }
 
 .lista {
@@ -55,15 +55,15 @@
 .nome {
   font-size: 1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .detalhe {
   font-size: 0.85rem;
-  color: #555;
+  color: var(--text-secondary);
 }
 
 .mensagem {
-  color: #555;
+  color: var(--text-secondary);
   font-size: 1rem;
 }
