@@ -103,7 +103,9 @@ function formatarMes(mes: string) {
 function formatarData(data: string | null) {
   if (!data) return '—'
   const d = new Date(data)
-  return d.toLocaleDateString('pt-BR')
+  const dia = String(d.getUTCDate()).padStart(2, '0')
+  const mes = String(d.getUTCMonth() + 1).padStart(2, '0')
+  return `${dia}/${mes}/${d.getUTCFullYear()}`
 }
 
 function formatarMoeda(valor: string) {

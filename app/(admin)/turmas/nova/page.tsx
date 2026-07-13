@@ -12,12 +12,18 @@ const turmaSchema = z.object({
   nome: z.string().min(1, 'Informe o nome'),
   projetoId: z.coerce.number({ message: 'Escolha um projeto' }),
   horario: z.string().min(1, 'Informe o horário'),
+  professorId: z.string().optional(),
 })
 
 type TurmaFormInput = z.input<typeof turmaSchema>
 type TurmaFormOutput = z.output<typeof turmaSchema>
 
 type Projeto = {
+  id: string
+  nome: string
+}
+
+type Professor = {
   id: string
   nome: string
 }
@@ -37,6 +43,7 @@ export default function NovaTurmaPage() {
   const projetoIdParam = searchParams.get('projetoId')
 
   const [projetos, setProjetos] = useState<Projeto[]>([])
+  const [professores, setProfessores] = useState<Professor[]>([])
   const [diasSelecionados, setDiasSelecionados] = useState<string[]>([])
   const [erroDias, setErroDias] = useState('')
   const [sucesso, setSucesso] = useState(false)
@@ -59,6 +66,7 @@ export default function NovaTurmaPage() {
         setValue('projetoId', Number(projetoIdParam))
       }
     })
+    apiGet<Professor[]>('/usuarios?papel=PROFESSOR').then(setProfessores)
   }, [projetoIdParam, setValue])
 
   function alternarDia(dia: string) {
@@ -83,6 +91,7 @@ export default function NovaTurmaPage() {
         projetoId: dados.projetoId,
         horario: dados.horario,
         dias: diasSelecionados,
+        professorId: dados.professorId || undefined,
       })
       setSucesso(true)
       reset()
@@ -140,6 +149,18 @@ export default function NovaTurmaPage() {
             <label htmlFor="horario">Horário</label>
             <input type="time" id="horario" {...register('horario')} />
             {errors.horario && <span className={styles.erro}>{errors.horario.message}</span>}
+          </div>
+
+          <div className={styles.campo}>
+            <label htmlFor="professorId">Professora responsável</label>
+            <select id="professorId" {...register('professorId')}>
+              <option value="">Sem professora definida</option>
+              {professores.map((professor) => (
+                <option key={professor.id} value={professor.id}>
+                  {professor.nome}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button className={styles.botao} disabled={isSubmitting}>

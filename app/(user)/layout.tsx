@@ -2,21 +2,28 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Home, FolderKanban, HandCoins, User } from 'lucide-react'
+import { Home, FolderKanban, HandCoins, User, GraduationCap } from 'lucide-react'
 import { getUsuario } from '../lib/auth'
 import BottomNav, { type ItemMenu } from '../components/BottomNav'
 import styles from './layout.module.css'
 
-const itensUser: ItemMenu[] = [
+const itensAssociado: ItemMenu[] = [
   { label: 'Home', href: '/inicio', icone: Home },
   { label: 'Meus Projetos', href: '/meus-projetos', icone: FolderKanban },
   { label: 'Contribuições', href: '/contribuicoes', icone: HandCoins },
   { label: 'Perfil', href: '/perfil', icone: User },
 ]
 
+const itensProfessor: ItemMenu[] = [
+  { label: 'Home', href: '/inicio', icone: Home },
+  { label: 'Minhas Turmas', href: '/turmas', icone: GraduationCap },
+  { label: 'Perfil', href: '/perfil', icone: User },
+]
+
 export default function UserLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [verificando, setVerificando] = useState(true)
+  const [papel, setPapel] = useState<'ASSOCIADO' | 'PROFESSOR'>('ASSOCIADO')
 
   useEffect(() => {
     const usuario = getUsuario()
@@ -31,6 +38,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       return
     }
 
+    setPapel(usuario.papel)
     setVerificando(false)
   }, [router])
 
@@ -40,7 +48,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className={styles.layout}>
-      <BottomNav itens={itensUser} />
+      <BottomNav itens={papel === 'PROFESSOR' ? itensProfessor : itensAssociado} />
       <main className={styles.conteudo}>{children}</main>
     </div>
   )

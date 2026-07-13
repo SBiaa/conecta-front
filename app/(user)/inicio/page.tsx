@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { FolderOpen, Wallet, User } from 'lucide-react'
+import { FolderOpen, Wallet, User, GraduationCap } from 'lucide-react'
 import { getUsuario } from '../../lib/auth'
 import { apiGet } from '../../lib/api'
 import styles from './inicio.module.css'
@@ -69,18 +69,41 @@ function calcularSituacao(pagamentos: Pagamento[]): SituacaoInfo {
 }
 
 export default function InicioPage() {
-  const [usuario] = useState<{ nome: string } | null>(() =>
+  const [usuario] = useState<{ nome: string; papel: 'ASSOCIADO' | 'PROFESSOR' } | null>(() =>
     typeof window !== 'undefined' ? getUsuario() : null
   )
   const [situacao, setSituacao] = useState<SituacaoInfo>({ tipo: 'carregando' })
+  const ehProfessor = usuario?.papel === 'PROFESSOR'
 
   useEffect(() => {
+    if (ehProfessor) return
     apiGet<Pagamento[]>('/me/pagamentos')
       .then((dados) => setSituacao(calcularSituacao(dados)))
       .catch(() => setSituacao({ tipo: 'erro' }))
-  }, [])
+  }, [ehProfessor])
 
   const nome = usuario?.nome ? primeiroNome(usuario.nome) : '...'
+
+  if (ehProfessor) {
+    return (
+      <div className={styles.pagina}>
+        <h1 className={styles.saudacao}>Olá, {nome} 👋</h1>
+
+        <h2 className={styles.tituloSecao}>Acesso rápido</h2>
+
+        <div className={styles.atalhos}>
+          <Link href="/turmas" className={styles.atalho}>
+            <GraduationCap size={30} />
+            <span>Minhas Turmas</span>
+          </Link>
+          <Link href="/perfil" className={styles.atalho}>
+            <User size={30} />
+            <span>Perfil</span>
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   const variante =
     situacao.tipo === 'emDia'

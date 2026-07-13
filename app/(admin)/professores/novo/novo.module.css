@@ -4,6 +4,7 @@
   align-items: center;
   justify-content: center;
   background-color: var(--background);
+  padding: 2rem 1rem;
 }
 
 .card {
@@ -12,7 +13,7 @@
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 400px;
+  max-width: 480px;
 }
 
 .titulo {
@@ -35,8 +36,7 @@
   margin-bottom: 0.4rem;
 }
 
-.campo input,
-.campo select {
+.campo input {
   padding: 0.6rem 0.8rem;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -45,8 +45,7 @@
   transition: border 0.2s;
 }
 
-.campo input:focus,
-.campo select:focus {
+.campo input:focus {
   border-color: var(--primary);
 }
 
@@ -91,4 +90,71 @@
   color: var(--danger);
   text-align: center;
   margin-top: 1rem;
+}
+
+.avisoSenha {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border-radius: 12px;
+  background-color: #fff7e6;
+  border: 2px solid #f59e0b;
+}
+
+.avisoSenhaTexto {
+  font-size: 1rem;
+  color: #7c4a03;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.avisoSenhaValor {
+  display: inline-block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: monospace;
+  color: #92400e;
+  background-color: #fef3c7;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  user-select: all;
+}
+
+.avisoSenhaAcoes {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.avisoSenhaCopiar {
+  flex: 1;
+  padding: 0.6rem;
+  background-color: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.avisoSenhaCopiar:hover {
+  background-color: #d97706;
+}
+
+.avisoSenhaDispensar {
+  flex: 1;
+  padding: 0.6rem;
+  background-color: #ffffff;
+  color: #7c4a03;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.avisoSenhaDispensar:hover {
+  background-color: #fff7e6;
 }
