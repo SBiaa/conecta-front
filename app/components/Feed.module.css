@@ -1,0 +1,185 @@
+.pagina {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background-color: var(--background);
+}
+
+.titulo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 1.25rem;
+}
+
+.cardForm {
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem 1.375rem;
+  margin-bottom: 1.5rem;
+  max-width: 560px;
+}
+
+.textarea {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  transition: border 0.2s;
+  box-sizing: border-box;
+}
+
+.textarea:focus {
+  border-color: var(--primary);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+}
+
+.campo label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+.campo select {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.campo select:focus {
+  border-color: var(--primary);
+}
+
+.campo select:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+}
+
+.erro {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--danger);
+  margin-top: 0.4rem;
+}
+
+.botao {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1.25rem;
+  transition: background-color 0.2s;
+}
+
+.botao:hover {
+  background-color: var(--primary-dark);
+}
+
+.botao:disabled {
+  background-color: #b3a1d9;
+  cursor: not-allowed;
+}
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  max-width: 560px;
+}
+
+.card {
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem 1.375rem;
+}
+
+.cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.autor {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.quando {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.botaoApagar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: var(--danger);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoApagar:hover {
+  background-color: #ffebee;
+}
+
+.botaoApagar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.badge {
+  display: inline-block;
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  background-color: var(--primary-soft);
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+}
+
+.conteudo {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin: 0.75rem 0 0;
+  white-space: pre-wrap;
+}
+
+.mensagem {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.mensagemErro {
+  font-size: 1rem;
+  color: var(--danger);
+}

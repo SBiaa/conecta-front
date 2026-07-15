@@ -44,6 +44,24 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return response.json()
 }
 
+export async function apiDelete<T>(path: string): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      method: 'DELETE',
+      headers: { ...authHeaders() },
+    })
+  } catch {
+    throw new Error(`Falha ao conectar com a API em ${path}`)
+  }
+
+  if (!response.ok) {
+    throw new Error(`Erro na requisição DELETE ${path}: ${response.status}`)
+  }
+
+  return response.json()
+}
+
 export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   let response: Response
   try {

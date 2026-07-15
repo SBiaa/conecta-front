@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Home, Users, GraduationCap, FolderKanban, Wallet, User } from 'lucide-react'
+import { Home, Users, GraduationCap, FolderKanban, Wallet, User, Rss } from 'lucide-react'
 import { getUsuario } from '../lib/auth'
 import BottomNav, { type ItemMenu } from '../components/BottomNav'
 import styles from './layout.module.css'
 
 const itensAdmin: ItemMenu[] = [
   { label: 'Home', href: '/inicio-admin', icone: Home },
+  { label: 'Feed', href: '/feed', icone: Rss },
   { label: 'Associados', href: '/associados', icone: Users },
   { label: 'Professoras', href: '/professores', icone: GraduationCap },
   { label: 'Projetos', href: '/projetos', icone: FolderKanban },
