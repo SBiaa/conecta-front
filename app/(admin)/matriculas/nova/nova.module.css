@@ -31,6 +31,15 @@
   margin: 1.5rem 0 1rem;
 }
 
+.linha {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.linha .campo {
+  flex: 1;
+}
+
 .campo {
   display: flex;
   flex-direction: column;
@@ -143,6 +152,12 @@
 .erro {
   font-size: 0.8rem;
   color: var(--danger);
+  margin-top: 0.3rem;
+}
+
+.aviso {
+  font-size: 0.8rem;
+  color: var(--warning);
   margin-top: 0.3rem;
 }
 

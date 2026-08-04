@@ -9,10 +9,18 @@ import { apiGet, apiPatch, apiPost } from '../../../lib/api'
 import styles from './nova.module.css'
 
 const matriculaSchema = z.object({
+  telefone: z.string().optional(),
   rg: z.string().optional(),
   dataNascimento: z.string().optional(),
   tomaMedicamento: z.boolean().optional(),
   qualMedicamento: z.string().optional(),
+  cep: z.string().optional(),
+  logradouro: z.string().optional(),
+  numero: z.string().optional(),
+  complemento: z.string().optional(),
+  bairro: z.string().optional(),
+  cidade: z.string().optional(),
+  uf: z.string().optional(),
   projetoId: z.coerce.number({ message: 'Escolha um projeto' }),
   turmaId: z.coerce.number({ message: 'Escolha uma turma' }),
   exameMedico: z.enum(['APTO', 'NAO_APTO', 'AGUARDANDO'], {
@@ -32,10 +40,18 @@ type AssociadaResumo = {
 type AssociadaCompleta = {
   id: string
   nome: string
+  telefone: string | null
   rg: string | null
   dataNascimento: string | null
   tomaMedicamento: boolean
   qualMedicamento: string | null
+  cep: string | null
+  logradouro: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  cidade: string | null
+  uf: string | null
 }
 
 type Projeto = {
@@ -48,14 +64,48 @@ type Turma = {
   nome: string
 }
 
+type RespostaViaCep = {
+  erro?: boolean
+  logradouro?: string
+  bairro?: string
+  localidade?: string
+  uf?: string
+}
+
 const VALORES_PADRAO: MatriculaFormInput = {
+  telefone: '',
   rg: '',
   dataNascimento: '',
   tomaMedicamento: false,
   qualMedicamento: '',
+  cep: '',
+  logradouro: '',
+  numero: '',
+  complemento: '',
+  bairro: '',
+  cidade: '',
+  uf: '',
   projetoId: '' as unknown as number,
   turmaId: '' as unknown as number,
   exameMedico: 'AGUARDANDO',
+}
+
+function dadosAssociadaParaFormulario(dados: AssociadaCompleta): MatriculaFormInput {
+  return {
+    ...VALORES_PADRAO,
+    telefone: dados.telefone ?? '',
+    rg: dados.rg ?? '',
+    dataNascimento: dados.dataNascimento ? dados.dataNascimento.slice(0, 10) : '',
+    tomaMedicamento: dados.tomaMedicamento,
+    qualMedicamento: dados.qualMedicamento ?? '',
+    cep: dados.cep ?? '',
+    logradouro: dados.logradouro ?? '',
+    numero: dados.numero ?? '',
+    complemento: dados.complemento ?? '',
+    bairro: dados.bairro ?? '',
+    cidade: dados.cidade ?? '',
+    uf: dados.uf ?? '',
+  }
 }
 
 export default function NovaMatriculaPage() {
@@ -76,6 +126,7 @@ export default function NovaMatriculaPage() {
     null
   )
   const [erroAssociada, setErroAssociada] = useState('')
+  const [cepNaoEncontrado, setCepNaoEncontrado] = useState(false)
 
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [turmas, setTurmas] = useState<Turma[]>([])
@@ -88,6 +139,7 @@ export default function NovaMatriculaPage() {
     handleSubmit,
     watch,
     setValue,
+    getValues,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<MatriculaFormInput, unknown, MatriculaFormOutput>({
@@ -97,6 +149,7 @@ export default function NovaMatriculaPage() {
 
   const tomaMedicamento = watch('tomaMedicamento')
   const projetoId = watch('projetoId')
+  const registroCep = register('cep')
 
   useEffect(() => {
     apiGet<Projeto[]>('/projetos').then(setProjetos)
@@ -110,13 +163,7 @@ export default function NovaMatriculaPage() {
       .then((dados) => {
         setAssociadaSelecionada(dados)
         setBuscaTexto(dados.nome)
-        reset({
-          ...VALORES_PADRAO,
-          rg: dados.rg ?? '',
-          dataNascimento: dados.dataNascimento ? dados.dataNascimento.slice(0, 10) : '',
-          tomaMedicamento: dados.tomaMedicamento,
-          qualMedicamento: dados.qualMedicamento ?? '',
-        })
+        reset(dadosAssociadaParaFormulario(dados))
       })
       .catch(() => setErroAssociada('Não foi possível carregar a associada'))
   }, [associadoIdParam, reset])
@@ -187,16 +234,9 @@ export default function NovaMatriculaPage() {
     setAssociadaSelecionada(dadosCompletos)
     setBuscaTexto(dadosCompletos.nome)
     setResultadosBusca([])
+    setCepNaoEncontrado(false)
 
-    reset({
-      ...VALORES_PADRAO,
-      rg: dadosCompletos.rg ?? '',
-      dataNascimento: dadosCompletos.dataNascimento
-        ? dadosCompletos.dataNascimento.slice(0, 10)
-        : '',
-      tomaMedicamento: dadosCompletos.tomaMedicamento,
-      qualMedicamento: dadosCompletos.qualMedicamento ?? '',
-    })
+    reset(dadosAssociadaParaFormulario(dadosCompletos))
   }
 
   function trocarAssociada() {
@@ -204,7 +244,35 @@ export default function NovaMatriculaPage() {
     setBuscaTexto('')
     setResultadosBusca([])
     setTurmas([])
+    setCepNaoEncontrado(false)
     reset(VALORES_PADRAO)
+  }
+
+  async function buscarCep() {
+    const cepLimpo = (getValues('cep') ?? '').replace(/\D/g, '')
+
+    if (cepLimpo.length !== 8) {
+      return
+    }
+
+    setCepNaoEncontrado(false)
+
+    try {
+      const resposta = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+      const dados: RespostaViaCep = await resposta.json()
+
+      if (dados.erro) {
+        setCepNaoEncontrado(true)
+        return
+      }
+
+      setValue('logradouro', dados.logradouro ?? '')
+      setValue('bairro', dados.bairro ?? '')
+      setValue('cidade', dados.localidade ?? '')
+      setValue('uf', dados.uf ?? '')
+    } catch {
+      setCepNaoEncontrado(true)
+    }
   }
 
   async function onSubmit(dados: MatriculaFormOutput) {
@@ -219,10 +287,18 @@ export default function NovaMatriculaPage() {
     setErroAssociada('')
     try {
       await apiPatch(`/usuarios/${associadaSelecionada.id}`, {
+        telefone: dados.telefone,
         rg: dados.rg,
         dataNascimento: dados.dataNascimento,
         tomaMedicamento: dados.tomaMedicamento,
         qualMedicamento: dados.tomaMedicamento ? dados.qualMedicamento : undefined,
+        cep: dados.cep,
+        logradouro: dados.logradouro,
+        numero: dados.numero,
+        complemento: dados.complemento,
+        bairro: dados.bairro,
+        cidade: dados.cidade,
+        uf: dados.uf,
       })
 
       await apiPost('/matriculas', {
@@ -287,6 +363,11 @@ export default function NovaMatriculaPage() {
               <h2 className={styles.subtitulo}>Dados da aluna</h2>
 
               <div className={styles.campo}>
+                <label htmlFor="telefone">Telefone</label>
+                <input type="text" id="telefone" {...register('telefone')} />
+              </div>
+
+              <div className={styles.campo}>
                 <label htmlFor="rg">RG</label>
                 <input type="text" id="rg" {...register('rg')} />
               </div>
@@ -311,6 +392,56 @@ export default function NovaMatriculaPage() {
                   <input type="text" id="qualMedicamento" {...register('qualMedicamento')} />
                 </div>
               )}
+
+              <h2 className={styles.subtitulo}>Endereço</h2>
+
+              <div className={styles.campo}>
+                <label htmlFor="cep">CEP</label>
+                <input
+                  type="text"
+                  id="cep"
+                  {...registroCep}
+                  onBlur={(evento) => {
+                    registroCep.onBlur(evento)
+                    buscarCep()
+                  }}
+                />
+                {cepNaoEncontrado && <span className={styles.aviso}>CEP não encontrado</span>}
+              </div>
+
+              <div className={styles.campo}>
+                <label htmlFor="logradouro">Logradouro</label>
+                <input type="text" id="logradouro" {...register('logradouro')} />
+              </div>
+
+              <div className={styles.linha}>
+                <div className={styles.campo}>
+                  <label htmlFor="numero">Número</label>
+                  <input type="text" id="numero" {...register('numero')} />
+                </div>
+
+                <div className={styles.campo}>
+                  <label htmlFor="complemento">Complemento</label>
+                  <input type="text" id="complemento" {...register('complemento')} />
+                </div>
+              </div>
+
+              <div className={styles.campo}>
+                <label htmlFor="bairro">Bairro</label>
+                <input type="text" id="bairro" {...register('bairro')} />
+              </div>
+
+              <div className={styles.linha}>
+                <div className={styles.campo}>
+                  <label htmlFor="cidade">Cidade</label>
+                  <input type="text" id="cidade" {...register('cidade')} />
+                </div>
+
+                <div className={styles.campo}>
+                  <label htmlFor="uf">UF</label>
+                  <input type="text" id="uf" {...register('uf')} />
+                </div>
+              </div>
 
               <h2 className={styles.subtitulo}>Matrícula</h2>
 
