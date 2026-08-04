@@ -13,6 +13,7 @@ type Turma = {
   horario: string | null
   ativas: number
   inativas: number
+  professor: { id: string; nome: string } | null
 }
 
 type Projeto = {
@@ -86,6 +87,9 @@ export default function TurmasDoProjetoPage() {
                 {formatarInfo(turma) && (
                   <span className={styles.detalhe}>{formatarInfo(turma)}</span>
                 )}
+                <span className={styles.detalhe}>
+                  {turma.professor ? `Professora: ${turma.professor.nome}` : 'Sem professora'}
+                </span>
                 <span className={styles.contagem}>
                   {turma.ativas} ativas · {turma.inativas} inativas
                 </span>

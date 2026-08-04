@@ -71,3 +71,67 @@
   font-weight: 600;
   color: var(--text-primary);
 }
+
+.formProfessora {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  background-color: #ffffff;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+  max-width: 500px;
+  margin-bottom: 1.5rem;
+}
+
+.formProfessora label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  width: 100%;
+}
+
+.formProfessora select {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.formProfessora select:focus {
+  border-color: var(--primary);
+}
+
+.botaoSalvar {
+  padding: 0.6rem 1.2rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoSalvar:hover {
+  background-color: var(--primary-dark);
+}
+
+.botaoSalvar:disabled {
+  background-color: #b3a1d9;
+  cursor: not-allowed;
+}
+
+.sucesso {
+  font-size: 0.85rem;
+  color: var(--success);
+}
+
+.erro {
+  font-size: 0.85rem;
+  color: var(--danger);
+}
