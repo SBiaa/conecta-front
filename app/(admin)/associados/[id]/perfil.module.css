@@ -281,6 +281,107 @@
   background-color: #ddd6fe;
 }
 
+/* Alterar senha */
+
+.botaoAlterarSenha {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+  background-color: var(--primary-soft);
+  border: none;
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoAlterarSenha:hover {
+  background-color: #ddd6fe;
+}
+
+.campoSenha {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.campoSenha input {
+  padding-right: 2.5rem;
+}
+
+.botaoOlho {
+  position: absolute;
+  right: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.botaoSugerirSenha {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.avisoSenha {
+  background-color: #fff3e0;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.avisoSenhaTexto {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.avisoSenhaValor {
+  font-weight: 700;
+  font-family: monospace;
+  font-size: 0.95rem;
+}
+
+.avisoSenhaAcoes {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.avisoSenhaCopiar {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--primary);
+  background-color: #ffffff;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+
+.avisoSenhaDispensar {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
 /* Modal */
 
 .overlay {

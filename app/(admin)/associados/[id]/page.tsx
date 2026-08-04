@@ -3,9 +3,20 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { CirclePlus, Pencil } from 'lucide-react'
+import { CirclePlus, Pencil, KeyRound, Eye, EyeOff } from 'lucide-react'
 import { apiGet, apiPatch } from '../../../lib/api'
 import styles from './perfil.module.css'
+
+const FLORES = [
+  'girassol', 'violeta', 'jasmim', 'margarida', 'orquidea',
+  'tulipa', 'rosa', 'lirio', 'camelia', 'hortensia',
+]
+
+function gerarSenhaSugerida() {
+  const flor = FLORES[Math.floor(Math.random() * FLORES.length)]
+  const digitos = String(Math.floor(Math.random() * 100)).padStart(2, '0')
+  return `${flor}${digitos}`
+}
 
 type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO'
 
@@ -153,6 +164,14 @@ export default function PerfilAssociadoPage() {
   const [enviando, setEnviando] = useState(false)
   const [erroModal, setErroModal] = useState('')
 
+  const [modalSenhaAberto, setModalSenhaAberto] = useState(false)
+  const [novaSenhaInput, setNovaSenhaInput] = useState('')
+  const [mostrarSenhaInput, setMostrarSenhaInput] = useState(false)
+  const [enviandoSenha, setEnviandoSenha] = useState(false)
+  const [erroSenha, setErroSenha] = useState('')
+  const [senhaSalva, setSenhaSalva] = useState<string | null>(null)
+  const [senhaCopiada, setSenhaCopiada] = useState(false)
+
   const [matriculaParaEditar, setMatriculaParaEditar] = useState<Matricula | null>(null)
   const [turmasModal, setTurmasModal] = useState<TurmaOpcao[]>([])
   const [carregandoTurmasModal, setCarregandoTurmasModal] = useState(false)
@@ -215,6 +234,50 @@ export default function PerfilAssociadoPage() {
     }
   }
 
+  function abrirModalSenha() {
+    setNovaSenhaInput('')
+    setMostrarSenhaInput(false)
+    setErroSenha('')
+    setModalSenhaAberto(true)
+  }
+
+  function fecharModalSenha() {
+    setModalSenhaAberto(false)
+  }
+
+  function preencherSenhaSugerida() {
+    setNovaSenhaInput(gerarSenhaSugerida())
+    setMostrarSenhaInput(true)
+  }
+
+  async function confirmarSenha() {
+    setEnviandoSenha(true)
+    setErroSenha('')
+    try {
+      const resposta = await apiPatch<{ senha: string }>(`/usuarios/${id}/senha`, {
+        novaSenha: novaSenhaInput || undefined,
+      })
+      setSenhaSalva(resposta.senha)
+      setSenhaCopiada(false)
+      fecharModalSenha()
+    } catch {
+      setErroSenha('Não foi possível alterar a senha')
+    } finally {
+      setEnviandoSenha(false)
+    }
+  }
+
+  function copiarSenhaSalva() {
+    if (!senhaSalva) return
+    navigator.clipboard.writeText(senhaSalva)
+    setSenhaCopiada(true)
+  }
+
+  function dispensarSenhaSalva() {
+    setSenhaSalva(null)
+    setSenhaCopiada(false)
+  }
+
   function abrirModalEdicao(matricula: Matricula) {
     setMatriculaParaEditar(matricula)
     setExameModal(matricula.exameMedico ?? 'AGUARDANDO')
@@ -267,7 +330,31 @@ export default function PerfilAssociadoPage() {
 
       {/* Bloco 1 — Dados pessoais */}
       <div className={styles.card}>
-        <h2 className={styles.subtitulo}>Dados pessoais</h2>
+        <div className={styles.cabecalhoSecao}>
+          <h2 className={styles.subtitulo}>Dados pessoais</h2>
+          <button className={styles.botaoAlterarSenha} onClick={abrirModalSenha}>
+            <KeyRound size={14} />
+            Alterar senha
+          </button>
+        </div>
+
+        {senhaSalva && (
+          <div className={styles.avisoSenha}>
+            <p className={styles.avisoSenhaTexto}>
+              Senha alterada! Nova senha de acesso:{' '}
+              <span className={styles.avisoSenhaValor}>{senhaSalva}</span> — anote e entregue à
+              associada.
+            </p>
+            <div className={styles.avisoSenhaAcoes}>
+              <button type="button" className={styles.avisoSenhaCopiar} onClick={copiarSenhaSalva}>
+                {senhaCopiada ? 'Copiado!' : 'Copiar senha'}
+              </button>
+              <button type="button" className={styles.avisoSenhaDispensar} onClick={dispensarSenhaSalva}>
+                Dispensar
+              </button>
+            </div>
+          </div>
+        )}
 
         <dl className={styles.grade}>
           <div className={styles.campo}>
@@ -401,6 +488,51 @@ export default function PerfilAssociadoPage() {
           </ul>
         )}
       </div>
+
+      {/* Modal alterar senha */}
+      {modalSenhaAberto && (
+        <div className={styles.overlay} onClick={fecharModalSenha}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitulo}>Alterar senha</h3>
+
+            <div className={styles.campo}>
+              <label htmlFor="novaSenha">Nova senha</label>
+              <div className={styles.campoSenha}>
+                <input
+                  type={mostrarSenhaInput ? 'text' : 'password'}
+                  id="novaSenha"
+                  value={novaSenhaInput}
+                  onChange={(e) => setNovaSenhaInput(e.target.value)}
+                  placeholder="Deixe em branco para gerar automaticamente"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className={styles.botaoOlho}
+                  onClick={() => setMostrarSenhaInput((v) => !v)}
+                  title={mostrarSenhaInput ? 'Ocultar senha' : 'Exibir senha'}
+                >
+                  {mostrarSenhaInput ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <button type="button" className={styles.botaoSugerirSenha} onClick={preencherSenhaSugerida}>
+                Gerar senha sugerida
+              </button>
+            </div>
+
+            {erroSenha && <p className={styles.erroModal}>{erroSenha}</p>}
+
+            <div className={styles.acoesModal}>
+              <button className={styles.botaoCancelar} onClick={fecharModalSenha}>
+                Cancelar
+              </button>
+              <button className={styles.botaoConfirmar} onClick={confirmarSenha} disabled={enviandoSenha}>
+                {enviandoSenha ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal editar matrícula */}
       {matriculaParaEditar && (

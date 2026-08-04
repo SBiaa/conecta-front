@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
-import { apiGet } from '../../../lib/api'
+import { apiGet, apiPatch } from '../../../lib/api'
 import styles from './perfil.module.css'
 
 type Professor = {
@@ -21,6 +20,7 @@ type Turma = {
   horario: string | null
   dias: string[]
   projeto: { nome: string }
+  professor: { id: string; nome: string } | null
   ativas: number
 }
 
@@ -39,8 +39,23 @@ export default function PerfilProfessorPage() {
 
   const [professor, setProfessor] = useState<Professor | null>(null)
   const [erro, setErro] = useState('')
+
+  const [editandoDados, setEditandoDados] = useState(false)
+  const [nome, setNome] = useState('')
+  const [telefone, setTelefone] = useState('')
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState<'ATIVO' | 'INATIVO'>('ATIVO')
+  const [salvandoDados, setSalvandoDados] = useState(false)
+  const [erroDados, setErroDados] = useState('')
+  const [sucessoDados, setSucessoDados] = useState(false)
+
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [carregandoTurmas, setCarregandoTurmas] = useState(true)
+  const [editandoTurmas, setEditandoTurmas] = useState(false)
+  const [turmaIdsSelecionadas, setTurmaIdsSelecionadas] = useState<Set<number>>(new Set())
+  const [salvandoTurmas, setSalvandoTurmas] = useState(false)
+  const [erroTurmas, setErroTurmas] = useState('')
+  const [sucessoTurmas, setSucessoTurmas] = useState(false)
 
   useEffect(() => {
     apiGet<Professor>(`/usuarios/${id}`)
@@ -48,11 +63,21 @@ export default function PerfilProfessorPage() {
       .catch(() => setErro('Professora não encontrada'))
   }, [id])
 
-  useEffect(() => {
+  function carregarTurmas() {
     setCarregandoTurmas(true)
-    apiGet<Turma[]>(`/turmas?professorId=${id}`)
-      .then(setTurmas)
+    apiGet<Turma[]>('/turmas')
+      .then((todas) => {
+        setTurmas(todas)
+        setTurmaIdsSelecionadas(
+          new Set(todas.filter((t) => t.professor?.id === id).map((t) => t.id))
+        )
+      })
       .finally(() => setCarregandoTurmas(false))
+  }
+
+  useEffect(() => {
+    carregarTurmas()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   if (erro) {
@@ -71,47 +96,211 @@ export default function PerfilProfessorPage() {
     )
   }
 
+  function iniciarEdicaoDados() {
+    if (!professor) return
+    setNome(professor.nome)
+    setTelefone(professor.telefone ?? '')
+    setEmail(professor.email ?? '')
+    setStatus(professor.status)
+    setErroDados('')
+    setSucessoDados(false)
+    setEditandoDados(true)
+  }
+
+  async function salvarDados(evento: React.FormEvent) {
+    evento.preventDefault()
+    setErroDados('')
+    setSucessoDados(false)
+    setSalvandoDados(true)
+
+    try {
+      const atualizado = await apiPatch<Professor>(`/usuarios/${id}`, {
+        nome,
+        telefone: telefone || null,
+        email: email || null,
+        status,
+      })
+      setProfessor((anterior) => (anterior ? { ...anterior, ...atualizado } : anterior))
+      setSucessoDados(true)
+      setEditandoDados(false)
+    } catch {
+      setErroDados('Não foi possível salvar os dados da professora')
+    } finally {
+      setSalvandoDados(false)
+    }
+  }
+
+  function alternarTurma(turmaId: number) {
+    setTurmaIdsSelecionadas((anterior) => {
+      const nova = new Set(anterior)
+      if (nova.has(turmaId)) {
+        nova.delete(turmaId)
+      } else {
+        nova.add(turmaId)
+      }
+      return nova
+    })
+  }
+
+  function cancelarEdicaoTurmas() {
+    setTurmaIdsSelecionadas(new Set(turmas.filter((t) => t.professor?.id === id).map((t) => t.id)))
+    setErroTurmas('')
+    setEditandoTurmas(false)
+  }
+
+  async function salvarTurmas() {
+    setErroTurmas('')
+    setSucessoTurmas(false)
+    setSalvandoTurmas(true)
+
+    const originais = new Set(turmas.filter((t) => t.professor?.id === id).map((t) => t.id))
+    const alteradas = turmas.filter(
+      (t) => originais.has(t.id) !== turmaIdsSelecionadas.has(t.id)
+    )
+
+    try {
+      await Promise.all(
+        alteradas.map((t) =>
+          apiPatch(`/turmas/${t.id}`, {
+            professorId: turmaIdsSelecionadas.has(t.id) ? id : null,
+          })
+        )
+      )
+      carregarTurmas()
+      setSucessoTurmas(true)
+      setEditandoTurmas(false)
+    } catch {
+      setErroTurmas('Não foi possível salvar as turmas atribuídas')
+    } finally {
+      setSalvandoTurmas(false)
+    }
+  }
+
   return (
     <div className={styles.pagina}>
       <h1 className={styles.titulo}>{professor.nome}</h1>
 
       <div className={styles.card}>
-        <h2 className={styles.subtitulo}>Dados pessoais</h2>
+        <div className={styles.cabecalhoCard}>
+          <h2 className={styles.subtitulo}>Dados pessoais</h2>
+          {!editandoDados && (
+            <button className={styles.botaoEditar} onClick={iniciarEdicaoDados}>
+              Editar
+            </button>
+          )}
+        </div>
 
-        <dl className={styles.grade}>
-          <div className={styles.campo}>
-            <dt>CPF</dt>
-            <dd>{professor.cpf}</dd>
-          </div>
-          <div className={styles.campo}>
-            <dt>Telefone</dt>
-            <dd>{professor.telefone || '—'}</dd>
-          </div>
-          <div className={styles.campo}>
-            <dt>Email</dt>
-            <dd>{professor.email || '—'}</dd>
-          </div>
-          <div className={styles.campo}>
-            <dt>Status</dt>
-            <dd>{professor.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</dd>
-          </div>
-        </dl>
+        {!editandoDados && (
+          <dl className={styles.grade}>
+            <div className={styles.campo}>
+              <dt>CPF</dt>
+              <dd>{professor.cpf}</dd>
+            </div>
+            <div className={styles.campo}>
+              <dt>Telefone</dt>
+              <dd>{professor.telefone || '—'}</dd>
+            </div>
+            <div className={styles.campo}>
+              <dt>Email</dt>
+              <dd>{professor.email || '—'}</dd>
+            </div>
+            <div className={styles.campo}>
+              <dt>Status</dt>
+              <dd>{professor.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</dd>
+            </div>
+          </dl>
+        )}
+
+        {editandoDados && (
+          <form className={styles.formEdicao} onSubmit={salvarDados}>
+            <div className={styles.campoForm}>
+              <label htmlFor="nome">Nome</label>
+              <input
+                id="nome"
+                type="text"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                required
+              />
+            </div>
+            <div className={styles.campoForm}>
+              <label htmlFor="telefone">Telefone</label>
+              <input
+                id="telefone"
+                type="text"
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value)}
+              />
+            </div>
+            <div className={styles.campoForm}>
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className={styles.campoForm}>
+              <label htmlFor="status">Status</label>
+              <select
+                id="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as 'ATIVO' | 'INATIVO')}
+              >
+                <option value="ATIVO">Ativo</option>
+                <option value="INATIVO">Inativo</option>
+              </select>
+            </div>
+
+            <div className={styles.acoesForm}>
+              <button className={styles.botaoSalvar} disabled={salvandoDados}>
+                {salvandoDados ? 'Salvando...' : 'Salvar'}
+              </button>
+              <button
+                type="button"
+                className={styles.botaoCancelar}
+                onClick={() => setEditandoDados(false)}
+                disabled={salvandoDados}
+              >
+                Cancelar
+              </button>
+            </div>
+            {erroDados && <span className={styles.erro}>{erroDados}</span>}
+          </form>
+        )}
+
+        {sucessoDados && !editandoDados && (
+          <span className={styles.sucesso}>Dados atualizados!</span>
+        )}
       </div>
 
       <div className={styles.card}>
-        <h2 className={styles.subtitulo}>Turmas atribuídas</h2>
+        <div className={styles.cabecalhoCard}>
+          <h2 className={styles.subtitulo}>Turmas atribuídas</h2>
+          {!editandoTurmas && (
+            <button
+              className={styles.botaoEditar}
+              onClick={() => setEditandoTurmas(true)}
+              disabled={carregandoTurmas}
+            >
+              Editar
+            </button>
+          )}
+        </div>
 
         {carregandoTurmas && <p className={styles.mensagem}>Carregando...</p>}
 
-        {!carregandoTurmas && turmas.length === 0 && (
+        {!carregandoTurmas && !editandoTurmas && turmaIdsSelecionadas.size === 0 && (
           <p className={styles.mensagem}>Nenhuma turma atribuída a esta professora</p>
         )}
 
-        {!carregandoTurmas && turmas.length > 0 && (
+        {!carregandoTurmas && !editandoTurmas && turmaIdsSelecionadas.size > 0 && (
           <ul className={styles.listaTurmas}>
-            {turmas.map((turma) => (
-              <li key={turma.id}>
-                <Link href={`/turmas/${turma.id}/alunas`} className={styles.itemTurma}>
+            {turmas
+              .filter((turma) => turmaIdsSelecionadas.has(turma.id))
+              .map((turma) => (
+                <li key={turma.id} className={styles.itemTurma}>
                   <span className={styles.nomeProjeto}>{turma.projeto.nome}</span>
                   <p className={styles.nomeTurma}>{turma.nome}</p>
                   <span className={styles.detalhe}>
@@ -120,10 +309,60 @@ export default function PerfilProfessorPage() {
                     {turma.dias.length > 0 || turma.horario ? ' · ' : ''}
                     {turma.ativas} alunas
                   </span>
-                </Link>
-              </li>
-            ))}
+                </li>
+              ))}
           </ul>
+        )}
+
+        {!carregandoTurmas && editandoTurmas && (
+          <>
+            <ul className={styles.listaSelecaoTurmas}>
+              {turmas.map((turma) => {
+                const atribuidaOutra = turma.professor && turma.professor.id !== id
+                return (
+                  <li key={turma.id} className={styles.itemSelecaoTurma}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={turmaIdsSelecionadas.has(turma.id)}
+                        onChange={() => alternarTurma(turma.id)}
+                      />
+                      <span className={styles.nomeProjeto}>{turma.projeto.nome}</span>
+                      <span className={styles.nomeTurma}>{turma.nome}</span>
+                      {atribuidaOutra && (
+                        <span className={styles.avisoOutraProfessora}>
+                          atualmente com {turma.professor!.nome}
+                        </span>
+                      )}
+                    </label>
+                  </li>
+                )
+              })}
+            </ul>
+
+            <div className={styles.acoesForm}>
+              <button
+                className={styles.botaoSalvar}
+                onClick={salvarTurmas}
+                disabled={salvandoTurmas}
+              >
+                {salvandoTurmas ? 'Salvando...' : 'Salvar'}
+              </button>
+              <button
+                type="button"
+                className={styles.botaoCancelar}
+                onClick={cancelarEdicaoTurmas}
+                disabled={salvandoTurmas}
+              >
+                Cancelar
+              </button>
+            </div>
+            {erroTurmas && <span className={styles.erro}>{erroTurmas}</span>}
+          </>
+        )}
+
+        {sucessoTurmas && !editandoTurmas && (
+          <span className={styles.sucesso}>Turmas atualizadas!</span>
         )}
       </div>
     </div>
