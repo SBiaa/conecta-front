@@ -17,7 +17,7 @@ type Turma = {
 }
 
 type Projeto = {
-  id: string
+  id: number
   nome: string
 }
 
@@ -46,19 +46,22 @@ export default function TurmasDoProjetoPage() {
   const { id } = useParams<{ id: string }>()
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState('')
   const [nomeProjeto, setNomeProjeto] = useState('')
 
   useEffect(() => {
+    setErro('')
     apiGet<Turma[]>(`/turmas?projetoId=${id}`)
       .then(setTurmas)
+      .catch(() => setErro('Não foi possível carregar as turmas deste projeto'))
       .finally(() => setCarregando(false))
   }, [id])
 
   useEffect(() => {
     apiGet<Projeto[]>('/projetos').then((projetos) => {
-      const projeto = projetos.find((item) => item.id === id)
+      const projeto = projetos.find((item) => String(item.id) === id)
       setNomeProjeto(projeto?.nome ?? '')
-    })
+    }).catch(() => {})
   }, [id])
 
   return (
@@ -74,11 +77,13 @@ export default function TurmasDoProjetoPage() {
 
       {carregando && <p className={styles.mensagem}>Carregando...</p>}
 
-      {!carregando && turmas.length === 0 && (
+      {!carregando && erro && <p className={styles.mensagem}>{erro}</p>}
+
+      {!carregando && !erro && turmas.length === 0 && (
         <p className={styles.mensagem}>Nenhuma turma neste projeto ainda</p>
       )}
 
-      {!carregando && turmas.length > 0 && (
+      {!carregando && !erro && turmas.length > 0 && (
         <ul className={styles.lista}>
           {turmas.map((turma) => (
             <li key={turma.id}>

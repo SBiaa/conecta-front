@@ -284,7 +284,7 @@ export default function PerfilProfessorPage() {
               onClick={() => setEditandoTurmas(true)}
               disabled={carregandoTurmas}
             >
-              Editar
+              Atribuir turma
             </button>
           )}
         </div>
