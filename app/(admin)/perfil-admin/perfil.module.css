@@ -1,0 +1,68 @@
+.pagina {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background-color: var(--background);
+}
+
+.titulo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 1.25rem;
+}
+
+.card {
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem 1.375rem;
+  max-width: 540px;
+}
+
+.grade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.25rem;
+  margin: 0;
+}
+
+.campo dt {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.2rem;
+}
+
+.campo dd {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.campoLargo {
+  grid-column: 1 / -1;
+}
+
+.mensagem {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.mensagemErro {
+  font-size: 1rem;
+  color: var(--danger);
+}
+
+.sair {
+  margin-top: 1.5rem;
+  background: none;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
