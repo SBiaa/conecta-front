@@ -1,0 +1,155 @@
+.pagina {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background);
+}
+
+.card {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.titulo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.campo label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+.campo input,
+.campo select {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.campo input:focus,
+.campo select:focus {
+  border-color: var(--primary);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: #eeeeee;
+  border: none;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.chip:hover {
+  background-color: #e0e0e0;
+}
+
+.chipSelecionado {
+  color: #ffffff;
+  background-color: var(--primary);
+}
+
+.chipSelecionado:hover {
+  background-color: var(--primary-dark);
+}
+
+.erro {
+  font-size: 0.8rem;
+  color: var(--danger);
+  margin-top: 0.3rem;
+}
+
+.acoes {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.botao {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botao:hover {
+  background-color: var(--primary-dark);
+}
+
+.botao:disabled {
+  background-color: #b3a1d9;
+  cursor: not-allowed;
+}
+
+.botaoCancelar {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: #eeeeee;
+  color: var(--text-primary);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.botaoCancelar:hover {
+  background-color: #e0e0e0;
+}
+
+.sucesso {
+  font-size: 0.9rem;
+  color: var(--success);
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.mensagemErro {
+  font-size: 0.9rem;
+  color: var(--danger);
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.carregando {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  text-align: center;
+}

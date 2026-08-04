@@ -10,6 +10,7 @@ import {
   Clock,
   AlertCircle,
   FolderOpen,
+  Waves,
 } from 'lucide-react'
 import { getUsuario } from '../../lib/auth'
 import { apiGet } from '../../lib/api'
@@ -32,6 +33,7 @@ type PagamentoAtrasado = {
 
 type Projeto = {
   id: number
+  nome: string
   ativo: boolean
 }
 
@@ -39,7 +41,34 @@ type Associado = {
   id: number
 }
 
+type Turma = {
+  id: number
+  nome: string
+  dias: string[]
+  horario: string | null
+  ativas: number
+  professor: { id: string; nome: string } | null
+  projeto: { nome: string }
+}
+
 type ValorCard = number | 'erro'
+
+const DIAS_LABELS: Record<string, string> = {
+  SEGUNDA: 'Seg',
+  TERCA: 'Ter',
+  QUARTA: 'Qua',
+  QUINTA: 'Qui',
+  SEXTA: 'Sex',
+  SABADO: 'Sáb',
+  DOMINGO: 'Dom',
+}
+
+function formatarDiasHorario(turma: Turma): string {
+  const partes: string[] = []
+  if (turma.dias?.length) partes.push(turma.dias.map((d) => DIAS_LABELS[d] ?? d).join(', '))
+  if (turma.horario) partes.push(turma.horario)
+  return partes.join(' — ')
+}
 
 type Resumo = {
   recebidoMes: ValorCard
@@ -63,6 +92,16 @@ export default function InicioAdminPage() {
     typeof window !== 'undefined' ? getUsuario() : null
   )
   const [resumo, setResumo] = useState<Resumo | null>(null)
+  const [projetoHidroId, setProjetoHidroId] = useState<number | null>(null)
+  const [turmas, setTurmas] = useState<Turma[]>([])
+  const [carregandoTurmas, setCarregandoTurmas] = useState(true)
+
+  useEffect(() => {
+    apiGet<Turma[]>('/turmas')
+      .then(setTurmas)
+      .catch(() => setTurmas([]))
+      .finally(() => setCarregandoTurmas(false))
+  }, [])
 
   useEffect(() => {
     const mes = new Date().toISOString().slice(0, 7)
@@ -73,6 +112,11 @@ export default function InicioAdminPage() {
       apiGet<Projeto[]>('/projetos'),
       apiGet<Associado[]>('/usuarios?papel=ASSOCIADO'),
     ]).then(([pagamentosRes, atrasadosRes, projetosRes, associadosRes]) => {
+      if (projetosRes.status === 'fulfilled') {
+        const hidro = projetosRes.value.find((p) => p.nome === 'Viva Bem com Hidro')
+        setProjetoHidroId(hidro?.id ?? null)
+      }
+
       let recebidoMes: ValorCard = 'erro'
       let pendenteMes: ValorCard = 'erro'
       if (pagamentosRes.status === 'fulfilled') {
@@ -198,7 +242,39 @@ export default function InicioAdminPage() {
             <Wallet size={26} />
             <span>Financeiro</span>
           </Link>
+          {projetoHidroId !== null && (
+            <Link href={`/projetos/${projetoHidroId}/turmas`} className={styles.card}>
+              <Waves size={26} />
+              <span>Viva Bem com Hidro</span>
+            </Link>
+          )}
         </div>
+      </section>
+
+      <section className={styles.secao}>
+        <h2 className={styles.tituloSecao}>Turmas</h2>
+
+        {carregandoTurmas && <p className={styles.mensagemTurmas}>Carregando...</p>}
+
+        {!carregandoTurmas && turmas.length === 0 && (
+          <p className={styles.mensagemTurmas}>Nenhuma turma cadastrada</p>
+        )}
+
+        {!carregandoTurmas && turmas.length > 0 && (
+          <div className={styles.quadroTurmas}>
+            {turmas.map((turma) => (
+              <Link key={turma.id} href={`/turmas/${turma.id}/alunas`} className={styles.turmaCard}>
+                <span className={styles.turmaProjeto}>{turma.projeto.nome}</span>
+                <span className={styles.turmaNome}>{turma.nome}</span>
+                <span className={styles.turmaDetalhe}>{formatarDiasHorario(turma) || '—'}</span>
+                <span className={styles.turmaDetalhe}>
+                  {turma.professor ? turma.professor.nome : 'Sem professora'}
+                </span>
+                <span className={styles.turmaContagem}>{turma.ativas} alunas ativas</span>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
     </div>

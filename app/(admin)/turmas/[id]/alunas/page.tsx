@@ -77,9 +77,14 @@ export default function AlunasDaTurmaPage() {
         <h1 className={styles.titulo}>
           {nomeTurma ? `Alunas — ${nomeTurma}` : 'Alunas da turma'}
         </h1>
-        <Link href={`/matriculas/nova?turmaId=${id}`} className={styles.botaoNovo}>
-          Nova aluna nesta turma
-        </Link>
+        <div className={styles.acoesHeader}>
+          <Link href={`/turmas/${id}/editar`} className={styles.botaoEditar}>
+            Editar turma
+          </Link>
+          <Link href={`/matriculas/nova?turmaId=${id}`} className={styles.botaoNovo}>
+            Nova aluna nesta turma
+          </Link>
+        </div>
       </div>
 
       <form className={styles.formProfessora} onSubmit={salvarProfessora}>
