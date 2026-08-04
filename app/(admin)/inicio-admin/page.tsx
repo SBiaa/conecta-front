@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
   Users,
@@ -47,11 +47,14 @@ type Turma = {
   dias: string[]
   horario: string | null
   ativas: number
+  inativas: number
   professor: { id: string; nome: string } | null
   projeto: { nome: string }
 }
 
 type ValorCard = number | 'erro'
+
+const DIAS_ORDEM = ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO', 'DOMINGO']
 
 const DIAS_LABELS: Record<string, string> = {
   SEGUNDA: 'Seg',
@@ -63,11 +66,18 @@ const DIAS_LABELS: Record<string, string> = {
   DOMINGO: 'Dom',
 }
 
-function formatarDiasHorario(turma: Turma): string {
-  const partes: string[] = []
-  if (turma.dias?.length) partes.push(turma.dias.map((d) => DIAS_LABELS[d] ?? d).join(', '))
-  if (turma.horario) partes.push(turma.horario)
-  return partes.join(' — ')
+const HORAS_PADRAO = [8, 9, 10, 11, 14, 15, 16, 17, 18, 19]
+
+function formatarHora(hora: number): string {
+  return `${String(hora).padStart(2, '0')}h`
+}
+
+function extrairHora(horario: string | null): number | null {
+  if (!horario) return null
+  const match = horario.match(/\d{1,2}/)
+  if (!match) return null
+  const hora = Number(match[0])
+  return hora >= 0 && hora <= 23 ? hora : null
 }
 
 type Resumo = {
@@ -148,6 +158,25 @@ export default function InicioAdminPage() {
   }, [])
 
   const carregando = resumo === null
+
+  const turmasNaGrade = useMemo(
+    () => turmas.filter((turma) => turma.dias?.length && extrairHora(turma.horario) !== null),
+    [turmas]
+  )
+  const turmasForaDaGrade = useMemo(
+    () => turmas.filter((turma) => !turma.dias?.length || extrairHora(turma.horario) === null),
+    [turmas]
+  )
+
+  const diasComTurma = useMemo(
+    () => DIAS_ORDEM.filter((dia) => turmasNaGrade.some((turma) => turma.dias.includes(dia))),
+    [turmasNaGrade]
+  )
+
+  const horasComTurma = useMemo(() => {
+    const presentes = turmasNaGrade.map((turma) => extrairHora(turma.horario) as number)
+    return Array.from(new Set([...HORAS_PADRAO, ...presentes])).sort((a, b) => a - b)
+  }, [turmasNaGrade])
 
   return (
     <div className={styles.pagina}>
@@ -261,19 +290,72 @@ export default function InicioAdminPage() {
         )}
 
         {!carregandoTurmas && turmas.length > 0 && (
-          <div className={styles.quadroTurmas}>
-            {turmas.map((turma) => (
-              <Link key={turma.id} href={`/turmas/${turma.id}/alunas`} className={styles.turmaCard}>
-                <span className={styles.turmaProjeto}>{turma.projeto.nome}</span>
-                <span className={styles.turmaNome}>{turma.nome}</span>
-                <span className={styles.turmaDetalhe}>{formatarDiasHorario(turma) || '—'}</span>
-                <span className={styles.turmaDetalhe}>
-                  {turma.professor ? turma.professor.nome : 'Sem professora'}
-                </span>
-                <span className={styles.turmaContagem}>{turma.ativas} alunas ativas</span>
-              </Link>
-            ))}
-          </div>
+          <>
+            {diasComTurma.length > 0 && (
+              <div className={styles.gradeWrapper}>
+                <div
+                  className={styles.grade}
+                  style={{ gridTemplateColumns: `4rem repeat(${diasComTurma.length}, minmax(7rem, 1fr))` }}
+                >
+                  <div className={styles.gradeCantoVazio} />
+                  {diasComTurma.map((dia) => (
+                    <div key={dia} className={styles.gradeDiaHeader}>
+                      {DIAS_LABELS[dia]}
+                    </div>
+                  ))}
+
+                  {horasComTurma.map((hora) => (
+                    <div key={hora} className={styles.gradeLinha} style={{ display: 'contents' }}>
+                      <div className={styles.gradeHoraLabel}>{formatarHora(hora)}</div>
+                      {diasComTurma.map((dia) => {
+                        const turmasCelula = turmasNaGrade.filter(
+                          (turma) => extrairHora(turma.horario) === hora && turma.dias.includes(dia)
+                        )
+                        return (
+                          <div key={dia} className={styles.gradeCelula}>
+                            {turmasCelula.map((turma) => (
+                              <Link
+                                key={turma.id}
+                                href={`/turmas/${turma.id}/alunas`}
+                                className={styles.gradeTurma}
+                                title={turma.projeto.nome}
+                              >
+                                {turma.nome}
+                              </Link>
+                            ))}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {turmasForaDaGrade.length > 0 && (
+              <div className={styles.semHorario}>
+                {diasComTurma.length > 0 && (
+                  <h3 className={styles.subtitulo}>Sem horário definido</h3>
+                )}
+                <ul className={styles.lista}>
+                  {turmasForaDaGrade.map((turma) => (
+                    <li key={turma.id}>
+                      <Link href={`/turmas/${turma.id}/alunas`} className={styles.item}>
+                        <span className={styles.turmaProjeto}>{turma.projeto.nome}</span>
+                        <span className={styles.nome}>{turma.nome}</span>
+                        <span className={styles.detalhe}>
+                          {turma.professor ? `Professora: ${turma.professor.nome}` : 'Sem professora'}
+                        </span>
+                        <span className={styles.contagem}>
+                          {turma.ativas} ativas · {turma.inativas} inativas
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
         )}
       </section>
 
