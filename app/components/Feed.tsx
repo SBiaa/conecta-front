@@ -93,7 +93,7 @@ export default function Feed() {
   }, [usuario])
 
   function buscarFeed() {
-    apiGet<Post[]>('/feed')
+    apiGet<Post[]>('/posts/feed')
       .then((dados) => {
         setPosts(dados)
         setErroFeed('')
