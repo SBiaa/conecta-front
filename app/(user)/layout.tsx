@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Home, FolderKanban, HandCoins, User, GraduationCap, Rss } from 'lucide-react'
+import { Home, FolderKanban, HandCoins, User, GraduationCap, Rss, CalendarCheck } from 'lucide-react'
 import { getUsuario } from '../lib/auth'
 import BottomNav, { type ItemMenu } from '../components/BottomNav'
 import styles from './layout.module.css'
@@ -11,6 +11,7 @@ const itensAssociado: ItemMenu[] = [
   { label: 'Home', href: '/inicio', icone: Home },
   { label: 'Feed', href: '/feed', icone: Rss },
   { label: 'Meus Projetos', href: '/meus-projetos', icone: FolderKanban },
+  { label: 'Frequência', href: '/minha-frequencia', icone: CalendarCheck },
   { label: 'Contribuições', href: '/contribuicoes', icone: HandCoins },
   { label: 'Perfil', href: '/perfil', icone: User },
 ]
