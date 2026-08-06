@@ -39,6 +39,186 @@
 .situacaoPendente .situacaoTexto { color: var(--warning); }
 .situacaoAtrasada .situacaoTexto { color: var(--danger); }
 
+.situacaoBotao {
+  display: inline-block;
+  margin-top: 0.9rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: #ffffff;
+  background-color: var(--primary);
+}
+
+.situacaoBotao:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Aviso de exame médico --------------------------------------------------- */
+
+.avisoExame {
+  background-color: #fff3e0;
+  border: 1px solid var(--border);
+  border-left-width: 5px;
+  border-left-color: var(--warning);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.avisoExameTexto {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--warning);
+  margin: 0;
+}
+
+/* Hoje --------------------------------------------------------------------- */
+
+.hoje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.hojeVazio {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.hojeItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+}
+
+.hojeTurma {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.15rem;
+}
+
+.hojeHorario {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.hojeFeita {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--success);
+  white-space: nowrap;
+}
+
+.hojeBotao {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: #ffffff;
+  background-color: var(--primary);
+  white-space: nowrap;
+}
+
+.hojeBotao:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Frequência --------------------------------------------------------------- */
+
+.frequencia {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.frequenciaPercentual {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.frequenciaTexto {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* Prévia do feed ------------------------------------------------------------ */
+
+.feedLista {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.feedItem {
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+}
+
+.feedCabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.4rem;
+}
+
+.feedAutor {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.feedQuando {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.feedConteudo {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.feedVazio {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+}
+
+.verTudo {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+
 /* Seção de atalhos ------------------------------------------------------- */
 
 .tituloSecao {
@@ -54,6 +234,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.875rem;
+  margin-bottom: 2rem;
 }
 
 .atalho {
