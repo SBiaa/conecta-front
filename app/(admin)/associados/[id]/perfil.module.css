@@ -465,6 +465,10 @@
   overflow-y: auto;
 }
 
+.modalLargo {
+  max-width: 640px;
+}
+
 .modalTitulo {
   font-size: 1.2rem;
   font-weight: 700;

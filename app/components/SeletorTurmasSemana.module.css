@@ -1,0 +1,99 @@
+.mensagem {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.gradeWrapper {
+  overflow-x: auto;
+}
+
+.grade {
+  display: grid;
+  gap: 1px;
+  background-color: #e5e7eb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  width: fit-content;
+  min-width: 100%;
+}
+
+.gradeCantoVazio {
+  background-color: #ffffff;
+}
+
+.gradeDiaHeader {
+  background-color: #ffffff;
+  padding: 0.5rem 0.4rem;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.gradeHoraLabel {
+  background-color: #ffffff;
+  padding: 0.5rem 0.4rem;
+  text-align: right;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.gradeCelula {
+  background-color: #ffffff;
+  padding: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 2.25rem;
+}
+
+.gradeTurma {
+  background-color: #ffffff;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  padding: 0.3rem 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  text-align: center;
+}
+
+.gradeTurma:hover {
+  background-color: var(--primary-soft);
+}
+
+.gradeTurmaSelecionada,
+.gradeTurmaSelecionada:hover {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.subtitulo {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 1rem 0 0.5rem;
+}
+
+.listaSemHorario {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.itemSemHorario {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background-color: #f0f0f0;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+}

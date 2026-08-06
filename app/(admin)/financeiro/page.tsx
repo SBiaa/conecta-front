@@ -104,6 +104,7 @@ function formatarMes(mes: string) {
 
 export default function FinanceiroPage() {
   const [projetos, setProjetos] = useState<Projeto[]>([])
+  const [modalGerarAberto, setModalGerarAberto] = useState(false)
   const [projetoId, setProjetoId] = useState('')
   const [mes, setMes] = useState('')
   const [vencimento, setVencimento] = useState('')
@@ -116,6 +117,7 @@ export default function FinanceiroPage() {
   const [mesFiltro, setMesFiltro] = useState(mesAtualISO())
   const [projetoIdFiltro, setProjetoIdFiltro] = useState('')
   const [statusFiltro, setStatusFiltro] = useState('')
+  const [nomeFiltro, setNomeFiltro] = useState('')
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [carregandoPagamentos, setCarregandoPagamentos] = useState(true)
 
@@ -171,6 +173,17 @@ export default function FinanceiroPage() {
 
   function fecharModalRegistro() {
     setPagamentoSelecionado(null)
+  }
+
+  function abrirModalGerar() {
+    setErroValidacao('')
+    setSucesso('')
+    setErro('')
+    setModalGerarAberto(true)
+  }
+
+  function fecharModalGerar() {
+    setModalGerarAberto(false)
   }
 
   async function confirmarRegistro() {
@@ -244,8 +257,12 @@ export default function FinanceiroPage() {
     }
   }
 
-  const pagas = pagamentos.filter((pagamento) => pagamento.status === 'PAGA')
-  const pendentes = pagamentos.filter((pagamento) => pagamento.status === 'PENDENTE')
+  const pagamentosFiltrados = pagamentos.filter((pagamento) =>
+    pagamento.matricula.usuario.nome.toLowerCase().includes(nomeFiltro.trim().toLowerCase())
+  )
+
+  const pagas = pagamentosFiltrados.filter((pagamento) => pagamento.status === 'PAGA')
+  const pendentes = pagamentosFiltrados.filter((pagamento) => pagamento.status === 'PENDENTE')
 
   const totalRecebido = pagas.reduce((soma, pagamento) => soma + Number(pagamento.valor), 0)
   const totalPendente = pendentes.reduce((soma, pagamento) => soma + Number(pagamento.valor), 0)
@@ -259,66 +276,18 @@ export default function FinanceiroPage() {
 
   return (
     <div className={styles.pagina}>
-      <h1 className={styles.titulo}>Financeiro</h1>
-
-      <div className={styles.barraGerar}>
-        <h2 className={styles.subtituloDiscreto}>Gerar mensalidades</h2>
-
-        <form className={styles.formGerar} onSubmit={onSubmit}>
-          <div className={styles.camposGerarLinha}>
-            <div className={styles.campo}>
-              <label htmlFor="projetoId">Projeto</label>
-              <select
-                id="projetoId"
-                value={projetoId}
-                onChange={(evento) => setProjetoId(evento.target.value)}
-              >
-                <option value="">Selecione...</option>
-                {projetos.map((projeto) => (
-                  <option key={projeto.id} value={projeto.id}>
-                    {projeto.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="mes">Mês</label>
-              <input
-                type="month"
-                id="mes"
-                value={mes}
-                onChange={(evento) => setMes(evento.target.value)}
-              />
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="vencimento">Vencimento</label>
-              <input
-                type="date"
-                id="vencimento"
-                value={vencimento}
-                onChange={(evento) => setVencimento(evento.target.value)}
-              />
-            </div>
-
-            <button className={styles.botaoGerar} disabled={gerando}>
-              {gerando ? 'Gerando...' : 'Gerar mensalidades'}
-            </button>
-          </div>
-
-          {erroValidacao && <span className={styles.erro}>{erroValidacao}</span>}
-        </form>
-
-        {sucesso && <p className={styles.sucesso}>{sucesso}</p>}
-        {erro && <p className={styles.mensagemErro}>{erro}</p>}
+      <div className={styles.cabecalho}>
+        <h1 className={styles.titulo}>Financeiro</h1>
+        <button type="button" className={styles.botaoGerar} onClick={abrirModalGerar}>
+          Gerar mensalidades
+        </button>
       </div>
 
       <div className={styles.grid}>
         <div className={`${styles.card} ${styles.cardSecundario} ${styles.blocoResumo}`}>
           <h2 className={styles.subtituloSecundario}>Resumo do mês</h2>
 
-          {!carregandoPagamentos && pagamentos.length > 0 && (
+          {!carregandoPagamentos && pagamentosFiltrados.length > 0 && (
             <>
               <div className={styles.resumo}>
                 <div className={styles.cardResumo}>
@@ -364,6 +333,17 @@ export default function FinanceiroPage() {
 
           <div className={styles.filtros}>
             <div className={styles.campo}>
+              <label htmlFor="nomeFiltro">Buscar por nome</label>
+              <input
+                type="text"
+                id="nomeFiltro"
+                placeholder="Nome da aluna..."
+                value={nomeFiltro}
+                onChange={(evento) => setNomeFiltro(evento.target.value)}
+              />
+            </div>
+
+            <div className={styles.campo}>
               <label htmlFor="mesFiltro">Mês</label>
               <input
                 type="month"
@@ -405,13 +385,13 @@ export default function FinanceiroPage() {
 
           {carregandoPagamentos && <p className={styles.mensagem}>Carregando...</p>}
 
-          {!carregandoPagamentos && pagamentos.length === 0 && (
+          {!carregandoPagamentos && pagamentosFiltrados.length === 0 && (
             <p className={styles.mensagem}>Nenhum pagamento neste filtro</p>
           )}
 
-          {!carregandoPagamentos && pagamentos.length > 0 && (
+          {!carregandoPagamentos && pagamentosFiltrados.length > 0 && (
             <ul className={styles.lista}>
-              {pagamentos.map((pagamento) => (
+              {pagamentosFiltrados.map((pagamento) => (
                 <li key={pagamento.id} className={styles.item}>
                   <div className={styles.infoPagamento}>
                     <span className={styles.nomeUsuario}>{pagamento.matricula.usuario.nome}</span>
@@ -495,6 +475,70 @@ export default function FinanceiroPage() {
           )}
         </div>
       </div>
+
+      {modalGerarAberto && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <h2 className={styles.modalTitulo}>Gerar mensalidades</h2>
+
+            <form onSubmit={onSubmit}>
+              <div className={styles.campo}>
+                <label htmlFor="projetoId">Projeto</label>
+                <select
+                  id="projetoId"
+                  value={projetoId}
+                  onChange={(evento) => setProjetoId(evento.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  {projetos.map((projeto) => (
+                    <option key={projeto.id} value={projeto.id}>
+                      {projeto.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.campo}>
+                <label htmlFor="mes">Mês</label>
+                <input
+                  type="month"
+                  id="mes"
+                  value={mes}
+                  onChange={(evento) => setMes(evento.target.value)}
+                />
+              </div>
+
+              <div className={styles.campo}>
+                <label htmlFor="vencimento">Vencimento</label>
+                <input
+                  type="date"
+                  id="vencimento"
+                  value={vencimento}
+                  onChange={(evento) => setVencimento(evento.target.value)}
+                />
+              </div>
+
+              {erroValidacao && <span className={styles.erro}>{erroValidacao}</span>}
+              {sucesso && <p className={styles.sucesso}>{sucesso}</p>}
+              {erro && <p className={styles.mensagemErro}>{erro}</p>}
+
+              <div className={styles.acoesModal}>
+                <button
+                  type="button"
+                  className={styles.botaoCancelar}
+                  onClick={fecharModalGerar}
+                  disabled={gerando}
+                >
+                  Fechar
+                </button>
+                <button className={styles.botaoConfirmar} disabled={gerando}>
+                  {gerando ? 'Gerando...' : 'Gerar mensalidades'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {pagamentoSelecionado && (
         <div className={styles.overlay}>

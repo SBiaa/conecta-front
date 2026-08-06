@@ -6,6 +6,10 @@ import Link from 'next/link'
 import { CirclePlus, Pencil, KeyRound, Eye, EyeOff, MessageCircle } from 'lucide-react'
 import { apiGet, apiPatch } from '../../../lib/api'
 import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
+import SeletorTurmasSemana, {
+  chaveDiaSelecao,
+  agruparSelecoesPorTurma,
+} from '../../../components/SeletorTurmasSemana'
 import styles from './perfil.module.css'
 
 const FLORES = [
@@ -114,20 +118,6 @@ const LABELS_FORMA: Record<FormaPagamento, string> = {
   DINHEIRO: 'Dinheiro',
   PIX: 'Pix',
   CARTAO: 'Cartão',
-}
-
-function chaveDiaSelecao(turmaId: number | string, dia: string) {
-  return `${turmaId}:${dia}`
-}
-
-function agruparSelecoesPorTurma(selecoes: string[]): { turmaId: number; dias: string[] }[] {
-  const porTurma = new Map<number, string[]>()
-  selecoes.forEach((chave) => {
-    const [turmaIdTexto, dia] = chave.split(':')
-    const turmaId = Number(turmaIdTexto)
-    porTurma.set(turmaId, [...(porTurma.get(turmaId) ?? []), dia])
-  })
-  return Array.from(porTurma.entries()).map(([turmaId, dias]) => ({ turmaId, dias }))
 }
 
 function formatarMes(mes: string) {
@@ -708,7 +698,7 @@ export default function PerfilAssociadoPage() {
       {/* Modal editar matrícula */}
       {matriculaParaEditar && (
         <div className={styles.overlay} onClick={fecharModalEdicao}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <div className={`${styles.modal} ${styles.modalLargo}`} onClick={(e) => e.stopPropagation()}>
             <h3 className={styles.modalTitulo}>Editar matrícula</h3>
 
             <div className={styles.campo}>
@@ -758,34 +748,11 @@ export default function PerfilAssociadoPage() {
                 <span className={styles.mensagem}>Carregando...</span>
               ) : (
                 <>
-                  <ul className={styles.listaTurmasModal}>
-                    {turmasModal.map((turma) =>
-                      turma.dias.length > 0 ? (
-                        turma.dias.map((dia) => {
-                          const chave = chaveDiaSelecao(turma.id, dia)
-                          return (
-                            <li key={chave}>
-                              <label>
-                                <input
-                                  type="checkbox"
-                                  checked={diaSelecoesModal.includes(chave)}
-                                  onChange={() => alternarDiaModal(chave)}
-                                />
-                                {turma.nome}
-                                {turma.horario ? ` — ${turma.horario}` : ''} — {LABELS_DIA[dia] ?? dia}
-                              </label>
-                            </li>
-                          )
-                        })
-                      ) : (
-                        <li key={turma.id}>
-                          <label className={styles.itemTurmaDesabilitado}>
-                            {turma.nome} — sem dias cadastrados
-                          </label>
-                        </li>
-                      )
-                    )}
-                  </ul>
+                  <SeletorTurmasSemana
+                    turmas={turmasModal}
+                    selecionados={diaSelecoesModal}
+                    onToggle={alternarDiaModal}
+                  />
                   {frequenciaModal !== '' && (
                     <span className={totalDiasModal === frequenciaModal ? styles.aviso : styles.erro}>
                       {totalDiasModal} de {frequenciaModal} aulas selecionadas

@@ -7,6 +7,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { apiGet, apiPatch, apiPost } from '../../../lib/api'
 import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
+import SeletorTurmasSemana, {
+  chaveDiaSelecao,
+  agruparSelecoesPorTurma,
+} from '../../../components/SeletorTurmasSemana'
 import styles from './nova.module.css'
 
 const PLANOS = [
@@ -14,16 +18,6 @@ const PLANOS = [
   { frequencia: 3, valor: 120 },
   { frequencia: 4, valor: 160 },
 ]
-
-const DIAS_ABREVIADOS: Record<string, string> = {
-  SEGUNDA: 'Seg',
-  TERCA: 'Ter',
-  QUARTA: 'Qua',
-  QUINTA: 'Qui',
-  SEXTA: 'Sex',
-  SABADO: 'Sáb',
-  DOMINGO: 'Dom',
-}
 
 const matriculaSchema = z.object({
   telefone: z.string().optional(),
@@ -83,6 +77,7 @@ type Projeto = {
 type Turma = {
   id: string
   nome: string
+  horario: string | null
   dias: string[]
 }
 
@@ -111,20 +106,6 @@ const VALORES_PADRAO: MatriculaFormInput = {
   frequenciaSemanal: '' as unknown as number,
   diaSelecoes: [],
   exameMedico: 'AGUARDANDO',
-}
-
-function chaveDiaSelecao(turmaId: number | string, dia: string) {
-  return `${turmaId}:${dia}`
-}
-
-function agruparSelecoesPorTurma(selecoes: string[]): { turmaId: number; dias: string[] }[] {
-  const porTurma = new Map<number, string[]>()
-  selecoes.forEach((chave) => {
-    const [turmaIdTexto, dia] = chave.split(':')
-    const turmaId = Number(turmaIdTexto)
-    porTurma.set(turmaId, [...(porTurma.get(turmaId) ?? []), dia])
-  })
-  return Array.from(porTurma.entries()).map(([turmaId, dias]) => ({ turmaId, dias }))
 }
 
 function dadosAssociadaParaFormulario(dados: AssociadaCompleta): MatriculaFormInput {
@@ -292,6 +273,15 @@ export default function NovaMatriculaPage() {
     setCepNaoEncontrado(false)
 
     reset(dadosAssociadaParaFormulario(dadosCompletos))
+  }
+
+  function alternarDia(chave: string) {
+    const atual = getValues('diaSelecoes') ?? []
+    setValue(
+      'diaSelecoes',
+      atual.includes(chave) ? atual.filter((item) => item !== chave) : [...atual, chave],
+      { shouldValidate: true }
+    )
   }
 
   function trocarAssociada() {
@@ -579,30 +569,7 @@ export default function NovaMatriculaPage() {
                 )}
                 {temProjeto && turmas.length > 0 && (
                   <>
-                    <ul className={styles.listaTurmas}>
-                      {turmas.map((turma) =>
-                        turma.dias.length > 0 ? (
-                          turma.dias.map((dia) => (
-                            <li key={chaveDiaSelecao(turma.id, dia)} className={styles.itemTurmaCheckbox}>
-                              <label>
-                                <input
-                                  type="checkbox"
-                                  value={chaveDiaSelecao(turma.id, dia)}
-                                  {...register('diaSelecoes')}
-                                />
-                                {turma.nome} — {DIAS_ABREVIADOS[dia] ?? dia}
-                              </label>
-                            </li>
-                          ))
-                        ) : (
-                          <li key={turma.id} className={styles.itemTurmaCheckbox}>
-                            <label className={styles.itemTurmaDesabilitado}>
-                              {turma.nome} — sem dias cadastrados
-                            </label>
-                          </li>
-                        )
-                      )}
-                    </ul>
+                    <SeletorTurmasSemana turmas={turmas} selecionados={diaSelecoes} onToggle={alternarDia} />
                     {frequenciaSemanalNum ? (
                       <span
                         className={
