@@ -172,6 +172,7 @@ export default function NovaMatriculaPage() {
   const [erro, setErro] = useState('')
   const [acesso, setAcesso] = useState<AcessoGerado | null>(null)
   const [copiado, setCopiado] = useState(false)
+  const [erroAcesso, setErroAcesso] = useState('')
 
   const {
     register,
@@ -333,6 +334,7 @@ export default function NovaMatriculaPage() {
     setErro('')
     setSucesso(false)
     setAcesso(null)
+    setErroAcesso('')
 
     if (!associadaSelecionada) {
       setErroAssociada('Selecione uma associada')
@@ -371,13 +373,23 @@ export default function NovaMatriculaPage() {
       })
 
       setSucesso(true)
-      setAcesso({
-        nome: associadaSelecionada.nome,
-        cpf: associadaSelecionada.cpf,
-        // Provisório: senha inicial = CPF, mesma convenção do cadastro.
-        senha: associadaSelecionada.cpf,
-        telefone: dados.telefone || associadaSelecionada.telefone,
-      })
+
+      // Não há como recuperar a senha atual (fica só o hash), então geramos
+      // uma nova senha real para poder mandar no acesso.
+      try {
+        const respostaSenha = await apiPatch<{ senha: string }>(
+          `/usuarios/${associadaSelecionada.id}/senha`,
+          {}
+        )
+        setAcesso({
+          nome: associadaSelecionada.nome,
+          cpf: associadaSelecionada.cpf,
+          senha: respostaSenha.senha,
+          telefone: dados.telefone || associadaSelecionada.telefone,
+        })
+      } catch {
+        setErroAcesso('Matrícula feita, mas não foi possível gerar a senha de acesso')
+      }
     } catch {
       setErro('Não foi possível matricular a aluna')
     }
@@ -665,6 +677,7 @@ export default function NovaMatriculaPage() {
         )}
 
         {!acesso && sucesso && <p className={styles.sucesso}>Aluna matriculada!</p>}
+        {erroAcesso && <p className={styles.mensagemErro}>{erroAcesso}</p>}
         {erro && <p className={styles.mensagemErro}>{erro}</p>}
       </div>
     </div>

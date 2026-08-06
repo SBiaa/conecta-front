@@ -198,6 +198,8 @@ export default function PerfilAssociadoPage() {
 
   const [acessoParaEnviar, setAcessoParaEnviar] = useState<AcessoGerado | null>(null)
   const [acessoCopiado, setAcessoCopiado] = useState(false)
+  const [gerandoAcesso, setGerandoAcesso] = useState(false)
+  const [erroAcesso, setErroAcesso] = useState('')
 
   const [matriculaParaEditar, setMatriculaParaEditar] = useState<Matricula | null>(null)
   const [turmasModal, setTurmasModal] = useState<TurmaOpcao[]>([])
@@ -306,17 +308,39 @@ export default function PerfilAssociadoPage() {
     setSenhaCopiada(false)
   }
 
-  function abrirAcesso() {
+  async function abrirAcesso() {
     if (!associado) return
-    setSenhaSalva(null)
-    setAcessoParaEnviar({
-      nome: associado.nome,
-      cpf: associado.cpf,
-      // Provisório: assume senha inicial = CPF, salvo troca recente nesta sessão.
-      senha: senhaSalva ?? associado.cpf,
-      telefone: associado.telefone,
-    })
-    setAcessoCopiado(false)
+    setErroAcesso('')
+
+    if (senhaSalva) {
+      setAcessoParaEnviar({
+        nome: associado.nome,
+        cpf: associado.cpf,
+        senha: senhaSalva,
+        telefone: associado.telefone,
+      })
+      setAcessoCopiado(false)
+      return
+    }
+
+    // Não há como recuperar a senha atual (fica só o hash), então geramos
+    // uma nova senha real para poder mandar no acesso.
+    setGerandoAcesso(true)
+    try {
+      const resposta = await apiPatch<{ senha: string }>(`/usuarios/${id}/senha`, {})
+      setSenhaSalva(resposta.senha)
+      setAcessoParaEnviar({
+        nome: associado.nome,
+        cpf: associado.cpf,
+        senha: resposta.senha,
+        telefone: associado.telefone,
+      })
+      setAcessoCopiado(false)
+    } catch {
+      setErroAcesso('Não foi possível gerar a senha de acesso')
+    } finally {
+      setGerandoAcesso(false)
+    }
   }
 
   function fecharAcesso() {
@@ -422,12 +446,18 @@ export default function PerfilAssociadoPage() {
               <KeyRound size={14} />
               Alterar senha
             </button>
-            <button className={styles.botaoEnviarAcesso} onClick={abrirAcesso}>
+            <button
+              className={styles.botaoEnviarAcesso}
+              onClick={abrirAcesso}
+              disabled={gerandoAcesso}
+            >
               <MessageCircle size={14} />
-              Enviar acesso
+              {gerandoAcesso ? 'Gerando...' : 'Enviar acesso'}
             </button>
           </div>
         </div>
+
+        {erroAcesso && <p className={styles.erro}>{erroAcesso}</p>}
 
         {senhaSalva && (
           <div className={styles.avisoSenha}>

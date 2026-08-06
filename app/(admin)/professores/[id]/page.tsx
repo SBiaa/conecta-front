@@ -53,6 +53,9 @@ export default function PerfilProfessorPage() {
 
   const [acessoParaEnviar, setAcessoParaEnviar] = useState<AcessoGerado | null>(null)
   const [acessoCopiado, setAcessoCopiado] = useState(false)
+  const [senhaConhecida, setSenhaConhecida] = useState<string | null>(null)
+  const [gerandoAcesso, setGerandoAcesso] = useState(false)
+  const [erroAcesso, setErroAcesso] = useState('')
 
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [carregandoTurmas, setCarregandoTurmas] = useState(true)
@@ -101,16 +104,39 @@ export default function PerfilProfessorPage() {
     )
   }
 
-  function abrirAcesso() {
+  async function abrirAcesso() {
     if (!professor) return
-    setAcessoParaEnviar({
-      nome: professor.nome,
-      cpf: professor.cpf,
-      // Provisório: assume senha inicial = CPF, mesma convenção do cadastro.
-      senha: professor.cpf,
-      telefone: professor.telefone,
-    })
-    setAcessoCopiado(false)
+    setErroAcesso('')
+
+    if (senhaConhecida) {
+      setAcessoParaEnviar({
+        nome: professor.nome,
+        cpf: professor.cpf,
+        senha: senhaConhecida,
+        telefone: professor.telefone,
+      })
+      setAcessoCopiado(false)
+      return
+    }
+
+    // Não há como recuperar a senha atual (fica só o hash), então geramos
+    // uma nova senha real para poder mandar no acesso.
+    setGerandoAcesso(true)
+    try {
+      const resposta = await apiPatch<{ senha: string }>(`/usuarios/${id}/senha`, {})
+      setSenhaConhecida(resposta.senha)
+      setAcessoParaEnviar({
+        nome: professor.nome,
+        cpf: professor.cpf,
+        senha: resposta.senha,
+        telefone: professor.telefone,
+      })
+      setAcessoCopiado(false)
+    } catch {
+      setErroAcesso('Não foi possível gerar a senha de acesso')
+    } finally {
+      setGerandoAcesso(false)
+    }
   }
 
   function fecharAcesso() {
@@ -221,13 +247,19 @@ export default function PerfilProfessorPage() {
               <button className={styles.botaoEditar} onClick={iniciarEdicaoDados}>
                 Editar
               </button>
-              <button className={styles.botaoEnviarAcesso} onClick={abrirAcesso}>
+              <button
+                className={styles.botaoEnviarAcesso}
+                onClick={abrirAcesso}
+                disabled={gerandoAcesso}
+              >
                 <MessageCircle size={14} />
-                Enviar acesso
+                {gerandoAcesso ? 'Gerando...' : 'Enviar acesso'}
               </button>
             </div>
           )}
         </div>
+
+        {erroAcesso && <p className={styles.erro}>{erroAcesso}</p>}
 
         {acessoParaEnviar && (
           <div className={styles.avisoSenha}>
