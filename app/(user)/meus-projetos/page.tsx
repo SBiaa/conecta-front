@@ -10,12 +10,12 @@ type Matricula = {
   id: number
   ativa: boolean
   exameMedico: ExameMedico
-  turma: {
+  turmas: {
     nome: string
     horario: string | null
     dias: string[]
     projeto: { nome: string }
-  }
+  }[]
 }
 
 const LABELS_DIA: Record<string, string> = {
@@ -66,15 +66,17 @@ export default function MeusProjetosPage() {
         <ul className={styles.lista}>
           {matriculas.map((matricula) => (
             <li key={matricula.id} className={styles.card}>
-              <span className={styles.projeto}>{matricula.turma.projeto.nome}</span>
-              <p className={styles.turma}>{matricula.turma.nome}</p>
+              <span className={styles.projeto}>{matricula.turmas[0]?.projeto.nome ?? '—'}</span>
+              <p className={styles.turma}>{matricula.turmas.map((turma) => turma.nome).join(', ')}</p>
 
-              {matricula.turma.dias.length > 0 && (
-                <p className={styles.detalhe}>
-                  {matricula.turma.dias.map((d) => LABELS_DIA[d] ?? d).join(', ')}
-                  {matricula.turma.horario ? ` — ${matricula.turma.horario}` : ''}
-                </p>
-              )}
+              {matricula.turmas.map((turma, indice) => (
+                turma.dias.length > 0 && (
+                  <p key={indice} className={styles.detalhe}>
+                    {turma.dias.map((d) => LABELS_DIA[d] ?? d).join(', ')}
+                    {turma.horario ? ` — ${turma.horario}` : ''}
+                  </p>
+                )
+              ))}
 
               <span className={`${styles.badge} ${styles[CLASSES_EXAME[matricula.exameMedico]]}`}>
                 {LABELS_EXAME[matricula.exameMedico]}

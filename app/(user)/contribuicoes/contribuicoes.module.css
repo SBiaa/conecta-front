@@ -11,6 +11,60 @@
   margin: 0 0 1.25rem;
 }
 
+/* Pix --------------------------------------------------------------------- */
+
+.pix {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background-color: #e8f5e9;
+  border-radius: 12px;
+  padding: 0.9rem 1.25rem;
+  margin-bottom: 1rem;
+  max-width: 540px;
+}
+
+.pixInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pixLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--success);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pixChave {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pixBotao {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: var(--success);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pixBotao:hover {
+  filter: brightness(0.95);
+}
+
 /* Resumo ----------------------------------------------------------------- */
 
 .resumo {

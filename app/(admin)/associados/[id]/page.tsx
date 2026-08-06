@@ -25,13 +25,14 @@ type Matricula = {
   ativa: boolean
   dataInicio: string
   exameMedico: 'APTO' | 'NAO_APTO' | 'AGUARDANDO' | null
-  turma: {
+  frequenciaSemanal: number | null
+  turmas: {
     id: string
     nome: string
     horario: string | null
     dias: string[]
     projeto: { id: string; nome: string }
-  }
+  }[]
 }
 
 type Associado = {
@@ -64,7 +65,7 @@ type Pagamento = {
   formaPagamento: FormaPagamento | null
   matricula: {
     usuario: { nome: string }
-    turma: { nome: string; projeto: { nome: string } }
+    turmas: { nome: string; projeto: { nome: string } }[]
   }
 }
 
@@ -77,7 +78,14 @@ type TurmaOpcao = {
   id: string
   nome: string
   horario: string | null
+  dias: string[]
 }
+
+const PLANOS = [
+  { frequencia: 2, valor: 85 },
+  { frequencia: 3, valor: 120 },
+  { frequencia: 4, valor: 160 },
+]
 
 const NOMES_MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -177,7 +185,8 @@ export default function PerfilAssociadoPage() {
   const [carregandoTurmasModal, setCarregandoTurmasModal] = useState(false)
   const [exameModal, setExameModal] = useState('AGUARDANDO')
   const [ativaModal, setAtivaModal] = useState(true)
-  const [turmaIdModal, setTurmaIdModal] = useState('')
+  const [turmaIdsModal, setTurmaIdsModal] = useState<string[]>([])
+  const [frequenciaModal, setFrequenciaModal] = useState<number | ''>('')
   const [enviandoEdicao, setEnviandoEdicao] = useState(false)
   const [erroModalEdicao, setErroModalEdicao] = useState('')
 
@@ -282,11 +291,13 @@ export default function PerfilAssociadoPage() {
     setMatriculaParaEditar(matricula)
     setExameModal(matricula.exameMedico ?? 'AGUARDANDO')
     setAtivaModal(matricula.ativa)
-    setTurmaIdModal(matricula.turma.id)
+    setTurmaIdsModal(matricula.turmas.map((turma) => turma.id))
+    setFrequenciaModal(matricula.frequenciaSemanal ?? '')
     setErroModalEdicao('')
     setTurmasModal([])
     setCarregandoTurmasModal(true)
-    apiGet<TurmaOpcao[]>(`/turmas?projetoId=${matricula.turma.projeto.id}`)
+    const projetoId = matricula.turmas[0]?.projeto.id
+    apiGet<TurmaOpcao[]>(`/turmas?projetoId=${projetoId ?? ''}`)
       .then(setTurmasModal)
       .finally(() => setCarregandoTurmasModal(false))
   }
@@ -295,15 +306,39 @@ export default function PerfilAssociadoPage() {
     setMatriculaParaEditar(null)
   }
 
+  function alternarTurmaModal(turmaId: string) {
+    setTurmaIdsModal((atual) =>
+      atual.includes(turmaId) ? atual.filter((id) => id !== turmaId) : [...atual, turmaId]
+    )
+  }
+
+  const totalDiasModal = turmasModal
+    .filter((turma) => turmaIdsModal.includes(turma.id))
+    .reduce((soma, turma) => soma + turma.dias.length, 0)
+
   async function confirmarEdicao() {
     if (!matriculaParaEditar) return
+
+    if (!frequenciaModal || turmaIdsModal.length === 0) {
+      setErroModalEdicao('Escolha o plano e ao menos uma turma')
+      return
+    }
+
+    if (totalDiasModal !== frequenciaModal) {
+      setErroModalEdicao(
+        `A soma de dias das turmas escolhidas (${totalDiasModal}) precisa bater com o plano (${frequenciaModal} aulas)`
+      )
+      return
+    }
+
     setEnviandoEdicao(true)
     setErroModalEdicao('')
     try {
       await apiPatch(`/matriculas/${matriculaParaEditar.id}`, {
         exameMedico: exameModal,
         ativa: ativaModal,
-        turmaId: Number(turmaIdModal),
+        turmaIds: turmaIdsModal.map(Number),
+        frequenciaSemanal: frequenciaModal,
       })
       await buscarAssociado()
       fecharModalEdicao()
@@ -406,14 +441,27 @@ export default function PerfilAssociadoPage() {
             {associado.matriculas.map((matricula) => (
               <li key={matricula.id} className={styles.itemMatricula}>
                 <div className={styles.infoMatricula}>
-                  <span className={styles.nomeProjeto}>{matricula.turma.projeto.nome}</span>
-                  <span className={styles.nomeTurma}>{matricula.turma.nome}</span>
-                  {matricula.turma.horario && (
-                    <span className={styles.detalhe}>{matricula.turma.horario}</span>
+                  <span className={styles.nomeProjeto}>{matricula.turmas[0]?.projeto.nome ?? '—'}</span>
+                  <span className={styles.nomeTurma}>
+                    {matricula.turmas.map((turma) => turma.nome).join(', ')}
+                  </span>
+                  {matricula.frequenciaSemanal && (
+                    <span className={styles.detalhe}>{matricula.frequenciaSemanal} aulas/semana</span>
                   )}
-                  {matricula.turma.dias.length > 0 && (
+                  {!matricula.frequenciaSemanal && (
+                    <span className={styles.detalhe}>Plano pendente de revisão</span>
+                  )}
+                  {matricula.turmas.some((turma) => turma.horario) && (
                     <span className={styles.detalhe}>
-                      {matricula.turma.dias.map((d) => LABELS_DIA[d] ?? d).join(', ')}
+                      {matricula.turmas.map((turma) => turma.horario).filter(Boolean).join(' · ')}
+                    </span>
+                  )}
+                  {matricula.turmas.some((turma) => turma.dias.length > 0) && (
+                    <span className={styles.detalhe}>
+                      {matricula.turmas
+                        .map((turma) => turma.dias.map((d) => LABELS_DIA[d] ?? d).join(', '))
+                        .filter(Boolean)
+                        .join(' · ')}
                     </span>
                   )}
                 </div>
@@ -457,7 +505,8 @@ export default function PerfilAssociadoPage() {
                 <div className={styles.infoPagamento}>
                   <span className={styles.mesPagamento}>{formatarMes(pagamento.mesReferencia)}</span>
                   <span className={styles.detalhe}>
-                    {pagamento.matricula.turma.projeto.nome} — {pagamento.matricula.turma.nome}
+                    {pagamento.matricula.turmas[0]?.projeto.nome ?? '—'} —{' '}
+                    {pagamento.matricula.turmas.map((turma) => turma.nome).join(', ')}
                   </span>
                   <span className={styles.detalhe}>
                     Vencimento: {formatarData(pagamento.vencimento)}
@@ -566,23 +615,52 @@ export default function PerfilAssociadoPage() {
             </div>
 
             <div className={styles.campo}>
-              <label htmlFor="turmaModal">Turma</label>
+              <label htmlFor="frequenciaModal">Plano</label>
               <select
-                id="turmaModal"
-                value={turmaIdModal}
-                onChange={(e) => setTurmaIdModal(e.target.value)}
-                disabled={carregandoTurmasModal}
+                id="frequenciaModal"
+                value={frequenciaModal}
+                onChange={(e) => setFrequenciaModal(e.target.value ? Number(e.target.value) : '')}
               >
-                {carregandoTurmasModal ? (
-                  <option>Carregando...</option>
-                ) : (
-                  turmasModal.map((turma) => (
-                    <option key={turma.id} value={turma.id}>
-                      {turma.nome}{turma.horario ? ` — ${turma.horario}` : ''}
-                    </option>
-                  ))
-                )}
+                <option value="">Selecione...</option>
+                {PLANOS.map((plano) => (
+                  <option key={plano.frequencia} value={plano.frequencia}>
+                    {plano.frequencia} aulas — R$ {plano.valor}
+                  </option>
+                ))}
               </select>
+            </div>
+
+            <div className={styles.campo}>
+              <label>Turmas</label>
+              {carregandoTurmasModal ? (
+                <span className={styles.mensagem}>Carregando...</span>
+              ) : (
+                <>
+                  <ul className={styles.listaTurmasModal}>
+                    {turmasModal.map((turma) => (
+                      <li key={turma.id}>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={turmaIdsModal.includes(turma.id)}
+                            onChange={() => alternarTurmaModal(turma.id)}
+                          />
+                          {turma.nome}
+                          {turma.horario ? ` — ${turma.horario}` : ''}
+                          {turma.dias.length > 0
+                            ? ` (${turma.dias.length} aula${turma.dias.length > 1 ? 's' : ''}/semana)`
+                            : ' (sem dias cadastrados)'}
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                  {frequenciaModal !== '' && (
+                    <span className={totalDiasModal === frequenciaModal ? styles.aviso : styles.erro}>
+                      {totalDiasModal} de {frequenciaModal} aulas selecionadas
+                    </span>
+                  )}
+                </>
+              )}
             </div>
 
             {erroModalEdicao && <p className={styles.erroModal}>{erroModalEdicao}</p>}

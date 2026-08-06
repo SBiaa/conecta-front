@@ -1,8 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Copy, Check } from 'lucide-react'
 import { apiGet } from '../../lib/api'
 import styles from './contribuicoes.module.css'
+
+const CHAVE_PIX = '06.659.481/0001-28'
 
 type Pagamento = {
   id: number
@@ -13,10 +16,10 @@ type Pagamento = {
   formaPagamento: string | null
   dataPagamento: string | null
   matricula: {
-    turma: {
+    turmas: {
       nome: string
       projeto: { nome: string }
-    }
+    }[]
   }
 }
 
@@ -50,6 +53,7 @@ function getSituacao(pagamento: Pagamento): Situacao {
 export default function ContribuicoesPage() {
   const [pagamentos, setPagamentos] = useState<Pagamento[] | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  const [chaveCopiada, setChaveCopiada] = useState(false)
 
   useEffect(() => {
     apiGet<Pagamento[]>('/me/pagamentos')
@@ -57,10 +61,31 @@ export default function ContribuicoesPage() {
       .catch(() => setErro('Não foi possível carregar as contribuições.'))
   }, [])
 
+  function copiarChavePix() {
+    navigator.clipboard.writeText(CHAVE_PIX).then(() => {
+      setChaveCopiada(true)
+      setTimeout(() => setChaveCopiada(false), 2000)
+    }).catch(() => {})
+  }
+
+  const cartaoPix = (
+    <div className={styles.pix}>
+      <div className={styles.pixInfo}>
+        <span className={styles.pixLabel}>Pagar via Pix · Chave CNPJ</span>
+        <span className={styles.pixChave}>{CHAVE_PIX}</span>
+      </div>
+      <button type="button" className={styles.pixBotao} onClick={copiarChavePix}>
+        {chaveCopiada ? <Check size={16} /> : <Copy size={16} />}
+        {chaveCopiada ? 'Copiada!' : 'Copiar chave'}
+      </button>
+    </div>
+  )
+
   if (erro) {
     return (
       <div className={styles.pagina}>
         <h1 className={styles.titulo}>Minhas Contribuições</h1>
+        {cartaoPix}
         <p className={styles.mensagemErro}>{erro}</p>
       </div>
     )
@@ -70,6 +95,7 @@ export default function ContribuicoesPage() {
     return (
       <div className={styles.pagina}>
         <h1 className={styles.titulo}>Minhas Contribuições</h1>
+        {cartaoPix}
         <p className={styles.mensagem}>Carregando...</p>
       </div>
     )
@@ -79,6 +105,7 @@ export default function ContribuicoesPage() {
     return (
       <div className={styles.pagina}>
         <h1 className={styles.titulo}>Minhas Contribuições</h1>
+        {cartaoPix}
         <p className={styles.mensagem}>Nenhuma contribuição encontrada.</p>
       </div>
     )
@@ -91,6 +118,8 @@ export default function ContribuicoesPage() {
   return (
     <div className={styles.pagina}>
       <h1 className={styles.titulo}>Minhas Contribuições</h1>
+
+      {cartaoPix}
 
       <div className={`${styles.resumo} ${emDia ? styles.resumoEmDia : styles.resumoPendente}`}>
         {emDia ? (
@@ -109,8 +138,8 @@ export default function ContribuicoesPage() {
           return (
             <li key={p.id} className={styles.card}>
               <p className={styles.atividade}>
-                <span className={styles.projeto}>{p.matricula.turma.projeto.nome}</span>
-                <span className={styles.turma}>{p.matricula.turma.nome}</span>
+                <span className={styles.projeto}>{p.matricula.turmas[0]?.projeto.nome ?? '—'}</span>
+                <span className={styles.turma}>{p.matricula.turmas.map((turma) => turma.nome).join(', ')}</span>
               </p>
 
               <p className={styles.mes}>{formatarMes(p.mesReferencia)}</p>

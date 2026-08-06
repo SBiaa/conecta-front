@@ -8,6 +8,22 @@ import { z } from 'zod'
 import { apiGet, apiPatch, apiPost } from '../../../lib/api'
 import styles from './nova.module.css'
 
+const PLANOS = [
+  { frequencia: 2, valor: 85 },
+  { frequencia: 3, valor: 120 },
+  { frequencia: 4, valor: 160 },
+]
+
+const DIAS_ABREVIADOS: Record<string, string> = {
+  SEGUNDA: 'Seg',
+  TERCA: 'Ter',
+  QUARTA: 'Qua',
+  QUINTA: 'Qui',
+  SEXTA: 'Sex',
+  SABADO: 'Sáb',
+  DOMINGO: 'Dom',
+}
+
 const matriculaSchema = z.object({
   telefone: z.string().optional(),
   rg: z.string().optional(),
@@ -22,7 +38,10 @@ const matriculaSchema = z.object({
   cidade: z.string().optional(),
   uf: z.string().optional(),
   projetoId: z.coerce.number({ message: 'Escolha um projeto' }),
-  turmaId: z.coerce.number({ message: 'Escolha uma turma' }),
+  frequenciaSemanal: z.coerce.number().refine((valor) => PLANOS.some((plano) => plano.frequencia === valor), {
+    message: 'Escolha um plano',
+  }),
+  turmaIds: z.array(z.coerce.number()).min(1, { message: 'Escolha ao menos uma turma' }),
   exameMedico: z.enum(['APTO', 'NAO_APTO', 'AGUARDANDO'], {
     message: 'Escolha o exame médico',
   }),
@@ -62,6 +81,7 @@ type Projeto = {
 type Turma = {
   id: string
   nome: string
+  dias: string[]
 }
 
 type RespostaViaCep = {
@@ -86,7 +106,8 @@ const VALORES_PADRAO: MatriculaFormInput = {
   cidade: '',
   uf: '',
   projetoId: '' as unknown as number,
-  turmaId: '' as unknown as number,
+  frequenciaSemanal: '' as unknown as number,
+  turmaIds: [],
   exameMedico: 'AGUARDANDO',
 }
 
@@ -149,7 +170,15 @@ export default function NovaMatriculaPage() {
 
   const tomaMedicamento = watch('tomaMedicamento')
   const projetoId = watch('projetoId')
+  const temProjeto = Boolean(projetoId)
+  const frequenciaSemanal = watch('frequenciaSemanal')
+  const frequenciaSemanalNum = frequenciaSemanal ? Number(frequenciaSemanal) : 0
+  const turmaIdsSelecionadas = watch('turmaIds') ?? []
   const registroCep = register('cep')
+
+  const totalDiasSelecionados = turmas
+    .filter((turma) => turmaIdsSelecionadas.map(Number).includes(Number(turma.id)))
+    .reduce((soma, turma) => soma + turma.dias.length, 0)
 
   useEffect(() => {
     apiGet<Projeto[]>('/projetos').then(setProjetos)
@@ -201,10 +230,14 @@ export default function NovaMatriculaPage() {
     apiGet<Turma[]>(`/turmas?projetoId=${projetoId}`).then((data) => {
       setTurmas(data)
       if (pendingTurmaIdRef.current !== null) {
-        setValue('turmaId', pendingTurmaIdRef.current)
+        const turmaPreSelecionada = data.find((t) => Number(t.id) === pendingTurmaIdRef.current)
+        setValue('turmaIds', pendingTurmaIdRef.current ? [pendingTurmaIdRef.current] : [])
+        if (turmaPreSelecionada && PLANOS.some((plano) => plano.frequencia === turmaPreSelecionada.dias.length)) {
+          setValue('frequenciaSemanal', turmaPreSelecionada.dias.length)
+        }
         pendingTurmaIdRef.current = null
       } else {
-        setValue('turmaId', '' as unknown as number)
+        setValue('turmaIds', [])
       }
     })
   }, [projetoId, setValue])
@@ -284,6 +317,17 @@ export default function NovaMatriculaPage() {
       return
     }
 
+    const totalDias = turmas
+      .filter((turma) => dados.turmaIds.map(Number).includes(Number(turma.id)))
+      .reduce((soma, turma) => soma + turma.dias.length, 0)
+
+    if (totalDias !== dados.frequenciaSemanal) {
+      setErro(
+        `A soma de dias das turmas escolhidas (${totalDias}) precisa bater com o plano (${dados.frequenciaSemanal} aulas)`
+      )
+      return
+    }
+
     setErroAssociada('')
     try {
       await apiPatch(`/usuarios/${associadaSelecionada.id}`, {
@@ -303,7 +347,8 @@ export default function NovaMatriculaPage() {
 
       await apiPost('/matriculas', {
         usuarioId: associadaSelecionada.id,
-        turmaId: dados.turmaId,
+        turmaIds: dados.turmaIds,
+        frequenciaSemanal: dados.frequenciaSemanal,
         exameMedico: dados.exameMedico,
       })
 
@@ -461,16 +506,58 @@ export default function NovaMatriculaPage() {
               </div>
 
               <div className={styles.campo}>
-                <label htmlFor="turmaId">Turma</label>
-                <select id="turmaId" disabled={!projetoId} {...register('turmaId')}>
+                <label htmlFor="frequenciaSemanal">Plano</label>
+                <select id="frequenciaSemanal" {...register('frequenciaSemanal')}>
                   <option value="">Selecione...</option>
-                  {turmas.map((turma) => (
-                    <option key={turma.id} value={turma.id}>
-                      {turma.nome}
+                  {PLANOS.map((plano) => (
+                    <option key={plano.frequencia} value={plano.frequencia}>
+                      {plano.frequencia} aulas — R$ {plano.valor}
                     </option>
                   ))}
                 </select>
-                {errors.turmaId && <span className={styles.erro}>{errors.turmaId.message}</span>}
+                {errors.frequenciaSemanal && (
+                  <span className={styles.erro}>{errors.frequenciaSemanal.message}</span>
+                )}
+              </div>
+
+              <div className={styles.campo}>
+                <label>Turmas</label>
+                {!temProjeto && <span className={styles.mensagem}>Escolha um projeto primeiro</span>}
+                {temProjeto && turmas.length === 0 && (
+                  <span className={styles.mensagem}>Nenhuma turma cadastrada neste projeto</span>
+                )}
+                {temProjeto && turmas.length > 0 && (
+                  <>
+                    <ul className={styles.listaTurmas}>
+                      {turmas.map((turma) => (
+                        <li key={turma.id} className={styles.itemTurmaCheckbox}>
+                          <label>
+                            <input type="checkbox" value={turma.id} {...register('turmaIds')} />
+                            {turma.nome}
+                            {' — '}
+                            {turma.dias.length > 0
+                              ? `${turma.dias.length} aula${turma.dias.length > 1 ? 's' : ''}/semana (${turma.dias
+                                  .map((dia) => DIAS_ABREVIADOS[dia] ?? dia)
+                                  .join(', ')})`
+                              : 'sem dias cadastrados'}
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                    {frequenciaSemanalNum ? (
+                      <span
+                        className={
+                          totalDiasSelecionados === frequenciaSemanalNum ? styles.contadorOk : styles.aviso
+                        }
+                      >
+                        {totalDiasSelecionados} de {frequenciaSemanalNum} aulas selecionadas
+                      </span>
+                    ) : (
+                      <span className={styles.mensagem}>Escolha o plano para ver o total necessário</span>
+                    )}
+                  </>
+                )}
+                {errors.turmaIds && <span className={styles.erro}>{errors.turmaIds.message}</span>}
               </div>
 
               <div className={styles.campo}>
@@ -485,7 +572,10 @@ export default function NovaMatriculaPage() {
                 )}
               </div>
 
-              <button className={styles.botao} disabled={isSubmitting}>
+              <button
+                className={styles.botao}
+                disabled={isSubmitting || (!!frequenciaSemanalNum && totalDiasSelecionados !== frequenciaSemanalNum)}
+              >
                 Matricular
               </button>
             </form>

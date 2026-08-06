@@ -134,6 +134,30 @@
   background-color: #e0e0e0;
 }
 
+.botaoExcluir {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.botaoExcluir:hover {
+  background-color: var(--danger);
+  color: #ffffff;
+}
+
+.botaoExcluir:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .sucesso {
   font-size: 0.9rem;
   color: var(--success);

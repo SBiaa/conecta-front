@@ -15,10 +15,10 @@ type Pagamento = {
   vencimento: string
   formaPagamento: string | null
   matricula: {
-    turma: {
+    turmas: {
       nome: string
       projeto: { nome: string }
-    }
+    }[]
   }
 }
 

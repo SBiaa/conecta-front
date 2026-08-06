@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { apiGet, apiPatch } from '../../../../lib/api'
+import { apiGet, apiPatch, apiDelete } from '../../../../lib/api'
 import styles from './editar.module.css'
 
 const turmaSchema = z.object({
@@ -58,6 +58,8 @@ export default function EditarTurmaPage() {
   const [erroDias, setErroDias] = useState('')
   const [sucesso, setSucesso] = useState(false)
   const [erro, setErro] = useState('')
+  const [excluindo, setExcluindo] = useState(false)
+  const [projetoId, setProjetoId] = useState<number | null>(null)
 
   const {
     register,
@@ -77,6 +79,7 @@ export default function EditarTurmaPage() {
       .then(([listaProjetos, listaProfessores, turma]) => {
         setProjetos(listaProjetos)
         setProfessores(listaProfessores)
+        setProjetoId(turma.projetoId)
         setValue('nome', turma.nome)
         setValue('projetoId', turma.projetoId)
         setValue('horario', turma.horario ?? '')
@@ -115,6 +118,27 @@ export default function EditarTurmaPage() {
       router.push(`/turmas/${id}/alunas`)
     } catch {
       setErro('Não foi possível salvar a turma')
+    }
+  }
+
+  async function excluirTurma() {
+    const confirmou = window.confirm(
+      'Tem certeza que deseja excluir esta turma? Essa ação não pode ser desfeita.'
+    )
+    if (!confirmou) return
+
+    setErro('')
+    setExcluindo(true)
+    try {
+      await apiDelete(`/turmas/${id}`)
+      router.push(projetoId ? `/projetos/${projetoId}/turmas` : '/projetos')
+    } catch (erro) {
+      if (erro instanceof Error && erro.message.includes('409')) {
+        setErro('Não é possível excluir a turma pois há matrículas ou presenças vinculadas a ela')
+      } else {
+        setErro('Não foi possível excluir a turma')
+      }
+      setExcluindo(false)
     }
   }
 
@@ -203,6 +227,15 @@ export default function EditarTurmaPage() {
             </button>
           </div>
         </form>
+
+        <button
+          type="button"
+          className={styles.botaoExcluir}
+          onClick={excluirTurma}
+          disabled={excluindo}
+        >
+          {excluindo ? 'Excluindo...' : 'Excluir turma'}
+        </button>
 
         {sucesso && <p className={styles.sucesso}>Turma atualizada!</p>}
         {erro && <p className={styles.mensagemErro}>{erro}</p>}

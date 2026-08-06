@@ -23,11 +23,18 @@ type Opcao = { id: number; nome: string }
 type Matricula = {
   id: number
   ativa: boolean
-  turma: {
+  turmas: {
     id: number
     nome: string
     projeto: { id: number; nome: string }
-  }
+  }[]
+}
+
+type TurmaProfessor = {
+  id: number
+  nome: string
+  projetoId: number
+  projeto: { nome: string }
 }
 
 function formatarQuando(dataIso: string): string {
@@ -73,10 +80,12 @@ export default function Feed() {
   const [projetosAdmin, setProjetosAdmin] = useState<Opcao[]>([])
   const [turmasDoProjetoAdmin, setTurmasDoProjetoAdmin] = useState<Opcao[]>([])
   const [matriculas, setMatriculas] = useState<Matricula[]>([])
+  const [turmasProfessor, setTurmasProfessor] = useState<TurmaProfessor[]>([])
 
   const [apagandoId, setApagandoId] = useState<number | null>(null)
 
   const ehAdmin = usuario?.papel === 'ADMIN'
+  const ehProfessor = usuario?.papel === 'PROFESSOR'
 
   useEffect(() => {
     setUsuario(getUsuario())
@@ -87,6 +96,8 @@ export default function Feed() {
 
     if (usuario.papel === 'ADMIN') {
       apiGet<Opcao[]>('/projetos').then(setProjetosAdmin).catch(() => {})
+    } else if (usuario.papel === 'PROFESSOR') {
+      apiGet<TurmaProfessor[]>('/professor/turmas').then(setTurmasProfessor).catch(() => {})
     } else {
       apiGet<Matricula[]>('/me/matriculas').then(setMatriculas).catch(() => {})
     }
@@ -115,14 +126,26 @@ export default function Feed() {
     }
   }, [ehAdmin, alcance, projetoId])
 
-  const projetosNaoAdmin: Opcao[] = Array.from(
-    new Map(matriculas.map((m) => [m.turma.projeto.id, m.turma.projeto])).values()
-  )
+  const projetosNaoAdmin: Opcao[] = ehProfessor
+    ? Array.from(
+        new Map(
+          turmasProfessor.map((t) => [t.projetoId, { id: t.projetoId, nome: t.projeto.nome }])
+        ).values()
+      )
+    : Array.from(
+        new Map(
+          matriculas.flatMap((m) => m.turmas.map((turma) => [turma.projeto.id, turma.projeto]))
+        ).values()
+      )
 
-  const turmasNaoAdmin: Opcao[] = matriculas.map((m) => ({
-    id: m.turma.id,
-    nome: m.turma.nome,
-  }))
+  const turmasNaoAdmin: Opcao[] = ehProfessor
+    ? turmasProfessor.map((t) => ({ id: t.id, nome: t.nome }))
+    : matriculas.flatMap((m) =>
+        m.turmas.map((turma) => ({
+          id: turma.id,
+          nome: turma.nome,
+        }))
+      )
 
   function trocarAlcance(novoAlcance: Alcance) {
     setAlcance(novoAlcance)

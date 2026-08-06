@@ -20,10 +20,10 @@ type Pagamento = {
   formaPagamento: FormaPagamento | null
   matricula: {
     usuario: { nome: string }
-    turma: {
+    turmas: {
       nome: string
       projeto: { nome: string }
-    }
+    }[]
   }
 }
 
@@ -34,10 +34,10 @@ type Atrasado = {
   mesReferencia: string
   matricula: {
     usuario: { nome: string }
-    turma: {
+    turmas: {
       nome: string
       projeto: { nome: string }
-    }
+    }[]
   }
 }
 
@@ -76,6 +76,12 @@ function formatarData(data: string) {
   return new Date(data).toLocaleDateString('pt-BR')
 }
 
+function descricaoTurmas(turmas: { nome: string; projeto: { nome: string } }[]) {
+  const projeto = turmas[0]?.projeto.nome ?? ''
+  const nomesTurmas = turmas.map((turma) => turma.nome).join(', ')
+  return `${projeto} — ${nomesTurmas}`
+}
+
 const NOMES_MESES = [
   'Janeiro',
   'Fevereiro',
@@ -100,7 +106,6 @@ export default function FinanceiroPage() {
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [projetoId, setProjetoId] = useState('')
   const [mes, setMes] = useState('')
-  const [valor, setValor] = useState('')
   const [vencimento, setVencimento] = useState('')
 
   const [erroValidacao, setErroValidacao] = useState('')
@@ -194,8 +199,8 @@ export default function FinanceiroPage() {
     setSucesso('')
     setErro('')
 
-    if (!projetoId || !mes || !valor || !vencimento) {
-      setErroValidacao('Preencha projeto, mês, valor e vencimento')
+    if (!projetoId || !mes || !vencimento) {
+      setErroValidacao('Preencha projeto, mês e vencimento')
       return
     }
 
@@ -203,24 +208,35 @@ export default function FinanceiroPage() {
 
     const projeto = projetos.find((item) => item.id === projetoId)
     const confirmado = window.confirm(
-      `Gerar mensalidades de ${formatarMes(mes)} para o projeto ${projeto?.nome ?? ''}?`
+      `Gerar mensalidades de ${formatarMes(mes)} para o projeto ${projeto?.nome ?? ''}? O valor de cada mensalidade é calculado a partir do plano de cada matrícula.`
     )
 
     if (!confirmado) return
 
     setGerando(true)
     try {
-      const criados = await apiPost<unknown[]>('/pagamentos/gerar-mes', {
-        projetoId: Number(projetoId),
-        mesReferencia: mes,
-        valor: Number(valor),
-        vencimento,
-      })
-      setSucesso(
-        `${criados.length} mensalidade${criados.length === 1 ? '' : 's'} gerada${
-          criados.length === 1 ? '' : 's'
-        }`
+      const resultado = await apiPost<{ criados: unknown[]; pendentes: { matriculaId: number; nome: string }[] }>(
+        '/pagamentos/gerar-mes',
+        {
+          projetoId: Number(projetoId),
+          mesReferencia: mes,
+          vencimento,
+        }
       )
+      const { criados, pendentes } = resultado
+      let mensagem = `${criados.length} mensalidade${criados.length === 1 ? '' : 's'} gerada${
+        criados.length === 1 ? '' : 's'
+      }`
+      if (pendentes.length > 0) {
+        const LIMITE_NOMES = 8
+        const nomes = pendentes.slice(0, LIMITE_NOMES).map((p) => p.nome).join(', ')
+        const resto = pendentes.length - LIMITE_NOMES
+        mensagem += `. ${pendentes.length} não gerada${pendentes.length === 1 ? '' : 's'} por falta de plano válido: ${nomes}${
+          resto > 0 ? ` e mais ${resto}` : ''
+        } — corrija o plano dessas matrículas e gere novamente.`
+      }
+      setSucesso(mensagem)
+      await buscarPagamentos()
     } catch {
       setErro('Não foi possível gerar as mensalidades')
     } finally {
@@ -273,16 +289,6 @@ export default function FinanceiroPage() {
                 id="mes"
                 value={mes}
                 onChange={(evento) => setMes(evento.target.value)}
-              />
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="valor">Valor</label>
-              <input
-                type="number"
-                id="valor"
-                value={valor}
-                onChange={(evento) => setValor(evento.target.value)}
               />
             </div>
 
@@ -410,7 +416,7 @@ export default function FinanceiroPage() {
                   <div className={styles.infoPagamento}>
                     <span className={styles.nomeUsuario}>{pagamento.matricula.usuario.nome}</span>
                     <span className={styles.detalhe}>
-                      {pagamento.matricula.turma.projeto.nome} — {pagamento.matricula.turma.nome}
+                      {descricaoTurmas(pagamento.matricula.turmas)}
                     </span>
                     <span className={styles.detalhe}>
                       {formatarMoeda(Number(pagamento.valor))}
@@ -463,7 +469,7 @@ export default function FinanceiroPage() {
                   <div className={styles.infoPagamento}>
                     <span className={styles.nomeUsuario}>{atrasado.matricula.usuario.nome}</span>
                     <span className={styles.detalhe}>
-                      {atrasado.matricula.turma.projeto.nome} — {atrasado.matricula.turma.nome}
+                      {descricaoTurmas(atrasado.matricula.turmas)}
                     </span>
                     <span className={styles.detalhe}>{atrasado.mesReferencia}</span>
                     <span className={styles.detalhe}>

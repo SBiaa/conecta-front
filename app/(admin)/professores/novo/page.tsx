@@ -16,10 +16,37 @@ const professorSchema = z.object({
 
 type ProfessorForm = z.infer<typeof professorSchema>
 
+type AcessoGerado = {
+  nome: string
+  cpf: string
+  senha: string
+  telefone?: string
+}
+
+function montarMensagemAcesso(acesso: AcessoGerado) {
+  const link = typeof window !== 'undefined' ? `${window.location.origin}/login` : ''
+  return [
+    `Olá, ${acesso.nome}! Seu cadastro na Conecta foi feito com sucesso.`,
+    '',
+    'Acesse com:',
+    `CPF: ${acesso.cpf}`,
+    `Senha: ${acesso.senha}`,
+    ...(link ? ['', `Link de acesso: ${link}`] : []),
+    '',
+    'Qualquer dúvida, é só chamar!',
+  ].join('\n')
+}
+
+function montarLinkWhatsapp(acesso: AcessoGerado) {
+  const digitos = (acesso.telefone ?? '').replace(/\D/g, '')
+  const numero = digitos ? (digitos.startsWith('55') ? digitos : `55${digitos}`) : ''
+  return `https://wa.me/${numero}?text=${encodeURIComponent(montarMensagemAcesso(acesso))}`
+}
+
 export default function NovoProfessorPage() {
   const [sucesso, setSucesso] = useState(false)
   const [erro, setErro] = useState('')
-  const [senhaGerada, setSenhaGerada] = useState<string | null>(null)
+  const [acesso, setAcesso] = useState<AcessoGerado | null>(null)
   const [copiado, setCopiado] = useState(false)
 
   const {
@@ -34,7 +61,7 @@ export default function NovoProfessorPage() {
   async function onSubmit(dados: ProfessorForm) {
     setErro('')
     setSucesso(false)
-    setSenhaGerada(null)
+    setAcesso(null)
 
     try {
       const usuarioCriado = await apiPost<{ senhaInicial?: string }>('/usuarios', {
@@ -45,21 +72,28 @@ export default function NovoProfessorPage() {
         papel: 'PROFESSOR',
       })
       setSucesso(true)
-      setSenhaGerada(usuarioCriado.senhaInicial ?? null)
+      if (usuarioCriado.senhaInicial) {
+        setAcesso({
+          nome: dados.nome,
+          cpf: dados.cpf,
+          senha: usuarioCriado.senhaInicial,
+          telefone: dados.telefone,
+        })
+      }
       reset()
     } catch {
       setErro('Não foi possível cadastrar a professora. Verifique se o CPF já está cadastrado.')
     }
   }
 
-  function copiarSenha() {
-    if (!senhaGerada) return
-    navigator.clipboard.writeText(senhaGerada)
+  function copiarMensagem() {
+    if (!acesso) return
+    navigator.clipboard.writeText(montarMensagemAcesso(acesso))
     setCopiado(true)
   }
 
-  function dispensarAvisoSenha() {
-    setSenhaGerada(null)
+  function dispensarAvisoAcesso() {
+    setAcesso(null)
     setSucesso(false)
     setCopiado(false)
   }
@@ -97,21 +131,30 @@ export default function NovoProfessorPage() {
           </button>
         </form>
 
-        {senhaGerada && (
+        {acesso && (
           <div className={styles.avisoSenha}>
             <p className={styles.avisoSenhaTexto}>
-              Professora cadastrada! Senha de acesso:{' '}
-              <span className={styles.avisoSenhaValor}>{senhaGerada}</span> — anote e entregue a
-              ela.
+              Professora cadastrada! Envie a mensagem abaixo para ela.
             </p>
+            <pre className={styles.mensagemAcesso}>{montarMensagemAcesso(acesso)}</pre>
             <div className={styles.avisoSenhaAcoes}>
-              <button type="button" className={styles.avisoSenhaCopiar} onClick={copiarSenha}>
-                {copiado ? 'Copiado!' : 'Copiar senha'}
+              <a
+                className={styles.avisoSenhaWhatsapp}
+                href={montarLinkWhatsapp(acesso)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Enviar no WhatsApp
+              </a>
+              <button type="button" className={styles.avisoSenhaCopiar} onClick={copiarMensagem}>
+                {copiado ? 'Copiado!' : 'Copiar mensagem'}
               </button>
+            </div>
+            <div className={styles.avisoSenhaAcoesSecundarias}>
               <button
                 type="button"
                 className={styles.avisoSenhaDispensar}
-                onClick={dispensarAvisoSenha}
+                onClick={dispensarAvisoAcesso}
               >
                 Dispensar
               </button>
@@ -119,7 +162,7 @@ export default function NovoProfessorPage() {
           </div>
         )}
 
-        {!senhaGerada && sucesso && <p className={styles.sucesso}>Professora cadastrada!</p>}
+        {!acesso && sucesso && <p className={styles.sucesso}>Professora cadastrada!</p>}
         {erro && <p className={styles.mensagemErro}>{erro}</p>}
       </div>
     </div>

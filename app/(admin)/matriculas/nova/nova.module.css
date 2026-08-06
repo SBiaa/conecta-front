@@ -161,6 +161,45 @@
   margin-top: 0.3rem;
 }
 
+.contadorOk {
+  font-size: 0.8rem;
+  color: var(--success);
+  margin-top: 0.3rem;
+}
+
+.mensagem {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.listaTurmas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.itemTurmaCheckbox {
+  padding: 0.5rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.itemTurmaCheckbox:last-child {
+  border-bottom: none;
+}
+
+.itemTurmaCheckbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
 .botao {
   width: 100%;
   padding: 0.75rem;
