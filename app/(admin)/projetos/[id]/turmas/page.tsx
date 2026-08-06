@@ -137,7 +137,10 @@ export default function TurmasDoProjetoPage() {
                               href={`/turmas/${turma.id}/alunas`}
                               className={styles.gradeTurma}
                             >
-                              {turma.nome}
+                              <span className={styles.gradeTurmaNome}>{turma.nome}</span>
+                              <span className={styles.gradeTurmaContagem}>
+                                {turma.ativas} ativas · {turma.inativas} inativas
+                              </span>
                             </Link>
                           ))}
                         </div>

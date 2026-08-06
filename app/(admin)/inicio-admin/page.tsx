@@ -35,6 +35,7 @@ type Projeto = {
   id: number
   nome: string
   ativo: boolean
+  alunasAtivas: number
 }
 
 type Associado = {
@@ -87,6 +88,7 @@ type Resumo = {
   atrasadosTotal: ValorCard
   projetosAtivos: ValorCard
   totalAssociados: ValorCard
+  totalAlunasAtivas: ValorCard
 }
 
 function moeda(valor: number) {
@@ -103,6 +105,7 @@ export default function InicioAdminPage() {
   )
   const [resumo, setResumo] = useState<Resumo | null>(null)
   const [projetoHidroId, setProjetoHidroId] = useState<number | null>(null)
+  const [projetos, setProjetos] = useState<Projeto[]>([])
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [carregandoTurmas, setCarregandoTurmas] = useState(true)
 
@@ -125,6 +128,7 @@ export default function InicioAdminPage() {
       if (projetosRes.status === 'fulfilled') {
         const hidro = projetosRes.value.find((p) => p.nome === 'Viva Bem com Hidro')
         setProjetoHidroId(hidro?.id ?? null)
+        setProjetos(projetosRes.value)
       }
 
       let recebidoMes: ValorCard = 'erro'
@@ -153,7 +157,20 @@ export default function InicioAdminPage() {
       const totalAssociados: ValorCard =
         associadosRes.status === 'fulfilled' ? associadosRes.value.length : 'erro'
 
-      setResumo({ recebidoMes, pendenteMes, atrasadosQtd, atrasadosTotal, projetosAtivos, totalAssociados })
+      const totalAlunasAtivas: ValorCard =
+        projetosRes.status === 'fulfilled'
+          ? projetosRes.value.reduce((acc, p) => acc + p.alunasAtivas, 0)
+          : 'erro'
+
+      setResumo({
+        recebidoMes,
+        pendenteMes,
+        atrasadosQtd,
+        atrasadosTotal,
+        projetosAtivos,
+        totalAssociados,
+        totalAlunasAtivas,
+      })
     })
   }, [])
 
@@ -253,7 +270,45 @@ export default function InicioAdminPage() {
             <span className={styles.resumoLabel}>Total de associados</span>
           </div>
 
+          <div className={`${styles.resumoCard} ${styles.resumoSuccess}`}>
+            <div className={styles.iconeWrap}>
+              <Users size={20} />
+            </div>
+            <span className={styles.resumoValor}>
+              {carregando ? '...' : valorOuErro(resumo.totalAlunasAtivas, String)}
+            </span>
+            <span className={styles.resumoLabel}>Alunas ativas</span>
+          </div>
+
         </div>
+      </section>
+
+      <section className={styles.secao}>
+        <h2 className={styles.tituloSecao}>Alunas ativas por projeto</h2>
+
+        {carregando && <p className={styles.mensagemTurmas}>Carregando...</p>}
+
+        {!carregando && projetos.length === 0 && (
+          <p className={styles.mensagemTurmas}>Nenhum projeto cadastrado</p>
+        )}
+
+        {!carregando && projetos.length > 0 && (
+          <ul className={styles.lista}>
+            {[...projetos]
+              .sort((a, b) => b.alunasAtivas - a.alunasAtivas)
+              .map((projeto) => (
+                <li key={projeto.id}>
+                  <Link href={`/projetos/${projeto.id}/turmas`} className={styles.item}>
+                    <span className={styles.nome}>{projeto.nome}</span>
+                    <span className={styles.contagem}>
+                      {projeto.alunasAtivas} aluna{projeto.alunasAtivas === 1 ? '' : 's'} ativa
+                      {projeto.alunasAtivas === 1 ? '' : 's'}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+          </ul>
+        )}
       </section>
 
       <section className={styles.secao}>
@@ -320,7 +375,10 @@ export default function InicioAdminPage() {
                                 className={styles.gradeTurma}
                                 title={turma.projeto.nome}
                               >
-                                {turma.nome}
+                                <span className={styles.gradeTurmaNome}>{turma.nome}</span>
+                                <span className={styles.gradeTurmaContagem}>
+                                  {turma.ativas} ativas · {turma.inativas} inativas
+                                </span>
                               </Link>
                             ))}
                           </div>

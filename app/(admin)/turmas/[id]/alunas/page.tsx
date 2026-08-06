@@ -78,6 +78,9 @@ export default function AlunasDaTurmaPage() {
           {nomeTurma ? `Alunas — ${nomeTurma}` : 'Alunas da turma'}
         </h1>
         <div className={styles.acoesHeader}>
+          <Link href={`/frequencia/${id}`} className={styles.botaoEditar}>
+            Ver frequência
+          </Link>
           <Link href={`/turmas/${id}/editar`} className={styles.botaoEditar}>
             Editar turma
           </Link>

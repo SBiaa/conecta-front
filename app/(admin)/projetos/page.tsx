@@ -9,6 +9,7 @@ type Projeto = {
   id: string
   nome: string
   ativo: boolean
+  alunasAtivas: number
   _count: {
     turmas: number
   }
@@ -48,6 +49,8 @@ export default function ProjetosPage() {
                   <span className={styles.nome}>{projeto.nome}</span>
                   <span className={styles.contagem}>
                     {projeto._count.turmas} turma{projeto._count.turmas === 1 ? '' : 's'}
+                    {' · '}
+                    {projeto.alunasAtivas} aluna{projeto.alunasAtivas === 1 ? '' : 's'} ativa{projeto.alunasAtivas === 1 ? '' : 's'}
                   </span>
                 </div>
                 <span

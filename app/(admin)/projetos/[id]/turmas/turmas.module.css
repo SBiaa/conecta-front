@@ -127,8 +127,9 @@
   color: #ffffff;
   border-radius: 6px;
   padding: 0.25rem 0.4rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
   text-decoration: none;
   line-height: 1.2;
   transition: background-color 0.2s;
@@ -136,6 +137,17 @@
 
 .gradeTurma:hover {
   background-color: var(--primary-dark);
+}
+
+.gradeTurmaNome {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.gradeTurmaContagem {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .subtitulo {
