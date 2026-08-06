@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { MessageCircle } from 'lucide-react'
 import { apiGet, apiPatch } from '../../../lib/api'
+import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
 import styles from './perfil.module.css'
 
 type Professor = {
@@ -49,6 +51,9 @@ export default function PerfilProfessorPage() {
   const [erroDados, setErroDados] = useState('')
   const [sucessoDados, setSucessoDados] = useState(false)
 
+  const [acessoParaEnviar, setAcessoParaEnviar] = useState<AcessoGerado | null>(null)
+  const [acessoCopiado, setAcessoCopiado] = useState(false)
+
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [carregandoTurmas, setCarregandoTurmas] = useState(true)
   const [editandoTurmas, setEditandoTurmas] = useState(false)
@@ -94,6 +99,34 @@ export default function PerfilProfessorPage() {
         <p className={styles.mensagem}>Carregando...</p>
       </div>
     )
+  }
+
+  function abrirAcesso() {
+    if (!professor) return
+    setAcessoParaEnviar({
+      nome: professor.nome,
+      cpf: professor.cpf,
+      // Provisório: assume senha inicial = CPF, mesma convenção do cadastro.
+      senha: professor.cpf,
+      telefone: professor.telefone,
+    })
+    setAcessoCopiado(false)
+  }
+
+  function fecharAcesso() {
+    setAcessoParaEnviar(null)
+    setAcessoCopiado(false)
+  }
+
+  function copiarMensagemAcesso() {
+    if (!acessoParaEnviar) return
+    navigator.clipboard.writeText(
+      montarMensagemAcesso(
+        acessoParaEnviar,
+        `Olá, ${acessoParaEnviar.nome}! Aqui estão seus dados de acesso à Conecta.`
+      )
+    )
+    setAcessoCopiado(true)
   }
 
   function iniciarEdicaoDados() {
@@ -184,11 +217,50 @@ export default function PerfilProfessorPage() {
         <div className={styles.cabecalhoCard}>
           <h2 className={styles.subtitulo}>Dados pessoais</h2>
           {!editandoDados && (
-            <button className={styles.botaoEditar} onClick={iniciarEdicaoDados}>
-              Editar
-            </button>
+            <div className={styles.acoesCabecalho}>
+              <button className={styles.botaoEditar} onClick={iniciarEdicaoDados}>
+                Editar
+              </button>
+              <button className={styles.botaoEnviarAcesso} onClick={abrirAcesso}>
+                <MessageCircle size={14} />
+                Enviar acesso
+              </button>
+            </div>
           )}
         </div>
+
+        {acessoParaEnviar && (
+          <div className={styles.avisoSenha}>
+            <p className={styles.avisoSenhaTexto}>Envie a mensagem abaixo para a professora.</p>
+            <pre className={styles.mensagemAcesso}>
+              {montarMensagemAcesso(
+                acessoParaEnviar,
+                `Olá, ${acessoParaEnviar.nome}! Aqui estão seus dados de acesso à Conecta.`
+              )}
+            </pre>
+            <div className={styles.avisoSenhaAcoes}>
+              <a
+                className={styles.avisoSenhaWhatsapp}
+                href={montarLinkWhatsapp(
+                  acessoParaEnviar,
+                  `Olá, ${acessoParaEnviar.nome}! Aqui estão seus dados de acesso à Conecta.`
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Enviar no WhatsApp
+              </a>
+              <button type="button" className={styles.avisoSenhaCopiar} onClick={copiarMensagemAcesso}>
+                {acessoCopiado ? 'Copiado!' : 'Copiar mensagem'}
+              </button>
+            </div>
+            <div className={styles.avisoSenhaAcoesSecundarias}>
+              <button type="button" className={styles.avisoSenhaDispensar} onClick={fecharAcesso}>
+                Dispensar
+              </button>
+            </div>
+          </div>
+        )}
 
         {!editandoDados && (
           <dl className={styles.grade}>
