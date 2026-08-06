@@ -13,7 +13,7 @@ type Matricula = {
   turmas: {
     nome: string
     horario: string | null
-    dias: string[]
+    diasContratados: string[]
     projeto: { nome: string }
   }[]
 }
@@ -70,9 +70,9 @@ export default function MeusProjetosPage() {
               <p className={styles.turma}>{matricula.turmas.map((turma) => turma.nome).join(', ')}</p>
 
               {matricula.turmas.map((turma, indice) => (
-                turma.dias.length > 0 && (
+                turma.diasContratados.length > 0 && (
                   <p key={indice} className={styles.detalhe}>
-                    {turma.dias.map((d) => LABELS_DIA[d] ?? d).join(', ')}
+                    {turma.diasContratados.map((d) => LABELS_DIA[d] ?? d).join(', ')}
                     {turma.horario ? ` — ${turma.horario}` : ''}
                   </p>
                 )

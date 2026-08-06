@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { apiGet, apiPatch, apiPost } from '../../../lib/api'
+import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
 import styles from './nova.module.css'
 
 const PLANOS = [
@@ -41,7 +42,7 @@ const matriculaSchema = z.object({
   frequenciaSemanal: z.coerce.number().refine((valor) => PLANOS.some((plano) => plano.frequencia === valor), {
     message: 'Escolha um plano',
   }),
-  turmaIds: z.array(z.coerce.number()).min(1, { message: 'Escolha ao menos uma turma' }),
+  diaSelecoes: z.array(z.string()).min(1, { message: 'Escolha os dias que a aluna vai frequentar' }),
   exameMedico: z.enum(['APTO', 'NAO_APTO', 'AGUARDANDO'], {
     message: 'Escolha o exame médico',
   }),
@@ -59,6 +60,7 @@ type AssociadaResumo = {
 type AssociadaCompleta = {
   id: string
   nome: string
+  cpf: string
   telefone: string | null
   rg: string | null
   dataNascimento: string | null
@@ -107,8 +109,22 @@ const VALORES_PADRAO: MatriculaFormInput = {
   uf: '',
   projetoId: '' as unknown as number,
   frequenciaSemanal: '' as unknown as number,
-  turmaIds: [],
+  diaSelecoes: [],
   exameMedico: 'AGUARDANDO',
+}
+
+function chaveDiaSelecao(turmaId: number | string, dia: string) {
+  return `${turmaId}:${dia}`
+}
+
+function agruparSelecoesPorTurma(selecoes: string[]): { turmaId: number; dias: string[] }[] {
+  const porTurma = new Map<number, string[]>()
+  selecoes.forEach((chave) => {
+    const [turmaIdTexto, dia] = chave.split(':')
+    const turmaId = Number(turmaIdTexto)
+    porTurma.set(turmaId, [...(porTurma.get(turmaId) ?? []), dia])
+  })
+  return Array.from(porTurma.entries()).map(([turmaId, dias]) => ({ turmaId, dias }))
 }
 
 function dadosAssociadaParaFormulario(dados: AssociadaCompleta): MatriculaFormInput {
@@ -154,6 +170,8 @@ export default function NovaMatriculaPage() {
 
   const [sucesso, setSucesso] = useState(false)
   const [erro, setErro] = useState('')
+  const [acesso, setAcesso] = useState<AcessoGerado | null>(null)
+  const [copiado, setCopiado] = useState(false)
 
   const {
     register,
@@ -173,12 +191,10 @@ export default function NovaMatriculaPage() {
   const temProjeto = Boolean(projetoId)
   const frequenciaSemanal = watch('frequenciaSemanal')
   const frequenciaSemanalNum = frequenciaSemanal ? Number(frequenciaSemanal) : 0
-  const turmaIdsSelecionadas = watch('turmaIds') ?? []
+  const diaSelecoes = watch('diaSelecoes') ?? []
   const registroCep = register('cep')
 
-  const totalDiasSelecionados = turmas
-    .filter((turma) => turmaIdsSelecionadas.map(Number).includes(Number(turma.id)))
-    .reduce((soma, turma) => soma + turma.dias.length, 0)
+  const totalDiasSelecionados = diaSelecoes.length
 
   useEffect(() => {
     apiGet<Projeto[]>('/projetos').then(setProjetos)
@@ -231,13 +247,18 @@ export default function NovaMatriculaPage() {
       setTurmas(data)
       if (pendingTurmaIdRef.current !== null) {
         const turmaPreSelecionada = data.find((t) => Number(t.id) === pendingTurmaIdRef.current)
-        setValue('turmaIds', pendingTurmaIdRef.current ? [pendingTurmaIdRef.current] : [])
+        setValue(
+          'diaSelecoes',
+          turmaPreSelecionada
+            ? turmaPreSelecionada.dias.map((dia) => chaveDiaSelecao(turmaPreSelecionada.id, dia))
+            : []
+        )
         if (turmaPreSelecionada && PLANOS.some((plano) => plano.frequencia === turmaPreSelecionada.dias.length)) {
           setValue('frequenciaSemanal', turmaPreSelecionada.dias.length)
         }
         pendingTurmaIdRef.current = null
       } else {
-        setValue('turmaIds', [])
+        setValue('diaSelecoes', [])
       }
     })
   }, [projetoId, setValue])
@@ -311,19 +332,16 @@ export default function NovaMatriculaPage() {
   async function onSubmit(dados: MatriculaFormOutput) {
     setErro('')
     setSucesso(false)
+    setAcesso(null)
 
     if (!associadaSelecionada) {
       setErroAssociada('Selecione uma associada')
       return
     }
 
-    const totalDias = turmas
-      .filter((turma) => dados.turmaIds.map(Number).includes(Number(turma.id)))
-      .reduce((soma, turma) => soma + turma.dias.length, 0)
-
-    if (totalDias !== dados.frequenciaSemanal) {
+    if (dados.diaSelecoes.length !== dados.frequenciaSemanal) {
       setErro(
-        `A soma de dias das turmas escolhidas (${totalDias}) precisa bater com o plano (${dados.frequenciaSemanal} aulas)`
+        `A quantidade de dias escolhidos (${dados.diaSelecoes.length}) precisa bater com o plano (${dados.frequenciaSemanal} aulas)`
       )
       return
     }
@@ -347,14 +365,35 @@ export default function NovaMatriculaPage() {
 
       await apiPost('/matriculas', {
         usuarioId: associadaSelecionada.id,
-        turmaIds: dados.turmaIds,
+        turmas: agruparSelecoesPorTurma(dados.diaSelecoes),
         frequenciaSemanal: dados.frequenciaSemanal,
         exameMedico: dados.exameMedico,
       })
 
-      router.push(`/associados/${associadaSelecionada.id}`)
+      setSucesso(true)
+      setAcesso({
+        nome: associadaSelecionada.nome,
+        cpf: associadaSelecionada.cpf,
+        // Provisório: senha inicial = CPF, mesma convenção do cadastro.
+        senha: associadaSelecionada.cpf,
+        telefone: dados.telefone || associadaSelecionada.telefone,
+      })
     } catch {
       setErro('Não foi possível matricular a aluna')
+    }
+  }
+
+  function copiarMensagem() {
+    if (!acesso) return
+    navigator.clipboard.writeText(
+      montarMensagemAcesso(acesso, `Olá, ${acesso.nome}! Sua matrícula na Conecta foi confirmada.`)
+    )
+    setCopiado(true)
+  }
+
+  function irParaPerfil() {
+    if (associadaSelecionada) {
+      router.push(`/associados/${associadaSelecionada.id}`)
     }
   }
 
@@ -395,7 +434,7 @@ export default function NovaMatriculaPage() {
           </div>
         )}
 
-        {associadaSelecionada && (
+        {associadaSelecionada && !acesso && (
           <>
             <div className={styles.associadaSelecionada}>
               <span className={styles.associadaNome}>{associadaSelecionada.nome}</span>
@@ -529,20 +568,28 @@ export default function NovaMatriculaPage() {
                 {temProjeto && turmas.length > 0 && (
                   <>
                     <ul className={styles.listaTurmas}>
-                      {turmas.map((turma) => (
-                        <li key={turma.id} className={styles.itemTurmaCheckbox}>
-                          <label>
-                            <input type="checkbox" value={turma.id} {...register('turmaIds')} />
-                            {turma.nome}
-                            {' — '}
-                            {turma.dias.length > 0
-                              ? `${turma.dias.length} aula${turma.dias.length > 1 ? 's' : ''}/semana (${turma.dias
-                                  .map((dia) => DIAS_ABREVIADOS[dia] ?? dia)
-                                  .join(', ')})`
-                              : 'sem dias cadastrados'}
-                          </label>
-                        </li>
-                      ))}
+                      {turmas.map((turma) =>
+                        turma.dias.length > 0 ? (
+                          turma.dias.map((dia) => (
+                            <li key={chaveDiaSelecao(turma.id, dia)} className={styles.itemTurmaCheckbox}>
+                              <label>
+                                <input
+                                  type="checkbox"
+                                  value={chaveDiaSelecao(turma.id, dia)}
+                                  {...register('diaSelecoes')}
+                                />
+                                {turma.nome} — {DIAS_ABREVIADOS[dia] ?? dia}
+                              </label>
+                            </li>
+                          ))
+                        ) : (
+                          <li key={turma.id} className={styles.itemTurmaCheckbox}>
+                            <label className={styles.itemTurmaDesabilitado}>
+                              {turma.nome} — sem dias cadastrados
+                            </label>
+                          </li>
+                        )
+                      )}
                     </ul>
                     {frequenciaSemanalNum ? (
                       <span
@@ -557,7 +604,7 @@ export default function NovaMatriculaPage() {
                     )}
                   </>
                 )}
-                {errors.turmaIds && <span className={styles.erro}>{errors.turmaIds.message}</span>}
+                {errors.diaSelecoes && <span className={styles.erro}>{errors.diaSelecoes.message}</span>}
               </div>
 
               <div className={styles.campo}>
@@ -582,7 +629,42 @@ export default function NovaMatriculaPage() {
           </>
         )}
 
-        {sucesso && <p className={styles.sucesso}>Aluna matriculada!</p>}
+        {acesso && (
+          <div className={styles.avisoSenha}>
+            <p className={styles.avisoSenhaTexto}>
+              Aluna matriculada! Envie a mensagem abaixo para ela.
+            </p>
+            <pre className={styles.mensagemAcesso}>
+              {montarMensagemAcesso(
+                acesso,
+                `Olá, ${acesso.nome}! Sua matrícula na Conecta foi confirmada.`
+              )}
+            </pre>
+            <div className={styles.avisoSenhaAcoes}>
+              <a
+                className={styles.avisoSenhaWhatsapp}
+                href={montarLinkWhatsapp(
+                  acesso,
+                  `Olá, ${acesso.nome}! Sua matrícula na Conecta foi confirmada.`
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Enviar no WhatsApp
+              </a>
+              <button type="button" className={styles.avisoSenhaCopiar} onClick={copiarMensagem}>
+                {copiado ? 'Copiado!' : 'Copiar mensagem'}
+              </button>
+            </div>
+            <div className={styles.avisoSenhaAcoesSecundarias}>
+              <button type="button" className={styles.avisoSenhaDispensar} onClick={irParaPerfil}>
+                Ir para o perfil da aluna
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!acesso && sucesso && <p className={styles.sucesso}>Aluna matriculada!</p>}
         {erro && <p className={styles.mensagemErro}>{erro}</p>}
       </div>
     </div>

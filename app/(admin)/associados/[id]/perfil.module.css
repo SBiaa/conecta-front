@@ -382,6 +382,66 @@
   cursor: pointer;
 }
 
+.avisoSenhaAcoesSecundarias {
+  display: flex;
+  margin-top: 0.4rem;
+}
+
+.mensagemAcesso {
+  margin: 0.6rem 0 0;
+  padding: 0.6rem 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid #fcd9a4;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: all;
+}
+
+.avisoSenhaWhatsapp {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: white;
+  background-color: #25d366;
+  border: none;
+  border-radius: 8px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.avisoSenhaWhatsapp:hover {
+  background-color: #1da851;
+}
+
+.botoesSenha {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.botaoEnviarAcesso {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #16a34a;
+  background-color: #dcfce7;
+  border: none;
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoEnviarAcesso:hover {
+  background-color: #bbf7d0;
+}
+
 /* Modal */
 
 .overlay {
@@ -464,6 +524,11 @@
   color: var(--text-primary);
   cursor: pointer;
   margin: 0;
+}
+
+.itemTurmaDesabilitado {
+  color: var(--text-secondary);
+  cursor: default;
 }
 
 .aviso {

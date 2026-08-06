@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { CirclePlus, Pencil, KeyRound, Eye, EyeOff } from 'lucide-react'
+import { CirclePlus, Pencil, KeyRound, Eye, EyeOff, MessageCircle } from 'lucide-react'
 import { apiGet, apiPatch } from '../../../lib/api'
+import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
 import styles from './perfil.module.css'
 
 const FLORES = [
@@ -31,6 +32,7 @@ type Matricula = {
     nome: string
     horario: string | null
     dias: string[]
+    diasContratados: string[]
     projeto: { id: string; nome: string }
   }[]
 }
@@ -65,7 +67,7 @@ type Pagamento = {
   formaPagamento: FormaPagamento | null
   matricula: {
     usuario: { nome: string }
-    turmas: { nome: string; projeto: { nome: string } }[]
+    turmas: { nome: string; diasContratados: string[]; projeto: { nome: string } }[]
   }
 }
 
@@ -112,6 +114,20 @@ const LABELS_FORMA: Record<FormaPagamento, string> = {
   DINHEIRO: 'Dinheiro',
   PIX: 'Pix',
   CARTAO: 'Cartão',
+}
+
+function chaveDiaSelecao(turmaId: number | string, dia: string) {
+  return `${turmaId}:${dia}`
+}
+
+function agruparSelecoesPorTurma(selecoes: string[]): { turmaId: number; dias: string[] }[] {
+  const porTurma = new Map<number, string[]>()
+  selecoes.forEach((chave) => {
+    const [turmaIdTexto, dia] = chave.split(':')
+    const turmaId = Number(turmaIdTexto)
+    porTurma.set(turmaId, [...(porTurma.get(turmaId) ?? []), dia])
+  })
+  return Array.from(porTurma.entries()).map(([turmaId, dias]) => ({ turmaId, dias }))
 }
 
 function formatarMes(mes: string) {
@@ -180,12 +196,15 @@ export default function PerfilAssociadoPage() {
   const [senhaSalva, setSenhaSalva] = useState<string | null>(null)
   const [senhaCopiada, setSenhaCopiada] = useState(false)
 
+  const [acessoParaEnviar, setAcessoParaEnviar] = useState<AcessoGerado | null>(null)
+  const [acessoCopiado, setAcessoCopiado] = useState(false)
+
   const [matriculaParaEditar, setMatriculaParaEditar] = useState<Matricula | null>(null)
   const [turmasModal, setTurmasModal] = useState<TurmaOpcao[]>([])
   const [carregandoTurmasModal, setCarregandoTurmasModal] = useState(false)
   const [exameModal, setExameModal] = useState('AGUARDANDO')
   const [ativaModal, setAtivaModal] = useState(true)
-  const [turmaIdsModal, setTurmaIdsModal] = useState<string[]>([])
+  const [diaSelecoesModal, setDiaSelecoesModal] = useState<string[]>([])
   const [frequenciaModal, setFrequenciaModal] = useState<number | ''>('')
   const [enviandoEdicao, setEnviandoEdicao] = useState(false)
   const [erroModalEdicao, setErroModalEdicao] = useState('')
@@ -287,11 +306,44 @@ export default function PerfilAssociadoPage() {
     setSenhaCopiada(false)
   }
 
+  function abrirAcesso() {
+    if (!associado) return
+    setSenhaSalva(null)
+    setAcessoParaEnviar({
+      nome: associado.nome,
+      cpf: associado.cpf,
+      // Provisório: assume senha inicial = CPF, salvo troca recente nesta sessão.
+      senha: senhaSalva ?? associado.cpf,
+      telefone: associado.telefone,
+    })
+    setAcessoCopiado(false)
+  }
+
+  function fecharAcesso() {
+    setAcessoParaEnviar(null)
+    setAcessoCopiado(false)
+  }
+
+  function copiarMensagemAcesso() {
+    if (!acessoParaEnviar) return
+    navigator.clipboard.writeText(
+      montarMensagemAcesso(
+        acessoParaEnviar,
+        `Olá, ${acessoParaEnviar.nome}! Aqui estão seus dados de acesso à Conecta.`
+      )
+    )
+    setAcessoCopiado(true)
+  }
+
   function abrirModalEdicao(matricula: Matricula) {
     setMatriculaParaEditar(matricula)
     setExameModal(matricula.exameMedico ?? 'AGUARDANDO')
     setAtivaModal(matricula.ativa)
-    setTurmaIdsModal(matricula.turmas.map((turma) => turma.id))
+    setDiaSelecoesModal(
+      matricula.turmas.flatMap((turma) =>
+        turma.diasContratados.map((dia) => chaveDiaSelecao(turma.id, dia))
+      )
+    )
     setFrequenciaModal(matricula.frequenciaSemanal ?? '')
     setErroModalEdicao('')
     setTurmasModal([])
@@ -306,27 +358,25 @@ export default function PerfilAssociadoPage() {
     setMatriculaParaEditar(null)
   }
 
-  function alternarTurmaModal(turmaId: string) {
-    setTurmaIdsModal((atual) =>
-      atual.includes(turmaId) ? atual.filter((id) => id !== turmaId) : [...atual, turmaId]
+  function alternarDiaModal(chave: string) {
+    setDiaSelecoesModal((atual) =>
+      atual.includes(chave) ? atual.filter((item) => item !== chave) : [...atual, chave]
     )
   }
 
-  const totalDiasModal = turmasModal
-    .filter((turma) => turmaIdsModal.includes(turma.id))
-    .reduce((soma, turma) => soma + turma.dias.length, 0)
+  const totalDiasModal = diaSelecoesModal.length
 
   async function confirmarEdicao() {
     if (!matriculaParaEditar) return
 
-    if (!frequenciaModal || turmaIdsModal.length === 0) {
-      setErroModalEdicao('Escolha o plano e ao menos uma turma')
+    if (!frequenciaModal || diaSelecoesModal.length === 0) {
+      setErroModalEdicao('Escolha o plano e ao menos um dia')
       return
     }
 
     if (totalDiasModal !== frequenciaModal) {
       setErroModalEdicao(
-        `A soma de dias das turmas escolhidas (${totalDiasModal}) precisa bater com o plano (${frequenciaModal} aulas)`
+        `A quantidade de dias escolhidos (${totalDiasModal}) precisa bater com o plano (${frequenciaModal} aulas)`
       )
       return
     }
@@ -337,7 +387,7 @@ export default function PerfilAssociadoPage() {
       await apiPatch(`/matriculas/${matriculaParaEditar.id}`, {
         exameMedico: exameModal,
         ativa: ativaModal,
-        turmaIds: turmaIdsModal.map(Number),
+        turmas: agruparSelecoesPorTurma(diaSelecoesModal),
         frequenciaSemanal: frequenciaModal,
       })
       await buscarAssociado()
@@ -367,10 +417,16 @@ export default function PerfilAssociadoPage() {
       <div className={styles.card}>
         <div className={styles.cabecalhoSecao}>
           <h2 className={styles.subtitulo}>Dados pessoais</h2>
-          <button className={styles.botaoAlterarSenha} onClick={abrirModalSenha}>
-            <KeyRound size={14} />
-            Alterar senha
-          </button>
+          <div className={styles.botoesSenha}>
+            <button className={styles.botaoAlterarSenha} onClick={abrirModalSenha}>
+              <KeyRound size={14} />
+              Alterar senha
+            </button>
+            <button className={styles.botaoEnviarAcesso} onClick={abrirAcesso}>
+              <MessageCircle size={14} />
+              Enviar acesso
+            </button>
+          </div>
         </div>
 
         {senhaSalva && (
@@ -385,6 +441,39 @@ export default function PerfilAssociadoPage() {
                 {senhaCopiada ? 'Copiado!' : 'Copiar senha'}
               </button>
               <button type="button" className={styles.avisoSenhaDispensar} onClick={dispensarSenhaSalva}>
+                Dispensar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {acessoParaEnviar && (
+          <div className={styles.avisoSenha}>
+            <p className={styles.avisoSenhaTexto}>Envie a mensagem abaixo para a associada.</p>
+            <pre className={styles.mensagemAcesso}>
+              {montarMensagemAcesso(
+                acessoParaEnviar,
+                `Olá, ${acessoParaEnviar.nome}! Aqui estão seus dados de acesso à Conecta.`
+              )}
+            </pre>
+            <div className={styles.avisoSenhaAcoes}>
+              <a
+                className={styles.avisoSenhaWhatsapp}
+                href={montarLinkWhatsapp(
+                  acessoParaEnviar,
+                  `Olá, ${acessoParaEnviar.nome}! Aqui estão seus dados de acesso à Conecta.`
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Enviar no WhatsApp
+              </a>
+              <button type="button" className={styles.avisoSenhaCopiar} onClick={copiarMensagemAcesso}>
+                {acessoCopiado ? 'Copiado!' : 'Copiar mensagem'}
+              </button>
+            </div>
+            <div className={styles.avisoSenhaAcoesSecundarias}>
+              <button type="button" className={styles.avisoSenhaDispensar} onClick={fecharAcesso}>
                 Dispensar
               </button>
             </div>
@@ -456,10 +545,13 @@ export default function PerfilAssociadoPage() {
                       {matricula.turmas.map((turma) => turma.horario).filter(Boolean).join(' · ')}
                     </span>
                   )}
-                  {matricula.turmas.some((turma) => turma.dias.length > 0) && (
+                  {matricula.turmas.some((turma) => turma.diasContratados.length > 0) && (
                     <span className={styles.detalhe}>
                       {matricula.turmas
-                        .map((turma) => turma.dias.map((d) => LABELS_DIA[d] ?? d).join(', '))
+                        .map(
+                          (turma) =>
+                            `${turma.nome}: ${turma.diasContratados.map((d) => LABELS_DIA[d] ?? d).join(', ')}`
+                        )
                         .filter(Boolean)
                         .join(' · ')}
                     </span>
@@ -637,22 +729,32 @@ export default function PerfilAssociadoPage() {
               ) : (
                 <>
                   <ul className={styles.listaTurmasModal}>
-                    {turmasModal.map((turma) => (
-                      <li key={turma.id}>
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={turmaIdsModal.includes(turma.id)}
-                            onChange={() => alternarTurmaModal(turma.id)}
-                          />
-                          {turma.nome}
-                          {turma.horario ? ` — ${turma.horario}` : ''}
-                          {turma.dias.length > 0
-                            ? ` (${turma.dias.length} aula${turma.dias.length > 1 ? 's' : ''}/semana)`
-                            : ' (sem dias cadastrados)'}
-                        </label>
-                      </li>
-                    ))}
+                    {turmasModal.map((turma) =>
+                      turma.dias.length > 0 ? (
+                        turma.dias.map((dia) => {
+                          const chave = chaveDiaSelecao(turma.id, dia)
+                          return (
+                            <li key={chave}>
+                              <label>
+                                <input
+                                  type="checkbox"
+                                  checked={diaSelecoesModal.includes(chave)}
+                                  onChange={() => alternarDiaModal(chave)}
+                                />
+                                {turma.nome}
+                                {turma.horario ? ` — ${turma.horario}` : ''} — {LABELS_DIA[dia] ?? dia}
+                              </label>
+                            </li>
+                          )
+                        })
+                      ) : (
+                        <li key={turma.id}>
+                          <label className={styles.itemTurmaDesabilitado}>
+                            {turma.nome} — sem dias cadastrados
+                          </label>
+                        </li>
+                      )
+                    )}
                   </ul>
                   {frequenciaModal !== '' && (
                     <span className={totalDiasModal === frequenciaModal ? styles.aviso : styles.erro}>

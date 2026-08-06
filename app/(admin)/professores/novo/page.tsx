@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { apiPost } from '../../../lib/api'
+import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
 import styles from './novo.module.css'
 
 const professorSchema = z.object({
@@ -15,33 +16,6 @@ const professorSchema = z.object({
 })
 
 type ProfessorForm = z.infer<typeof professorSchema>
-
-type AcessoGerado = {
-  nome: string
-  cpf: string
-  senha: string
-  telefone?: string
-}
-
-function montarMensagemAcesso(acesso: AcessoGerado) {
-  const link = typeof window !== 'undefined' ? `${window.location.origin}/login` : ''
-  return [
-    `Olá, ${acesso.nome}! Seu cadastro na Conecta foi feito com sucesso.`,
-    '',
-    'Acesse com:',
-    `CPF: ${acesso.cpf}`,
-    `Senha: ${acesso.senha}`,
-    ...(link ? ['', `Link de acesso: ${link}`] : []),
-    '',
-    'Qualquer dúvida, é só chamar!',
-  ].join('\n')
-}
-
-function montarLinkWhatsapp(acesso: AcessoGerado) {
-  const digitos = (acesso.telefone ?? '').replace(/\D/g, '')
-  const numero = digitos ? (digitos.startsWith('55') ? digitos : `55${digitos}`) : ''
-  return `https://wa.me/${numero}?text=${encodeURIComponent(montarMensagemAcesso(acesso))}`
-}
 
 export default function NovoProfessorPage() {
   const [sucesso, setSucesso] = useState(false)
