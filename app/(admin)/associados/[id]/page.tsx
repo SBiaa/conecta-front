@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { CirclePlus, Pencil, KeyRound, Eye, EyeOff, MessageCircle } from 'lucide-react'
-import { apiGet, apiPatch } from '../../../lib/api'
+import { CirclePlus, Pencil, Trash2, KeyRound, Eye, EyeOff, MessageCircle } from 'lucide-react'
+import { apiGet, apiPatch, apiDelete } from '../../../lib/api'
 import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
 import SeletorTurmasSemana, {
   chaveDiaSelecao,
@@ -200,6 +200,29 @@ export default function PerfilAssociadoPage() {
   const [frequenciaModal, setFrequenciaModal] = useState<number | ''>('')
   const [enviandoEdicao, setEnviandoEdicao] = useState(false)
   const [erroModalEdicao, setErroModalEdicao] = useState('')
+
+  const [matriculaParaExcluir, setMatriculaParaExcluir] = useState<Matricula | null>(null)
+  const [excluindoMatricula, setExcluindoMatricula] = useState(false)
+  const [erroExclusao, setErroExclusao] = useState('')
+
+  const [modalDadosAberto, setModalDadosAberto] = useState(false)
+  const [nomeEdit, setNomeEdit] = useState('')
+  const [telefoneEdit, setTelefoneEdit] = useState('')
+  const [emailEdit, setEmailEdit] = useState('')
+  const [rgEdit, setRgEdit] = useState('')
+  const [dataNascimentoEdit, setDataNascimentoEdit] = useState('')
+  const [tomaMedicamentoEdit, setTomaMedicamentoEdit] = useState<'' | 'true' | 'false'>('')
+  const [qualMedicamentoEdit, setQualMedicamentoEdit] = useState('')
+  const [cepEdit, setCepEdit] = useState('')
+  const [logradouroEdit, setLogradouroEdit] = useState('')
+  const [numeroEdit, setNumeroEdit] = useState('')
+  const [complementoEdit, setComplementoEdit] = useState('')
+  const [bairroEdit, setBairroEdit] = useState('')
+  const [cidadeEdit, setCidadeEdit] = useState('')
+  const [ufEdit, setUfEdit] = useState('')
+  const [cepNaoEncontradoEdit, setCepNaoEncontradoEdit] = useState(false)
+  const [enviandoDados, setEnviandoDados] = useState(false)
+  const [erroDados, setErroDados] = useState('')
 
   function buscarAssociado() {
     return apiGet<Associado>(`/usuarios/${id}`)
@@ -413,6 +436,116 @@ export default function PerfilAssociadoPage() {
     }
   }
 
+  function abrirModalExclusao(matricula: Matricula) {
+    setMatriculaParaExcluir(matricula)
+    setErroExclusao('')
+  }
+
+  function fecharModalExclusao() {
+    setMatriculaParaExcluir(null)
+  }
+
+  async function confirmarExclusao() {
+    if (!matriculaParaExcluir) return
+    setExcluindoMatricula(true)
+    setErroExclusao('')
+    try {
+      await apiDelete(`/matriculas/${matriculaParaExcluir.id}`)
+      await buscarAssociado()
+      fecharModalExclusao()
+    } catch {
+      setErroExclusao('Não foi possível excluir a matrícula. Verifique se há pagamentos ou presenças vinculados a ela.')
+    } finally {
+      setExcluindoMatricula(false)
+    }
+  }
+
+  function abrirModalDados() {
+    if (!associado) return
+    setNomeEdit(associado.nome)
+    setTelefoneEdit(associado.telefone ?? '')
+    setEmailEdit(associado.email ?? '')
+    setRgEdit(associado.rg ?? '')
+    setDataNascimentoEdit(associado.dataNascimento ? associado.dataNascimento.slice(0, 10) : '')
+    setTomaMedicamentoEdit(
+      associado.tomaMedicamento === true ? 'true' : associado.tomaMedicamento === false ? 'false' : ''
+    )
+    setQualMedicamentoEdit(associado.qualMedicamento ?? '')
+    setCepEdit(associado.cep ?? '')
+    setLogradouroEdit(associado.logradouro ?? '')
+    setNumeroEdit(associado.numero ?? '')
+    setComplementoEdit(associado.complemento ?? '')
+    setBairroEdit(associado.bairro ?? '')
+    setCidadeEdit(associado.cidade ?? '')
+    setUfEdit(associado.uf ?? '')
+    setCepNaoEncontradoEdit(false)
+    setErroDados('')
+    setModalDadosAberto(true)
+  }
+
+  function fecharModalDados() {
+    setModalDadosAberto(false)
+  }
+
+  async function buscarCepEdit() {
+    const cepLimpo = cepEdit.replace(/\D/g, '')
+    if (cepLimpo.length !== 8) return
+
+    setCepNaoEncontradoEdit(false)
+
+    try {
+      const resposta = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+      const dados: { erro?: boolean; logradouro?: string; bairro?: string; localidade?: string; uf?: string } =
+        await resposta.json()
+
+      if (dados.erro) {
+        setCepNaoEncontradoEdit(true)
+        return
+      }
+
+      setLogradouroEdit(dados.logradouro ?? '')
+      setBairroEdit(dados.bairro ?? '')
+      setCidadeEdit(dados.localidade ?? '')
+      setUfEdit(dados.uf ?? '')
+    } catch {
+      setCepNaoEncontradoEdit(true)
+    }
+  }
+
+  async function confirmarDados() {
+    if (!nomeEdit.trim()) {
+      setErroDados('O nome é obrigatório')
+      return
+    }
+
+    setEnviandoDados(true)
+    setErroDados('')
+    try {
+      await apiPatch(`/usuarios/${id}`, {
+        nome: nomeEdit.trim(),
+        telefone: telefoneEdit || undefined,
+        email: emailEdit || undefined,
+        rg: rgEdit || undefined,
+        dataNascimento: dataNascimentoEdit || undefined,
+        tomaMedicamento: tomaMedicamentoEdit === '' ? undefined : tomaMedicamentoEdit === 'true',
+        qualMedicamento: qualMedicamentoEdit || undefined,
+        cep: cepEdit || undefined,
+        logradouro: logradouroEdit || undefined,
+        numero: numeroEdit || undefined,
+        complemento: complementoEdit || undefined,
+        bairro: bairroEdit || undefined,
+        cidade: cidadeEdit || undefined,
+        uf: ufEdit || undefined,
+      })
+      await buscarAssociado()
+      fecharModalDados()
+    } catch {
+      setErroDados('Não foi possível salvar os dados. Verifique se o email já está em uso.')
+    } finally {
+      setEnviandoDados(false)
+    }
+  }
+
   if (carregandoAssociado) {
     return <div className={styles.pagina}><p className={styles.mensagem}>Carregando...</p></div>
   }
@@ -432,6 +565,10 @@ export default function PerfilAssociadoPage() {
         <div className={styles.cabecalhoSecao}>
           <h2 className={styles.subtitulo}>Dados pessoais</h2>
           <div className={styles.botoesSenha}>
+            <button className={styles.botaoAlterarSenha} onClick={abrirModalDados}>
+              <Pencil size={14} />
+              Editar dados
+            </button>
             <button className={styles.botaoAlterarSenha} onClick={abrirModalSenha}>
               <KeyRound size={14} />
               Alterar senha
@@ -593,6 +730,13 @@ export default function PerfilAssociadoPage() {
                   >
                     <Pencil size={14} />
                   </button>
+                  <button
+                    className={styles.botaoEditar}
+                    onClick={() => abrirModalExclusao(matricula)}
+                    title="Excluir matrícula"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </li>
             ))}
@@ -649,6 +793,152 @@ export default function PerfilAssociadoPage() {
           </ul>
         )}
       </div>
+
+      {/* Modal editar dados pessoais */}
+      {modalDadosAberto && (
+        <div className={styles.overlay} onClick={fecharModalDados}>
+          <div className={`${styles.modal} ${styles.modalLargo}`} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitulo}>Editar dados pessoais</h3>
+
+            <div className={styles.campo}>
+              <label htmlFor="nomeEdit">Nome</label>
+              <input type="text" id="nomeEdit" value={nomeEdit} onChange={(e) => setNomeEdit(e.target.value)} />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="telefoneEdit">Telefone</label>
+              <input
+                type="text"
+                id="telefoneEdit"
+                value={telefoneEdit}
+                onChange={(e) => setTelefoneEdit(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="emailEdit">Email</label>
+              <input type="email" id="emailEdit" value={emailEdit} onChange={(e) => setEmailEdit(e.target.value)} />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="rgEdit">RG</label>
+              <input type="text" id="rgEdit" value={rgEdit} onChange={(e) => setRgEdit(e.target.value)} />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="dataNascimentoEdit">Data de nascimento</label>
+              <input
+                type="date"
+                id="dataNascimentoEdit"
+                value={dataNascimentoEdit}
+                onChange={(e) => setDataNascimentoEdit(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="tomaMedicamentoEdit">Toma medicamento</label>
+              <select
+                id="tomaMedicamentoEdit"
+                value={tomaMedicamentoEdit}
+                onChange={(e) => setTomaMedicamentoEdit(e.target.value as '' | 'true' | 'false')}
+              >
+                <option value="">Não informado</option>
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
+              </select>
+            </div>
+
+            {tomaMedicamentoEdit === 'true' && (
+              <div className={styles.campo}>
+                <label htmlFor="qualMedicamentoEdit">Qual medicamento</label>
+                <input
+                  type="text"
+                  id="qualMedicamentoEdit"
+                  value={qualMedicamentoEdit}
+                  onChange={(e) => setQualMedicamentoEdit(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className={styles.campo}>
+              <label htmlFor="cepEdit">CEP</label>
+              <input
+                type="text"
+                id="cepEdit"
+                value={cepEdit}
+                onChange={(e) => setCepEdit(e.target.value)}
+                onBlur={buscarCepEdit}
+              />
+              {cepNaoEncontradoEdit && <span className={styles.aviso}>CEP não encontrado</span>}
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="logradouroEdit">Logradouro</label>
+              <input
+                type="text"
+                id="logradouroEdit"
+                value={logradouroEdit}
+                onChange={(e) => setLogradouroEdit(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.linha}>
+              <div className={styles.campo}>
+                <label htmlFor="numeroEdit">Número</label>
+                <input
+                  type="text"
+                  id="numeroEdit"
+                  value={numeroEdit}
+                  onChange={(e) => setNumeroEdit(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.campo}>
+                <label htmlFor="complementoEdit">Complemento</label>
+                <input
+                  type="text"
+                  id="complementoEdit"
+                  value={complementoEdit}
+                  onChange={(e) => setComplementoEdit(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="bairroEdit">Bairro</label>
+              <input type="text" id="bairroEdit" value={bairroEdit} onChange={(e) => setBairroEdit(e.target.value)} />
+            </div>
+
+            <div className={styles.linha}>
+              <div className={styles.campo}>
+                <label htmlFor="cidadeEdit">Cidade</label>
+                <input
+                  type="text"
+                  id="cidadeEdit"
+                  value={cidadeEdit}
+                  onChange={(e) => setCidadeEdit(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.campo}>
+                <label htmlFor="ufEdit">UF</label>
+                <input type="text" id="ufEdit" value={ufEdit} onChange={(e) => setUfEdit(e.target.value)} />
+              </div>
+            </div>
+
+            {erroDados && <p className={styles.erroModal}>{erroDados}</p>}
+
+            <div className={styles.acoesModal}>
+              <button className={styles.botaoCancelar} onClick={fecharModalDados}>
+                Cancelar
+              </button>
+              <button className={styles.botaoConfirmar} onClick={confirmarDados} disabled={enviandoDados}>
+                {enviandoDados ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal alterar senha */}
       {modalSenhaAberto && (
@@ -774,6 +1064,36 @@ export default function PerfilAssociadoPage() {
                 disabled={enviandoEdicao || carregandoTurmasModal}
               >
                 {enviandoEdicao ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal excluir matrícula */}
+      {matriculaParaExcluir && (
+        <div className={styles.overlay} onClick={fecharModalExclusao}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitulo}>Excluir matrícula</h3>
+
+            <p className={styles.mensagem}>
+              Tem certeza que deseja excluir a matrícula em{' '}
+              {matriculaParaExcluir.turmas.map((turma) => turma.nome).join(', ') || 'turma não informada'}?
+              Essa ação não pode ser desfeita.
+            </p>
+
+            {erroExclusao && <p className={styles.erroModal}>{erroExclusao}</p>}
+
+            <div className={styles.acoesModal}>
+              <button className={styles.botaoCancelar} onClick={fecharModalExclusao}>
+                Cancelar
+              </button>
+              <button
+                className={styles.botaoConfirmar}
+                onClick={confirmarExclusao}
+                disabled={excluindoMatricula}
+              >
+                {excluindoMatricula ? 'Excluindo...' : 'Excluir'}
               </button>
             </div>
           </div>

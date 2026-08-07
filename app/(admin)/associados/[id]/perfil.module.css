@@ -501,6 +501,15 @@
   border-color: var(--primary);
 }
 
+.linha {
+  display: flex;
+  gap: 1rem;
+}
+
+.linha .campo {
+  flex: 1;
+}
+
 .listaTurmasModal {
   list-style: none;
   margin: 0;
