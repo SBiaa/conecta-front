@@ -723,20 +723,22 @@ export default function PerfilAssociadoPage() {
                   <span className={`${styles.badge} ${matricula.ativa ? styles.badgeAtiva : styles.badgeInativa}`}>
                     {matricula.ativa ? 'Ativa' : 'Inativa'}
                   </span>
-                  <button
-                    className={styles.botaoEditar}
-                    onClick={() => abrirModalEdicao(matricula)}
-                    title="Editar matrícula"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                  <button
-                    className={styles.botaoEditar}
-                    onClick={() => abrirModalExclusao(matricula)}
-                    title="Excluir matrícula"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className={styles.acoesMatricula}>
+                    <button
+                      className={styles.botaoEditar}
+                      onClick={() => abrirModalEdicao(matricula)}
+                      title="Editar matrícula"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      className={styles.botaoEditar}
+                      onClick={() => abrirModalExclusao(matricula)}
+                      title="Excluir matrícula"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}

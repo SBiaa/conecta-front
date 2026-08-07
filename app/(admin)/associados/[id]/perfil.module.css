@@ -242,6 +242,12 @@
   background-color: #ffebee;
 }
 
+.acoesMatricula {
+  display: flex;
+  flex-direction: row;
+  gap: 0.4rem;
+}
+
 .botaoEditar {
   display: flex;
   align-items: center;
