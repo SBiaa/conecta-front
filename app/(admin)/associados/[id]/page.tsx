@@ -209,6 +209,7 @@ export default function PerfilAssociadoPage() {
   const [nomeEdit, setNomeEdit] = useState('')
   const [telefoneEdit, setTelefoneEdit] = useState('')
   const [emailEdit, setEmailEdit] = useState('')
+  const [statusEdit, setStatusEdit] = useState<'ATIVO' | 'INATIVO'>('ATIVO')
   const [rgEdit, setRgEdit] = useState('')
   const [dataNascimentoEdit, setDataNascimentoEdit] = useState('')
   const [tomaMedicamentoEdit, setTomaMedicamentoEdit] = useState<'' | 'true' | 'false'>('')
@@ -465,6 +466,7 @@ export default function PerfilAssociadoPage() {
     setNomeEdit(associado.nome)
     setTelefoneEdit(associado.telefone ?? '')
     setEmailEdit(associado.email ?? '')
+    setStatusEdit(associado.status)
     setRgEdit(associado.rg ?? '')
     setDataNascimentoEdit(associado.dataNascimento ? associado.dataNascimento.slice(0, 10) : '')
     setTomaMedicamentoEdit(
@@ -525,6 +527,7 @@ export default function PerfilAssociadoPage() {
         nome: nomeEdit.trim(),
         telefone: telefoneEdit || undefined,
         email: emailEdit || undefined,
+        status: statusEdit,
         rg: rgEdit || undefined,
         dataNascimento: dataNascimentoEdit || undefined,
         tomaMedicamento: tomaMedicamentoEdit === '' ? undefined : tomaMedicamentoEdit === 'true',
@@ -647,8 +650,16 @@ export default function PerfilAssociadoPage() {
             <dd>{associado.telefone || '—'}</dd>
           </div>
           <div className={styles.campo}>
+            <dt>Email</dt>
+            <dd>{associado.email || '—'}</dd>
+          </div>
+          <div className={styles.campo}>
             <dt>RG</dt>
             <dd>{associado.rg || '—'}</dd>
+          </div>
+          <div className={styles.campo}>
+            <dt>Status</dt>
+            <dd>{associado.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</dd>
           </div>
           <div className={styles.campo}>
             <dt>Data de nascimento</dt>
@@ -820,6 +831,18 @@ export default function PerfilAssociadoPage() {
             <div className={styles.campo}>
               <label htmlFor="emailEdit">Email</label>
               <input type="email" id="emailEdit" value={emailEdit} onChange={(e) => setEmailEdit(e.target.value)} />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="statusEdit">Status</label>
+              <select
+                id="statusEdit"
+                value={statusEdit}
+                onChange={(e) => setStatusEdit(e.target.value as 'ATIVO' | 'INATIVO')}
+              >
+                <option value="ATIVO">Ativo</option>
+                <option value="INATIVO">Inativo</option>
+              </select>
             </div>
 
             <div className={styles.campo}>
