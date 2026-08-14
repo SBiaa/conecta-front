@@ -207,6 +207,7 @@ export default function PerfilAssociadoPage() {
 
   const [modalDadosAberto, setModalDadosAberto] = useState(false)
   const [nomeEdit, setNomeEdit] = useState('')
+  const [cpfEdit, setCpfEdit] = useState('')
   const [telefoneEdit, setTelefoneEdit] = useState('')
   const [emailEdit, setEmailEdit] = useState('')
   const [statusEdit, setStatusEdit] = useState<'ATIVO' | 'INATIVO'>('ATIVO')
@@ -464,6 +465,7 @@ export default function PerfilAssociadoPage() {
   function abrirModalDados() {
     if (!associado) return
     setNomeEdit(associado.nome)
+    setCpfEdit(associado.cpf)
     setTelefoneEdit(associado.telefone ?? '')
     setEmailEdit(associado.email ?? '')
     setStatusEdit(associado.status)
@@ -520,11 +522,17 @@ export default function PerfilAssociadoPage() {
       return
     }
 
+    if (!cpfEdit.trim()) {
+      setErroDados('O CPF é obrigatório')
+      return
+    }
+
     setEnviandoDados(true)
     setErroDados('')
     try {
       await apiPatch(`/usuarios/${id}`, {
         nome: nomeEdit.trim(),
+        cpf: cpfEdit.trim(),
         telefone: telefoneEdit || undefined,
         email: emailEdit || undefined,
         status: statusEdit,
@@ -543,7 +551,7 @@ export default function PerfilAssociadoPage() {
       await buscarAssociado()
       fecharModalDados()
     } catch {
-      setErroDados('Não foi possível salvar os dados. Verifique se o email já está em uso.')
+      setErroDados('Não foi possível salvar os dados. Verifique se o CPF ou email já estão em uso.')
     } finally {
       setEnviandoDados(false)
     }
@@ -816,6 +824,11 @@ export default function PerfilAssociadoPage() {
             <div className={styles.campo}>
               <label htmlFor="nomeEdit">Nome</label>
               <input type="text" id="nomeEdit" value={nomeEdit} onChange={(e) => setNomeEdit(e.target.value)} />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="cpfEdit">CPF</label>
+              <input type="text" id="cpfEdit" value={cpfEdit} onChange={(e) => setCpfEdit(e.target.value)} />
             </div>
 
             <div className={styles.campo}>
