@@ -63,9 +63,14 @@ export default function MinhasTurmasPage() {
 
                 <span className={styles.contagem}>{turma.totalAlunas} alunas</span>
               </Link>
-              <Link href={`/turmas/${turma.id}/frequencia`} className={styles.linkFrequencia}>
-                Ver frequência
-              </Link>
+              <div className={styles.acoes}>
+                <Link href={`/turmas/${turma.id}/frequencia`} className={styles.linkFrequencia}>
+                  Ver frequência
+                </Link>
+                <Link href={`/turmas/${turma.id}/saude`} className={styles.linkFrequencia}>
+                  Como estão
+                </Link>
+              </div>
             </li>
           ))}
         </ul>

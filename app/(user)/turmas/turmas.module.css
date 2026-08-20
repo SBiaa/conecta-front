@@ -34,6 +34,12 @@
   text-decoration: none;
 }
 
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
 .linkFrequencia {
   display: inline-block;
   margin-top: 0.75rem;

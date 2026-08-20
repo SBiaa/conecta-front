@@ -1,0 +1,464 @@
+.pagina {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background-color: var(--background);
+}
+
+.titulo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 1rem;
+}
+
+/* ---------- seletor de mês ---------- */
+
+.seletorMes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  max-width: 620px;
+  margin-bottom: 1rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+}
+
+.setaMes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--primary-soft);
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.setaMes:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.mesAtual {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ---------- botão e formulário ---------- */
+
+.botaoAbrir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 620px;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--primary);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 620px;
+  margin-bottom: 1rem;
+  padding: 1.25rem 1.375rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.grupo {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rotulo {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 0;
+}
+
+.opcional {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background-color: #ffffff;
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.escala {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.opcao {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background-color: #ffffff;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.opcaoAtiva {
+  border-color: var(--primary);
+  background-color: var(--primary-soft);
+  color: var(--primary);
+}
+
+.acoesFormulario {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+.botaoPrimario {
+  padding: 0.65rem 1.4rem;
+  border: none;
+  border-radius: 10px;
+  background-color: var(--primary);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.botaoPrimario:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.botaoSecundario {
+  padding: 0.65rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background-color: #ffffff;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.aviso svg {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+/* ---------- cartões do relatório ---------- */
+
+.cartao {
+  max-width: 620px;
+  margin-bottom: 0.875rem;
+  padding: 1.25rem 1.375rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.cabecalhoCartao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.tituloCartao {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem;
+}
+
+.selo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.seloOk {
+  color: var(--success);
+  background-color: #e8f5e9;
+}
+
+.seloAtencao {
+  color: var(--warning);
+  background-color: #fff3e0;
+}
+
+.seloCritico {
+  color: var(--danger);
+  background-color: #ffebee;
+}
+
+.seloSemDados {
+  color: var(--text-secondary);
+  background-color: var(--border);
+}
+
+.numeroGrande {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0.4rem 0 0;
+  line-height: 1.1;
+}
+
+.unidade {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-left: 0.25rem;
+}
+
+.detalhe {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0.3rem 0 0;
+}
+
+.comparativo {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0 0;
+  font-style: italic;
+}
+
+.listaTurmas {
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.itemTurma {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.nomeTurma {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.percentualTurma {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* ---------- resumo de saúde ---------- */
+
+.resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.blocoResumo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.rotuloResumo {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+}
+
+.valorResumo {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.notaResumo {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.rotuloSecao {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 1rem 0 0.5rem;
+}
+
+.chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chip {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary);
+  background-color: var(--primary-soft);
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+}
+
+.grafico {
+  width: 100%;
+  height: 80px;
+  margin-top: 0.9rem;
+  overflow: visible;
+}
+
+/* ---------- lista de registros ---------- */
+
+.listaRegistros {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.registro {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+}
+
+.registroTopo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.registroData {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.botaoApagar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.botaoApagar:hover {
+  color: var(--danger);
+  background-color: #ffebee;
+}
+
+.registroLinha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0;
+}
+
+.chipPequeno {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: var(--background);
+  border-radius: 999px;
+  padding: 0.22rem 0.6rem;
+}
+
+.registroObservacao {
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0 0;
+  line-height: 1.45;
+}
+
+/* ---------- estados ---------- */
+
+.vazio {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin: 0.6rem 0 0;
+}
+
+.mensagem {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.mensagemErro {
+  font-size: 0.9rem;
+  color: var(--danger);
+  margin: 0;
+}

@@ -1,0 +1,186 @@
+.bloco {
+  display: flex;
+  flex-direction: column;
+}
+
+.seletorMes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.4rem 0.6rem;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.setaMes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--primary-soft);
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.setaMes:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.mesAtual {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.rotulo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.valor {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.nota {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.selo {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  margin-top: 0.15rem;
+}
+
+.seloOk {
+  color: var(--success);
+  background-color: #e8f5e9;
+}
+
+.seloAtencao {
+  color: var(--warning);
+  background-color: #fff3e0;
+}
+
+.seloCritico {
+  color: var(--danger);
+  background-color: #ffebee;
+}
+
+.seloSemDados {
+  color: var(--text-secondary);
+  background-color: var(--border);
+}
+
+.rotuloSecao {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 1.1rem 0 0.5rem;
+}
+
+.chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chip {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--primary);
+  background-color: var(--primary-soft);
+  border-radius: 999px;
+  padding: 0.24rem 0.65rem;
+}
+
+.listaRegistros {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.registro {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+}
+
+.registroData {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.registroChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.chipPequeno {
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: var(--background);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+
+.registroObservacao {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0.45rem 0 0;
+}
+
+.mensagem {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.mensagemErro {
+  font-size: 0.88rem;
+  color: var(--danger);
+  margin: 0;
+}
