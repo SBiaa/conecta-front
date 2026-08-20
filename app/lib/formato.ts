@@ -36,6 +36,14 @@ export function mesAtualISO() {
   return `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`
 }
 
+// Último dia do mês "AAAA-MM", no formato "AAAA-MM-DD".
+// O dia 0 do mês seguinte é o último dia do mês pedido.
+export function ultimoDiaDoMesISO(mes: string) {
+  const [ano, mesNumero] = mes.split('-').map(Number)
+  const ultimoDia = new Date(ano, mesNumero, 0).getDate()
+  return `${mes}-${String(ultimoDia).padStart(2, '0')}`
+}
+
 export function dataHojeISO() {
   const agora = new Date()
   const mes = String(agora.getMonth() + 1).padStart(2, '0')

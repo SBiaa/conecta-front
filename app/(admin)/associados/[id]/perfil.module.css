@@ -36,9 +36,11 @@
   font-weight: 600;
   color: var(--primary);
   background-color: var(--primary-soft);
+  border: none;
   border-radius: 8px;
   padding: 0.35rem 0.75rem;
   text-decoration: none;
+  cursor: pointer;
   transition: background-color 0.2s;
 }
 
@@ -639,4 +641,11 @@
   .acoesPagamento {
     align-self: flex-end;
   }
+}
+
+.avisoSaude {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0 0 1rem;
 }

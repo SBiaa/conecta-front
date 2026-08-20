@@ -8,6 +8,18 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
+// A API responde os erros como { erro: "mensagem" }. Quando existir, usa essa
+// mensagem — assim a tela pode mostrar o motivo real em vez de um texto genérico.
+async function erroDaResposta(response: Response, padrao: string): Promise<Error> {
+  try {
+    const corpo = await response.json()
+    if (corpo?.erro) return new Error(corpo.erro)
+  } catch {
+    // resposta sem corpo JSON — cai no texto padrão
+  }
+  return new Error(padrao)
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   let response: Response
   try {
@@ -19,7 +31,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new Error(`Erro na requisição GET ${path}: ${response.status}`)
+    throw await erroDaResposta(response, `Erro na requisição GET ${path}: ${response.status}`)
   }
 
   return response.json()
@@ -38,7 +50,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new Error(`Erro na requisição POST ${path}: ${response.status}`)
+    throw await erroDaResposta(response, `Erro na requisição POST ${path}: ${response.status}`)
   }
 
   return response.json()
@@ -56,7 +68,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new Error(`Erro na requisição DELETE ${path}: ${response.status}`)
+    throw await erroDaResposta(response, `Erro na requisição DELETE ${path}: ${response.status}`)
   }
 
   return response.json()
@@ -75,7 +87,7 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new Error(`Erro na requisição PATCH ${path}: ${response.status}`)
+    throw await erroDaResposta(response, `Erro na requisição PATCH ${path}: ${response.status}`)
   }
 
   return response.json()

@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { CirclePlus, Pencil, Trash2, KeyRound, Eye, EyeOff, MessageCircle } from 'lucide-react'
-import { apiGet, apiPatch, apiDelete } from '../../../lib/api'
+import { apiGet, apiPatch, apiPost, apiDelete } from '../../../lib/api'
 import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
+import { mesAtualISO, ultimoDiaDoMesISO } from '../../../lib/formato'
 import SeletorTurmasSemana, {
   chaveDiaSelecao,
   agruparSelecoesPorTurma,
@@ -15,6 +16,7 @@ import BlocoInscricao, {
   inscricaoParaPayload,
   type EstadoInscricao,
 } from '../../../components/BlocoInscricao'
+import RelatorioSaude from '../../../components/RelatorioSaude'
 import styles from './perfil.module.css'
 
 const FLORES = [
@@ -195,6 +197,13 @@ export default function PerfilAssociadoPage() {
   const [acessoCopiado, setAcessoCopiado] = useState(false)
   const [gerandoAcesso, setGerandoAcesso] = useState(false)
   const [erroAcesso, setErroAcesso] = useState('')
+
+  const [modalGerarAberto, setModalGerarAberto] = useState(false)
+  const [matriculaGerar, setMatriculaGerar] = useState('')
+  const [mesGerar, setMesGerar] = useState('')
+  const [vencimentoGerar, setVencimentoGerar] = useState('')
+  const [gerandoMensalidade, setGerandoMensalidade] = useState(false)
+  const [erroGerar, setErroGerar] = useState('')
 
   const [matriculaParaEditar, setMatriculaParaEditar] = useState<Matricula | null>(null)
   const [turmasModal, setTurmasModal] = useState<TurmaOpcao[]>([])
@@ -378,6 +387,52 @@ export default function PerfilAssociadoPage() {
       )
     )
     setAcessoCopiado(true)
+  }
+
+  function abrirModalGerar() {
+    const mes = mesAtualISO()
+    const ativas = associado?.matriculas.filter((matricula) => matricula.ativa) ?? []
+
+    setMatriculaGerar(ativas.length === 1 ? String(ativas[0].id) : '')
+    setMesGerar(mes)
+    setVencimentoGerar(ultimoDiaDoMesISO(mes))
+    setErroGerar('')
+    setModalGerarAberto(true)
+  }
+
+  function trocarMesGerar(mes: string) {
+    setMesGerar(mes)
+    if (mes) setVencimentoGerar(ultimoDiaDoMesISO(mes))
+  }
+
+  async function confirmarGerarMensalidade() {
+    if (!matriculaGerar) {
+      setErroGerar('Escolha a matrícula')
+      return
+    }
+
+    if (!mesGerar || !vencimentoGerar) {
+      setErroGerar('Preencha o mês e o vencimento')
+      return
+    }
+
+    setGerandoMensalidade(true)
+    setErroGerar('')
+    try {
+      await apiPost('/pagamentos/gerar-matricula', {
+        matriculaId: Number(matriculaGerar),
+        mesReferencia: mesGerar,
+        vencimento: vencimentoGerar,
+      })
+      await buscarPagamentos()
+      setModalGerarAberto(false)
+    } catch (erro) {
+      setErroGerar(
+        erro instanceof Error ? erro.message : 'Não foi possível gerar a mensalidade'
+      )
+    } finally {
+      setGerandoMensalidade(false)
+    }
   }
 
   function abrirModalEdicao(matricula: Matricula) {
@@ -779,7 +834,12 @@ export default function PerfilAssociadoPage() {
 
       {/* Bloco 3 — Extrato de pagamentos */}
       <div className={styles.card}>
-        <h2 className={styles.subtitulo}>Extrato de pagamentos</h2>
+        <div className={styles.cabecalhoSecao}>
+          <h2 className={styles.subtitulo}>Extrato de pagamentos</h2>
+          <button className={styles.botaoNovaMatricula} onClick={abrirModalGerar}>
+            Gerar mensalidade
+          </button>
+        </div>
 
         {carregandoPagamentos && <p className={styles.mensagem}>Carregando pagamentos...</p>}
 
@@ -825,6 +885,20 @@ export default function PerfilAssociadoPage() {
             ))}
           </ul>
         )}
+      </div>
+
+      {/* Bloco 4 — Saúde e progresso */}
+      <div className={styles.card}>
+        <div className={styles.cabecalhoSecao}>
+          <h2 className={styles.subtitulo}>Saúde e progresso</h2>
+        </div>
+
+        <p className={styles.avisoSaude}>
+          Dado de saúde informado pela própria associada. Use só para acompanhar e adaptar as
+          atividades dela.
+        </p>
+
+        <RelatorioSaude caminho={`/usuarios/${id}/saude`} />
       </div>
 
       {/* Modal editar dados pessoais */}
@@ -1153,6 +1227,79 @@ export default function PerfilAssociadoPage() {
                 disabled={excluindoMatricula}
               >
                 {excluindoMatricula ? 'Excluindo...' : 'Excluir'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal gerar mensalidade avulsa */}
+      {modalGerarAberto && (
+        <div className={styles.overlay} onClick={() => setModalGerarAberto(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitulo}>Gerar mensalidade</h3>
+
+            <div className={styles.campo}>
+              <label htmlFor="matriculaGerar">Matrícula</label>
+              <select
+                id="matriculaGerar"
+                value={matriculaGerar}
+                onChange={(e) => setMatriculaGerar(e.target.value)}
+              >
+                <option value="">Selecione...</option>
+                {associado.matriculas
+                  .filter((matricula) => matricula.ativa)
+                  .map((matricula) => (
+                    <option key={matricula.id} value={matricula.id}>
+                      {matricula.turmas[0]?.projeto.nome ?? 'Projeto'} —{' '}
+                      {matricula.turmas.map((turma) => turma.nome).join(', ')}
+                      {matricula.frequenciaSemanal
+                        ? ` (${matricula.frequenciaSemanal} aulas)`
+                        : ' (sem plano)'}
+                    </option>
+                  ))}
+              </select>
+              {associado.matriculas.filter((matricula) => matricula.ativa).length === 0 && (
+                <span className={styles.erro}>Esta associada não tem matrícula ativa</span>
+              )}
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="mesGerar">Mês</label>
+              <input
+                type="month"
+                id="mesGerar"
+                value={mesGerar}
+                onChange={(e) => trocarMesGerar(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="vencimentoGerar">Vencimento</label>
+              <input
+                type="date"
+                id="vencimentoGerar"
+                value={vencimentoGerar}
+                onChange={(e) => setVencimentoGerar(e.target.value)}
+              />
+            </div>
+
+            {erroGerar && <p className={styles.erroModal}>{erroGerar}</p>}
+
+            <div className={styles.acoesModal}>
+              <button
+                className={styles.botaoCancelar}
+                onClick={() => setModalGerarAberto(false)}
+                disabled={gerandoMensalidade}
+              >
+                Cancelar
+              </button>
+              <button
+                className={styles.botaoConfirmar}
+                onClick={confirmarGerarMensalidade}
+                disabled={gerandoMensalidade}
+              >
+                {gerandoMensalidade ? 'Gerando...' : 'Gerar'}
               </button>
             </div>
           </div>

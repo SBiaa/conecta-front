@@ -9,6 +9,8 @@ const ABAS = [
   { label: 'Vendas', href: '/financeiro/vendas' },
   { label: 'Produtos', href: '/financeiro/produtos' },
   { label: 'Gastos', href: '/financeiro/gastos' },
+  { label: 'Caixa do dia', href: '/financeiro/caixa' },
+  { label: 'Fechamento do mês', href: '/financeiro/fechamento' },
 ]
 
 export default function FinanceiroLayout({ children }: { children: React.ReactNode }) {

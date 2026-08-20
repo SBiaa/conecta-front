@@ -419,6 +419,13 @@
   color: var(--danger);
 }
 
+.valorPagamento {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
 .valorPositivo {
   color: var(--success);
 }
