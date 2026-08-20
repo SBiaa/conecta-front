@@ -1,0 +1,210 @@
+.interacoes {
+  margin-top: 0.875rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.reacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.6rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.reacao:hover:not(:disabled) {
+  background-color: var(--primary-soft);
+}
+
+.reacao:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reacaoAtiva {
+  border-color: var(--primary);
+  background-color: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.emoji {
+  font-size: 1rem;
+}
+
+.contagem {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.comentar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  padding: 0.35rem 0.7rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.comentar:hover {
+  background-color: var(--primary-soft);
+}
+
+.comentarAtivo {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.resumo {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0 0;
+}
+
+.erro {
+  font-size: 0.8rem;
+  color: var(--danger);
+  margin: 0.5rem 0 0;
+}
+
+.painel {
+  margin-top: 0.875rem;
+}
+
+.vazio {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+}
+
+.lista {
+  list-style: none;
+  margin: 0 0 0.875rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.comentario {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  background-color: var(--background);
+  border-radius: 10px;
+  padding: 0.625rem 0.75rem;
+}
+
+.comentarioCorpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.comentarioCabecalho {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.comentarioAutor {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.comentarioQuando {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.botaoApagar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--danger);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoApagar:hover {
+  background-color: #ffebee;
+}
+
+.comentarioTexto {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+  margin: 0.25rem 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.campo {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.campo:focus {
+  border-color: var(--primary);
+}
+
+.botaoEnviar {
+  flex-shrink: 0;
+  padding: 0.55rem 1rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoEnviar:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+}
+
+.botaoEnviar:disabled {
+  background-color: #b3a1d9;
+  cursor: not-allowed;
+}

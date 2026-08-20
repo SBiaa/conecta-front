@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiGet } from '../../lib/api'
 import { logout } from '../../lib/auth'
+import FotoPerfil from '../../components/FotoPerfil'
 import styles from './perfil.module.css'
 
 type Usuario = {
@@ -11,6 +12,7 @@ type Usuario = {
   cpf: string
   email: string | null
   telefone: string | null
+  fotoUrl: string | null
 }
 
 export default function PerfilAdminPage() {
@@ -49,7 +51,14 @@ export default function PerfilAdminPage() {
 
   return (
     <div className={styles.pagina}>
-      <h1 className={styles.titulo}>{usuario.nome}</h1>
+      <div className={styles.cabecalho}>
+        <FotoPerfil
+          nome={usuario.nome}
+          fotoUrl={usuario.fotoUrl}
+          aoMudar={(fotoUrl) => setUsuario({ ...usuario, fotoUrl })}
+        />
+        <h1 className={styles.titulo}>{usuario.nome}</h1>
+      </div>
 
       <div className={styles.card}>
         <dl className={styles.grade}>

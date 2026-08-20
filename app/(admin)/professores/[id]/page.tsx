@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { MessageCircle } from 'lucide-react'
 import { apiGet, apiPatch } from '../../../lib/api'
 import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
+import Avatar from '../../../components/Avatar'
 import styles from './perfil.module.css'
 
 type Professor = {
@@ -13,6 +14,7 @@ type Professor = {
   cpf: string
   email: string | null
   telefone: string | null
+  fotoUrl: string | null
   status: 'ATIVO' | 'INATIVO'
 }
 
@@ -237,7 +239,10 @@ export default function PerfilProfessorPage() {
 
   return (
     <div className={styles.pagina}>
-      <h1 className={styles.titulo}>{professor.nome}</h1>
+      <div className={styles.cabecalho}>
+        <Avatar nome={professor.nome} fotoUrl={professor.fotoUrl} tamanho={64} />
+        <h1 className={styles.titulo}>{professor.nome}</h1>
+      </div>
 
       <div className={styles.card}>
         <div className={styles.cabecalhoCard}>

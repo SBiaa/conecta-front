@@ -43,6 +43,67 @@ export type RegistroSaude = {
   locaisDor: LocalDor[]
   disposicao: number | null
   observacao: string | null
+  percentualGordura: number | null
+  percentualAgua: number | null
+  massaMuscular: number | null
+  massaOssea: number | null
+  gorduraVisceral: number | null
+  taxaMetabolica: number | null
+}
+
+// Os campos que a balança entrega junto com o peso. A ordem aqui é a ordem em
+// que aparecem no formulário e nos cartões.
+export const CAMPOS_BALANCA = [
+  { campo: 'percentualGordura', label: 'Gordura', unidade: '%' },
+  { campo: 'percentualAgua', label: 'Água', unidade: '%' },
+  { campo: 'massaMuscular', label: 'Massa muscular', unidade: 'kg' },
+  { campo: 'massaOssea', label: 'Massa óssea', unidade: 'kg' },
+  { campo: 'gorduraVisceral', label: 'Gordura visceral', unidade: '' },
+  { campo: 'taxaMetabolica', label: 'Taxa metabólica', unidade: 'kcal' },
+] as const
+
+export type CampoBalanca = (typeof CAMPOS_BALANCA)[number]['campo']
+
+// Circunferências de fita métrica, tiradas na avaliação física.
+export const CAMPOS_MEDIDA = [
+  { campo: 'cintura', label: 'Cintura' },
+  { campo: 'quadril', label: 'Quadril' },
+  { campo: 'braco', label: 'Braço' },
+  { campo: 'coxa', label: 'Coxa' },
+  { campo: 'panturrilha', label: 'Panturrilha' },
+  { campo: 'torax', label: 'Tórax' },
+] as const
+
+export type CampoMedida = (typeof CAMPOS_MEDIDA)[number]['campo']
+
+export type Avaliacao = {
+  id: number
+  data: string
+  cintura: number | null
+  quadril: number | null
+  braco: number | null
+  coxa: number | null
+  panturrilha: number | null
+  torax: number | null
+  observacao: string | null
+  registradoPor: string | null
+}
+
+// Primeiro/último/variação de um número ao longo do mês.
+export type Evolucao = {
+  primeiro: number | null
+  ultimo: number | null
+  variacao: number | null
+  serie: { data: string; valor: number }[]
+}
+
+// Faixas de referência da OMS. Só rotulam o número — a tela decide se mostra.
+export function faixaImc(imc: number | null): string | null {
+  if (imc === null) return null
+  if (imc < 18.5) return 'Abaixo do peso'
+  if (imc < 25) return 'Peso adequado'
+  if (imc < 30) return 'Sobrepeso'
+  return 'Obesidade'
 }
 
 export type FrequenciaTurma = {
@@ -66,13 +127,13 @@ export type Relatorio = {
     situacao: SituacaoFrequencia
     porTurma: FrequenciaTurma[]
   }
+  alturaCm: number | null
+  imc: number | null
   totalRegistros: number
-  peso: {
-    primeiro: number | null
-    ultimo: number | null
-    variacao: number | null
-    serie: { data: string; peso: number }[]
-  }
+  peso: Evolucao
+  composicao: Record<CampoBalanca, Evolucao>
+  avaliacoes: Avaliacao[]
+  ultimaAvaliacao: Avaliacao | null
   dor: {
     media: number | null
     maior: number | null
@@ -88,6 +149,8 @@ export type Relatorio = {
     mes: string
     frequenciaPercentual: number | null
     pesoUltimo: number | null
+    imc: number | null
+    gorduraUltima: number | null
     dorMedia: number | null
     disposicaoMedia: number | null
   }

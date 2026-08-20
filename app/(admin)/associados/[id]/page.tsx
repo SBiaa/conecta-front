@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { CirclePlus, Pencil, Trash2, KeyRound, Eye, EyeOff, MessageCircle } from 'lucide-react'
@@ -16,7 +16,10 @@ import BlocoInscricao, {
   inscricaoParaPayload,
   type EstadoInscricao,
 } from '../../../components/BlocoInscricao'
+import FormularioAvaliacao from '../../../components/FormularioAvaliacao'
 import RelatorioSaude from '../../../components/RelatorioSaude'
+import Avatar from '../../../components/Avatar'
+import type { Avaliacao, RelatorioDaAluna } from '../../../lib/saude'
 import styles from './perfil.module.css'
 
 const FLORES = [
@@ -54,6 +57,7 @@ type Associado = {
   cpf: string
   email: string | null
   telefone: string | null
+  fotoUrl: string | null
   status: 'ATIVO' | 'INATIVO'
   rg: string | null
   dataNascimento: string | null
@@ -170,6 +174,15 @@ function montarEndereco(a: Associado): string | null {
 
 export default function PerfilAssociadoPage() {
   const { id } = useParams<{ id: string }>()
+  // Altura e versão do bloco de saúde: a versão remonta o relatório depois que
+  // uma avaliação nova é salva.
+  const [alturaAluna, setAlturaAluna] = useState<number | null>(null)
+  const [versaoSaude, setVersaoSaude] = useState(0)
+  const [avaliacoesAluna, setAvaliacoesAluna] = useState<Avaliacao[]>([])
+  const aoCarregarSaude = useCallback((relatorio: RelatorioDaAluna) => {
+    setAlturaAluna(relatorio.alturaCm)
+    setAvaliacoesAluna(relatorio.avaliacoes)
+  }, [])
 
   const [associado, setAssociado] = useState<Associado | null>(null)
   const [carregandoAssociado, setCarregandoAssociado] = useState(true)
@@ -636,7 +649,10 @@ export default function PerfilAssociadoPage() {
 
   return (
     <div className={styles.pagina}>
-      <h1 className={styles.titulo}>{associado.nome}</h1>
+      <div className={styles.cabecalho}>
+        <Avatar nome={associado.nome} fotoUrl={associado.fotoUrl} tamanho={64} />
+        <h1 className={styles.titulo}>{associado.nome}</h1>
+      </div>
 
       {/* Bloco 1 — Dados pessoais */}
       <div className={styles.card}>
@@ -898,7 +914,18 @@ export default function PerfilAssociadoPage() {
           atividades dela.
         </p>
 
-        <RelatorioSaude caminho={`/usuarios/${id}/saude`} />
+        <FormularioAvaliacao
+          caminho={`/usuarios/${id}/avaliacoes`}
+          alturaAtual={alturaAluna}
+          avaliacoes={avaliacoesAluna}
+          aoSalvar={() => setVersaoSaude((v) => v + 1)}
+        />
+
+        <RelatorioSaude
+          key={versaoSaude}
+          caminho={`/usuarios/${id}/saude`}
+          aoCarregar={aoCarregarSaude}
+        />
       </div>
 
       {/* Modal editar dados pessoais */}

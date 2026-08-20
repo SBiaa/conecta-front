@@ -26,6 +26,17 @@ export function formatarData(data: string) {
   return `${dia}/${mes}/${d.getUTCFullYear()}`
 }
 
+// Em pt-BR o separador decimal é vírgula. Sem casas fixas: 70 continua "70",
+// 70.2 vira "70,2".
+export function formatarNumero(valor: number) {
+  return valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+}
+
+// Mesmo formato, com o sinal explícito — pra variações ("+1,8", "-0,9").
+export function comSinal(valor: number) {
+  return `${valor > 0 ? '+' : ''}${formatarNumero(valor)}`
+}
+
 export function formatarMes(mes: string) {
   const [ano, mesNumero] = mes.split('-')
   return `${NOMES_MESES[Number(mesNumero) - 1]} ${ano}`

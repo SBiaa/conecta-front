@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { apiGet } from '../lib/api'
-import { formatarMes, mesAtualISO } from '../lib/formato'
+import { comSinal, formatarMes, formatarNumero, mesAtualISO } from '../lib/formato'
 import {
+  CAMPOS_BALANCA,
+  CAMPOS_MEDIDA,
+  faixaImc,
   LABELS_LOCAL_DOR,
   type RelatorioDaAluna,
   ROTULOS_DISPOSICAO,
@@ -150,16 +153,81 @@ export default function RelatorioSaude({
             <div className={styles.indicador}>
               <span className={styles.rotulo}>Peso</span>
               <span className={styles.valor}>
-                {relatorio.peso.ultimo === null ? '—' : `${relatorio.peso.ultimo} kg`}
+                {relatorio.peso.ultimo === null ? '—' : `${formatarNumero(relatorio.peso.ultimo)} kg`}
               </span>
               {relatorio.peso.variacao !== null && relatorio.peso.variacao !== 0 && (
-                <span className={styles.nota}>
-                  {relatorio.peso.variacao > 0 ? '+' : ''}
-                  {relatorio.peso.variacao} kg no mês
-                </span>
+                <span className={styles.nota}>{comSinal(relatorio.peso.variacao)} kg no mês</span>
               )}
             </div>
+
+            <div className={styles.indicador}>
+              <span className={styles.rotulo}>IMC</span>
+              <span className={styles.valor}>
+                {relatorio.imc === null ? '—' : formatarNumero(relatorio.imc)}
+              </span>
+              <span className={styles.nota}>
+                {relatorio.imc === null
+                  ? relatorio.alturaCm === null
+                    ? 'sem altura cadastrada'
+                    : 'sem peso no mês'
+                  : faixaImc(relatorio.imc)}
+              </span>
+            </div>
           </div>
+
+          {/* Composição corporal: só aparece se a associada chegou a informar
+              algum número da balança no mês. */}
+          {CAMPOS_BALANCA.some(({ campo }) => relatorio.composicao[campo].ultimo !== null) && (
+            <>
+              <p className={styles.rotuloSecao}>Composição corporal</p>
+              <div className={styles.indicadores}>
+                {CAMPOS_BALANCA.filter(({ campo }) => relatorio.composicao[campo].ultimo !== null).map(
+                  ({ campo, label, unidade }) => {
+                    const evolucao = relatorio.composicao[campo]
+                    return (
+                      <div key={campo} className={styles.indicador}>
+                        <span className={styles.rotulo}>{label}</span>
+                        <span className={styles.valor}>
+                          {formatarNumero(evolucao.ultimo!)}
+                          {unidade}
+                        </span>
+                        {evolucao.variacao !== null && evolucao.variacao !== 0 && (
+                          <span className={styles.nota}>{comSinal(evolucao.variacao)} no mês</span>
+                        )}
+                      </div>
+                    )
+                  }
+                )}
+              </div>
+            </>
+          )}
+
+          {relatorio.ultimaAvaliacao &&
+            CAMPOS_MEDIDA.some(({ campo }) => relatorio.ultimaAvaliacao![campo] !== null) && (
+              <>
+                <p className={styles.rotuloSecao}>
+                  Medidas · {relatorio.ultimaAvaliacao.data.split('-').reverse().slice(0, 2).join('/')}
+                  {relatorio.ultimaAvaliacao.registradoPor
+                    ? ` · por ${relatorio.ultimaAvaliacao.registradoPor}`
+                    : ''}
+                </p>
+                <div className={styles.indicadores}>
+                  {CAMPOS_MEDIDA.filter(({ campo }) => relatorio.ultimaAvaliacao![campo] !== null).map(
+                    ({ campo, label }) => (
+                      <div key={campo} className={styles.indicador}>
+                        <span className={styles.rotulo}>{label}</span>
+                        <span className={styles.valor}>
+                          {formatarNumero(relatorio.ultimaAvaliacao![campo]!)} cm
+                        </span>
+                      </div>
+                    )
+                  )}
+                </div>
+                {relatorio.ultimaAvaliacao.observacao && (
+                  <p className={styles.mensagem}>{relatorio.ultimaAvaliacao.observacao}</p>
+                )}
+              </>
+            )}
 
           {relatorio.dor.locaisMaisFrequentes.length > 0 && (
             <>
@@ -191,7 +259,15 @@ export default function RelatorioSaude({
                       <span className={styles.chipPequeno}>{ROTULOS_DOR[registro.nivelDor]}</span>
                     )}
                     {registro.peso !== null && (
-                      <span className={styles.chipPequeno}>{registro.peso} kg</span>
+                      <span className={styles.chipPequeno}>{formatarNumero(registro.peso)} kg</span>
+                    )}
+                    {CAMPOS_BALANCA.filter(({ campo }) => registro[campo] !== null).map(
+                      ({ campo, label, unidade }) => (
+                        <span key={campo} className={styles.chipPequeno}>
+                          {label}: {formatarNumero(registro[campo]!)}
+                          {unidade}
+                        </span>
+                      )
                     )}
                     {registro.locaisDor.map((local) => (
                       <span key={local} className={styles.chipPequeno}>

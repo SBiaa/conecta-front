@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { apiGet, apiPost, apiDelete } from '../lib/api'
 import { getUsuario } from '../lib/auth'
+import PostInteracoes, { type TipoReacao } from './PostInteracoes'
+import Avatar from './Avatar'
 import styles from './Feed.module.css'
 
 type Alcance = 'GERAL' | 'PROJETO' | 'TURMA'
@@ -13,9 +15,12 @@ type Post = {
   conteudo: string
   tipo: Alcance
   criadoEm: string
-  autor: { id: string; nome: string }
+  autor: { id: string; nome: string; fotoUrl: string | null }
   projeto?: { nome: string } | null
   turma?: { nome: string } | null
+  reacoes: Partial<Record<TipoReacao, number>>
+  minhaReacao: TipoReacao | null
+  totalComentarios: number
 }
 
 type Opcao = { id: number; nome: string }
@@ -207,6 +212,16 @@ export default function Feed() {
     }
   }
 
+  // Reagir e comentar mexem só num post, então trocam esse item da lista em vez
+  // de recarregar o feed inteiro — assim ninguém perde o lugar na rolagem.
+  function atualizarPost(id: number, mudanca: Partial<Post>) {
+    setPosts((atuais) =>
+      atuais === null
+        ? atuais
+        : atuais.map((post) => (post.id === id ? { ...post, ...mudanca } : post))
+    )
+  }
+
   function podeApagar(post: Post): boolean {
     if (!usuario) return false
     return usuario.id === post.autor.id || usuario.papel === 'ADMIN'
@@ -324,9 +339,12 @@ export default function Feed() {
           {posts.map((post) => (
             <li key={post.id} className={styles.card}>
               <div className={styles.cabecalho}>
-                <div>
-                  <span className={styles.autor}>{post.autor.nome}</span>
-                  <span className={styles.quando}> · {formatarQuando(post.criadoEm)}</span>
+                <div className={styles.quemPostou}>
+                  <Avatar nome={post.autor.nome} fotoUrl={post.autor.fotoUrl} tamanho={38} />
+                  <div>
+                    <span className={styles.autor}>{post.autor.nome}</span>
+                    <span className={styles.quando}> · {formatarQuando(post.criadoEm)}</span>
+                  </div>
                 </div>
 
                 {podeApagar(post) && (
@@ -345,6 +363,20 @@ export default function Feed() {
               <span className={styles.badge}>{rotuloAlcance(post)}</span>
 
               <p className={styles.conteudo}>{post.conteudo}</p>
+
+              <PostInteracoes
+                postId={post.id}
+                autorDoPostId={post.autor.id}
+                reacoes={post.reacoes}
+                minhaReacao={post.minhaReacao}
+                totalComentarios={post.totalComentarios}
+                usuario={usuario}
+                formatarQuando={formatarQuando}
+                aoMudarReacoes={(resumo) => atualizarPost(post.id, resumo)}
+                aoMudarTotalComentarios={(total) =>
+                  atualizarPost(post.id, { totalComentarios: total })
+                }
+              />
             </li>
           ))}
         </ul>
