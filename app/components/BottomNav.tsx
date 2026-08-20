@@ -19,7 +19,8 @@ export default function BottomNav({ itens }: { itens: ItemMenu[] }) {
       <ul className={styles.lista}>
         {itens.map((item) => {
           const Icone = item.icone
-          const ativo = pathname === item.href
+          // Prefixo pra sub-rotas (ex: /financeiro/vendas) manterem o item aceso.
+          const ativo = pathname === item.href || pathname.startsWith(`${item.href}/`)
 
           return (
             <li key={item.href}>

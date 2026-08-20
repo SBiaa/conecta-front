@@ -11,6 +11,11 @@ import SeletorTurmasSemana, {
   chaveDiaSelecao,
   agruparSelecoesPorTurma,
 } from '../../../components/SeletorTurmasSemana'
+import BlocoInscricao, {
+  INSCRICAO_INICIAL,
+  inscricaoParaPayload,
+  type EstadoInscricao,
+} from '../../../components/BlocoInscricao'
 import styles from './nova.module.css'
 
 const PLANOS = [
@@ -154,6 +159,7 @@ export default function NovaMatriculaPage() {
   const [acesso, setAcesso] = useState<AcessoGerado | null>(null)
   const [copiado, setCopiado] = useState(false)
   const [erroAcesso, setErroAcesso] = useState('')
+  const [inscricao, setInscricao] = useState<EstadoInscricao>(INSCRICAO_INICIAL)
 
   const {
     register,
@@ -360,6 +366,7 @@ export default function NovaMatriculaPage() {
         turmas: agruparSelecoesPorTurma(dados.diaSelecoes),
         frequenciaSemanal: dados.frequenciaSemanal,
         exameMedico: dados.exameMedico,
+        inscricao: inscricaoParaPayload(inscricao),
       })
 
       setSucesso(true)
@@ -597,6 +604,13 @@ export default function NovaMatriculaPage() {
                   <span className={styles.erro}>{errors.exameMedico.message}</span>
                 )}
               </div>
+
+              <BlocoInscricao
+                valor={inscricao}
+                onChange={setInscricao}
+                styles={styles}
+                titulo="Taxa de inscrição"
+              />
 
               <button
                 className={styles.botao}

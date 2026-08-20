@@ -10,6 +10,11 @@ import SeletorTurmasSemana, {
   chaveDiaSelecao,
   agruparSelecoesPorTurma,
 } from '../../../components/SeletorTurmasSemana'
+import BlocoInscricao, {
+  INSCRICAO_INICIAL,
+  inscricaoParaPayload,
+  type EstadoInscricao,
+} from '../../../components/BlocoInscricao'
 import styles from './perfil.module.css'
 
 const FLORES = [
@@ -196,6 +201,7 @@ export default function PerfilAssociadoPage() {
   const [carregandoTurmasModal, setCarregandoTurmasModal] = useState(false)
   const [exameModal, setExameModal] = useState('AGUARDANDO')
   const [ativaModal, setAtivaModal] = useState(true)
+  const [inscricaoModal, setInscricaoModal] = useState<EstadoInscricao>(INSCRICAO_INICIAL)
   const [diaSelecoesModal, setDiaSelecoesModal] = useState<string[]>([])
   const [frequenciaModal, setFrequenciaModal] = useState<number | ''>('')
   const [enviandoEdicao, setEnviandoEdicao] = useState(false)
@@ -384,6 +390,7 @@ export default function PerfilAssociadoPage() {
       )
     )
     setFrequenciaModal(matricula.frequenciaSemanal ?? '')
+    setInscricaoModal(INSCRICAO_INICIAL)
     setErroModalEdicao('')
     setTurmasModal([])
     setCarregandoTurmasModal(true)
@@ -404,6 +411,10 @@ export default function PerfilAssociadoPage() {
   }
 
   const totalDiasModal = diaSelecoesModal.length
+
+  // Rematrícula: a aluna estava inativa e está voltando. Só nesse caso a inscrição
+  // é oferecida — trocar de turma ou corrigir o exame não cobra nada.
+  const rematriculando = Boolean(matriculaParaEditar && !matriculaParaEditar.ativa && ativaModal)
 
   async function confirmarEdicao() {
     if (!matriculaParaEditar) return
@@ -428,6 +439,7 @@ export default function PerfilAssociadoPage() {
         ativa: ativaModal,
         turmas: agruparSelecoesPorTurma(diaSelecoesModal),
         frequenciaSemanal: frequenciaModal,
+        ...(rematriculando ? { inscricao: inscricaoParaPayload(inscricaoModal) } : {}),
       })
       await buscarAssociado()
       fecharModalEdicao()
@@ -1089,6 +1101,15 @@ export default function PerfilAssociadoPage() {
                 </>
               )}
             </div>
+
+            {rematriculando && (
+              <BlocoInscricao
+                valor={inscricaoModal}
+                onChange={setInscricaoModal}
+                styles={styles}
+                titulo="Rematrícula"
+              />
+            )}
 
             {erroModalEdicao && <p className={styles.erroModal}>{erroModalEdicao}</p>}
 

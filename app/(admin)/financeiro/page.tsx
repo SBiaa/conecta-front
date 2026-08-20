@@ -3,6 +3,13 @@
 import { useEffect, useState } from 'react'
 import { CirclePlus } from 'lucide-react'
 import { apiGet, apiPatch, apiPost } from '../../lib/api'
+import {
+  formatarMoeda,
+  formatarData,
+  formatarMes,
+  mesAtualISO,
+  dataHojeISO,
+} from '../../lib/formato'
 import styles from './financeiro.module.css'
 
 type Projeto = {
@@ -12,8 +19,17 @@ type Projeto = {
 
 type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO'
 
+type TipoPagamento = 'MENSALIDADE' | 'INSCRICAO'
+
+type ResumoFinanceiro = {
+  entradas: { mensalidades: number; inscricoes: number; vendas: number; total: number }
+  saidas: { total: number; porCategoria: { categoriaId: number; nome: string; total: number }[] }
+  saldo: number
+}
+
 type Pagamento = {
   id: string
+  tipo: TipoPagamento
   valor: string
   status: 'PAGA' | 'PENDENTE'
   vencimento: string
@@ -29,6 +45,7 @@ type Pagamento = {
 
 type Atrasado = {
   id: string
+  tipo: TipoPagamento
   valor: string
   vencimento: string
   mesReferencia: string
@@ -53,53 +70,10 @@ const LABELS_FORMA_PAGAMENTO: Record<FormaPagamento, string> = {
   CARTAO: 'Cartão',
 }
 
-function mesAtualISO() {
-  const agora = new Date()
-  const ano = agora.getFullYear()
-  const mes = String(agora.getMonth() + 1).padStart(2, '0')
-  return `${ano}-${mes}`
-}
-
-function dataHojeISO() {
-  const agora = new Date()
-  const ano = agora.getFullYear()
-  const mes = String(agora.getMonth() + 1).padStart(2, '0')
-  const dia = String(agora.getDate()).padStart(2, '0')
-  return `${ano}-${mes}-${dia}`
-}
-
-function formatarMoeda(valor: number) {
-  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
-function formatarData(data: string) {
-  return new Date(data).toLocaleDateString('pt-BR')
-}
-
 function descricaoTurmas(turmas: { nome: string; projeto: { nome: string } }[]) {
   const projeto = turmas[0]?.projeto.nome ?? ''
   const nomesTurmas = turmas.map((turma) => turma.nome).join(', ')
   return `${projeto} — ${nomesTurmas}`
-}
-
-const NOMES_MESES = [
-  'Janeiro',
-  'Fevereiro',
-  'Março',
-  'Abril',
-  'Maio',
-  'Junho',
-  'Julho',
-  'Agosto',
-  'Setembro',
-  'Outubro',
-  'Novembro',
-  'Dezembro',
-]
-
-function formatarMes(mes: string) {
-  const [ano, mesNumero] = mes.split('-')
-  return `${NOMES_MESES[Number(mesNumero) - 1]} ${ano}`
 }
 
 export default function FinanceiroPage() {
@@ -133,6 +107,8 @@ export default function FinanceiroPage() {
   const [atrasados, setAtrasados] = useState<Atrasado[]>([])
   const [carregandoAtrasados, setCarregandoAtrasados] = useState(true)
 
+  const [resumo, setResumo] = useState<ResumoFinanceiro | null>(null)
+
   useEffect(() => {
     apiGet<Projeto[]>('/projetos').then(setProjetos)
   }, [])
@@ -151,6 +127,16 @@ export default function FinanceiroPage() {
   useEffect(() => {
     buscarPagamentos()
   }, [mesFiltro, statusFiltro, projetoIdFiltro])
+
+  function buscarResumo() {
+    return apiGet<ResumoFinanceiro>(`/financeiro/resumo?mes=${mesFiltro}`)
+      .then(setResumo)
+      .catch(() => setResumo(null))
+  }
+
+  useEffect(() => {
+    buscarResumo()
+  }, [mesFiltro])
 
   function buscarAtrasados() {
     setCarregandoAtrasados(true)
@@ -197,7 +183,7 @@ export default function FinanceiroPage() {
         formaPagamento: formaPagamentoModal,
         valor: Number(valorModal),
       })
-      await Promise.all([buscarPagamentos(), buscarAtrasados()])
+      await Promise.all([buscarPagamentos(), buscarAtrasados(), buscarResumo()])
       fecharModalRegistro()
     } catch {
       setErroModalRegistro('Não foi possível registrar o pagamento')
@@ -326,6 +312,38 @@ export default function FinanceiroPage() {
               </div>
             </>
           )}
+
+          {resumo && (
+            <div className={styles.resumoFormas}>
+              <span className={styles.cardLabel}>Caixa do mês (tudo que entrou e saiu)</span>
+              <ul className={styles.listaFormas}>
+                <li className={styles.linhaForma}>
+                  <span>Mensalidades recebidas</span>
+                  <span>{formatarMoeda(resumo.entradas.mensalidades)}</span>
+                </li>
+                <li className={styles.linhaForma}>
+                  <span>Inscrições recebidas</span>
+                  <span>{formatarMoeda(resumo.entradas.inscricoes)}</span>
+                </li>
+                <li className={styles.linhaForma}>
+                  <span>Vendas</span>
+                  <span>{formatarMoeda(resumo.entradas.vendas)}</span>
+                </li>
+                <li className={styles.linhaForma}>
+                  <span>Gastos</span>
+                  <span className={styles.valorNegativo}>
+                    − {formatarMoeda(resumo.saidas.total)}
+                  </span>
+                </li>
+                <li className={`${styles.linhaForma} ${styles.linhaSaldo}`}>
+                  <span>Saldo</span>
+                  <span className={resumo.saldo < 0 ? styles.valorNegativo : styles.valorPositivo}>
+                    {formatarMoeda(resumo.saldo)}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
 
         <div className={`${styles.card} ${styles.cardDestaque} ${styles.blocoLista}`}>
@@ -394,7 +412,12 @@ export default function FinanceiroPage() {
               {pagamentosFiltrados.map((pagamento) => (
                 <li key={pagamento.id} className={styles.item}>
                   <div className={styles.infoPagamento}>
-                    <span className={styles.nomeUsuario}>{pagamento.matricula.usuario.nome}</span>
+                    <span className={styles.nomeUsuario}>
+                      {pagamento.matricula.usuario.nome}
+                      {pagamento.tipo === 'INSCRICAO' && (
+                        <span className={styles.badgeTipo}>Inscrição</span>
+                      )}
+                    </span>
                     <span className={styles.detalhe}>
                       {descricaoTurmas(pagamento.matricula.turmas)}
                     </span>
