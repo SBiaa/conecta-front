@@ -1,4 +1,4 @@
-import { getToken } from './auth'
+import { getToken, logout } from './auth'
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL!;
@@ -8,9 +8,22 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
+// Sessão expirada/token inválido: sem isso, toda tela mostrava "não foi
+// possível carregar" (mensagem de erro de conexão) quando na verdade era
+// só precisar entrar de novo — confuso pra quem não é técnico.
+function trataSessaoExpirada(response: Response) {
+  if (response.status === 401 && typeof window !== 'undefined') {
+    logout()
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login'
+    }
+  }
+}
+
 // A API responde os erros como { erro: "mensagem" }. Quando existir, usa essa
 // mensagem — assim a tela pode mostrar o motivo real em vez de um texto genérico.
 async function erroDaResposta(response: Response, padrao: string): Promise<Error> {
+  trataSessaoExpirada(response)
   try {
     const corpo = await response.json()
     if (corpo?.erro) return new Error(corpo.erro)

@@ -97,13 +97,16 @@ export type Evolucao = {
   serie: { data: string; valor: number }[]
 }
 
-// Faixas de referência da OMS. Só rotulam o número — a tela decide se mostra.
+// Faixas de referência da OMS, em linguagem que descreve o número sem
+// julgar o corpo — nada de "sobrepeso"/"obesidade" na tela da associada
+// nem na da professora. O mesmo motivo pelo qual o selo do IMC é cinza,
+// não colorido: a tela informa, não dá veredito.
 export function faixaImc(imc: number | null): string | null {
   if (imc === null) return null
-  if (imc < 18.5) return 'Abaixo do peso'
-  if (imc < 25) return 'Peso adequado'
-  if (imc < 30) return 'Sobrepeso'
-  return 'Obesidade'
+  if (imc < 18.5) return 'Abaixo da faixa de referência'
+  if (imc < 25) return 'Dentro da faixa de referência'
+  if (imc < 30) return 'Acima da faixa de referência'
+  return 'Bem acima da faixa de referência'
 }
 
 export type FrequenciaTurma = {

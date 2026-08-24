@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { apiGet, apiPost, apiDelete } from '../../../lib/api'
 import { formatarMoeda, formatarData, mesAtualISO, dataHojeISO } from '../../../lib/formato'
+import ConfirmDialog from '../../../components/ConfirmDialog'
 import styles from '../financeiro.module.css'
 
 type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO'
@@ -57,6 +58,9 @@ export default function VendasPage() {
   const [buscaAluna, setBuscaAluna] = useState('')
   const [resultadosBusca, setResultadosBusca] = useState<AssociadaResumo[]>([])
   const [alunaSelecionada, setAlunaSelecionada] = useState<AssociadaResumo | null>(null)
+
+  const [vendaParaApagar, setVendaParaApagar] = useState<Venda | null>(null)
+  const [excluindo, setExcluindo] = useState(false)
 
   function buscarVendas() {
     setCarregando(true)
@@ -149,14 +153,15 @@ export default function VendasPage() {
   }
 
   async function apagar(venda: Venda) {
-    const confirmado = window.confirm(`Excluir a venda de "${venda.produto.nome}"?`)
-    if (!confirmado) return
-
+    setExcluindo(true)
     try {
       await apiDelete(`/vendas/${venda.id}`)
       await buscarVendas()
     } catch {
       setErro('Não foi possível excluir a venda')
+    } finally {
+      setExcluindo(false)
+      setVendaParaApagar(null)
     }
   }
 
@@ -223,8 +228,9 @@ export default function VendasPage() {
                   <span className={styles.valorPagamento}>{formatarMoeda(venda.valorTotal)}</span>
                   <button
                     className={styles.botaoRegistrar}
-                    onClick={() => apagar(venda)}
+                    onClick={() => setVendaParaApagar(venda)}
                     title="Excluir venda"
+                    aria-label={`Excluir venda de ${venda.produto.nome}`}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -371,6 +377,15 @@ export default function VendasPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        aberto={vendaParaApagar !== null}
+        titulo="Excluir venda"
+        mensagem={`Excluir a venda de "${vendaParaApagar?.produto.nome}"?`}
+        carregando={excluindo}
+        onConfirmar={() => vendaParaApagar && apagar(vendaParaApagar)}
+        onCancelar={() => setVendaParaApagar(null)}
+      />
     </div>
   )
 }

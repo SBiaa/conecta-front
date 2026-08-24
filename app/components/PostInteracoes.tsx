@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { MessageCircle, Trash2 } from 'lucide-react'
 import { apiGet, apiPost, apiDelete } from '../lib/api'
 import Avatar from './Avatar'
+import ConfirmDialog from './ConfirmDialog'
 import styles from './PostInteracoes.module.css'
 
 export type TipoReacao = 'CURTIR' | 'AMEI' | 'FORCA' | 'PARABENS'
@@ -61,6 +62,8 @@ export default function PostInteracoes({
   const [texto, setTexto] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
+  const [comentarioParaApagar, setComentarioParaApagar] = useState<Comentario | null>(null)
+  const [apagandoComentario, setApagandoComentario] = useState(false)
 
   // Clicar de novo na reação que já era minha tira a reação; clicar em outra troca.
   async function reagir(tipo: TipoReacao) {
@@ -122,10 +125,8 @@ export default function PostInteracoes({
   }
 
   async function apagarComentario(comentario: Comentario) {
-    const confirmou = window.confirm('Tem certeza que deseja apagar este comentário?')
-    if (!confirmou) return
-
     setErro('')
+    setApagandoComentario(true)
     try {
       await apiDelete(`/posts/${postId}/comentarios/${comentario.id}`)
 
@@ -134,6 +135,9 @@ export default function PostInteracoes({
       aoMudarTotalComentarios(lista.length)
     } catch {
       setErro('Não foi possível apagar o comentário.')
+    } finally {
+      setApagandoComentario(false)
+      setComentarioParaApagar(null)
     }
   }
 
@@ -221,7 +225,7 @@ export default function PostInteracoes({
                           type="button"
                           className={styles.botaoApagar}
                           aria-label="Apagar comentário"
-                          onClick={() => apagarComentario(comentario)}
+                          onClick={() => setComentarioParaApagar(comentario)}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -249,6 +253,15 @@ export default function PostInteracoes({
           </form>
         </div>
       )}
+
+      <ConfirmDialog
+        aberto={comentarioParaApagar !== null}
+        titulo="Apagar comentário"
+        mensagem="Tem certeza que deseja apagar este comentário?"
+        carregando={apagandoComentario}
+        onConfirmar={() => comentarioParaApagar && apagarComentario(comentarioParaApagar)}
+        onCancelar={() => setComentarioParaApagar(null)}
+      />
     </div>
   )
 }

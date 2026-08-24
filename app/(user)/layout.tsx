@@ -2,26 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Home, FolderKanban, HandCoins, User, GraduationCap, Rss, CalendarCheck } from 'lucide-react'
 import { getUsuario } from '../lib/auth'
-import BottomNav, { type ItemMenu } from '../components/BottomNav'
+import { itensAssociado, itensProfessor } from '../lib/menus'
+import BottomNav from '../components/BottomNav'
 import styles from './layout.module.css'
-
-const itensAssociado: ItemMenu[] = [
-  { label: 'Home', href: '/inicio', icone: Home },
-  { label: 'Feed', href: '/feed', icone: Rss },
-  { label: 'Meus Projetos', href: '/meus-projetos', icone: FolderKanban },
-  { label: 'Progresso', href: '/meu-progresso', icone: CalendarCheck },
-  { label: 'Contribuições', href: '/contribuicoes', icone: HandCoins },
-  { label: 'Perfil', href: '/perfil', icone: User },
-]
-
-const itensProfessor: ItemMenu[] = [
-  { label: 'Home', href: '/inicio', icone: Home },
-  { label: 'Feed', href: '/feed', icone: Rss },
-  { label: 'Minhas Turmas', href: '/turmas', icone: GraduationCap },
-  { label: 'Perfil', href: '/perfil', icone: User },
-]
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()

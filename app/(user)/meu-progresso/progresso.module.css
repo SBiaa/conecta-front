@@ -22,7 +22,7 @@
   margin-bottom: 1rem;
   background-color: #ffffff;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   padding: 0.5rem 0.75rem;
 }
 
@@ -30,10 +30,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   background-color: var(--primary-soft);
   color: var(--primary);
   cursor: pointer;
@@ -62,7 +62,7 @@
   margin-bottom: 1rem;
   padding: 0.85rem 1rem;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   background-color: var(--primary);
   color: #ffffff;
   font-size: 0.95rem;
@@ -134,7 +134,7 @@
 .opcao {
   padding: 0.45rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background-color: #ffffff;
   color: var(--text-secondary);
   font-size: 0.82rem;
@@ -225,7 +225,7 @@
   font-size: 0.78rem;
   font-weight: 700;
   padding: 0.28rem 0.75rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   white-space: nowrap;
 }
 
@@ -362,7 +362,7 @@
   font-weight: 600;
   color: var(--primary);
   background-color: var(--primary-soft);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.28rem 0.7rem;
 }
 
@@ -403,7 +403,7 @@
   width: 28px;
   height: 28px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   background: none;
   color: var(--text-secondary);
   cursor: pointer;
@@ -426,7 +426,7 @@
   font-weight: 600;
   color: var(--text-secondary);
   background-color: var(--background);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.22rem 0.6rem;
 }
 
@@ -542,7 +542,7 @@
   font-size: 0.76rem;
   font-weight: 700;
   padding: 0.28rem 0.7rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   white-space: nowrap;
   color: var(--text-secondary);
   background-color: var(--background);

@@ -6,6 +6,7 @@ import { apiGet, apiPost, apiDelete } from '../lib/api'
 import { getUsuario } from '../lib/auth'
 import PostInteracoes, { type TipoReacao } from './PostInteracoes'
 import Avatar from './Avatar'
+import ConfirmDialog from './ConfirmDialog'
 import styles from './Feed.module.css'
 
 type Alcance = 'GERAL' | 'PROJETO' | 'TURMA'
@@ -88,6 +89,7 @@ export default function Feed() {
   const [turmasProfessor, setTurmasProfessor] = useState<TurmaProfessor[]>([])
 
   const [apagandoId, setApagandoId] = useState<number | null>(null)
+  const [postParaApagar, setPostParaApagar] = useState<Post | null>(null)
 
   const ehAdmin = usuario?.papel === 'ADMIN'
   const ehProfessor = usuario?.papel === 'PROFESSOR'
@@ -198,9 +200,6 @@ export default function Feed() {
   }
 
   async function apagar(post: Post) {
-    const confirmou = window.confirm('Tem certeza que deseja apagar esta publicação?')
-    if (!confirmou) return
-
     setApagandoId(post.id)
     try {
       await apiDelete(`/posts/${post.id}`)
@@ -209,6 +208,7 @@ export default function Feed() {
       setErroFeed('Não foi possível apagar a publicação.')
     } finally {
       setApagandoId(null)
+      setPostParaApagar(null)
     }
   }
 
@@ -353,7 +353,7 @@ export default function Feed() {
                     className={styles.botaoApagar}
                     aria-label="Apagar publicação"
                     disabled={apagandoId === post.id}
-                    onClick={() => apagar(post)}
+                    onClick={() => setPostParaApagar(post)}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -381,6 +381,15 @@ export default function Feed() {
           ))}
         </ul>
       )}
+
+      <ConfirmDialog
+        aberto={postParaApagar !== null}
+        titulo="Apagar publicação"
+        mensagem="Tem certeza que deseja apagar esta publicação? Essa ação não pode ser desfeita."
+        carregando={apagandoId !== null}
+        onConfirmar={() => postParaApagar && apagar(postParaApagar)}
+        onCancelar={() => setPostParaApagar(null)}
+      />
     </div>
   )
 }

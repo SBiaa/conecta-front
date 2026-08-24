@@ -88,9 +88,8 @@ export default function NovoAssociadoPage() {
         nome: dados.nome,
         cpf: dados.cpf,
         telefone: dados.telefone,
-        // Provisório: senha inicial = CPF. Trocar por um fluxo de definição
-        // de senha (ex: convite por email/SMS) quando esse fluxo existir.
-        senha: dados.cpf,
+        // Sem senha: a API sempre gera uma senha amigável (ex: "girassol42")
+        // pra associada, nunca aceita o CPF como senha — ver usuarioController.
         papel: 'ASSOCIADO',
         cep: dados.cep,
         logradouro: dados.logradouro,

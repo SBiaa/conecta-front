@@ -20,7 +20,7 @@
   margin-bottom: 1rem;
   padding: 1rem 1.125rem;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   background-color: var(--background);
 }
 

@@ -18,7 +18,7 @@
   padding: 0.35rem 0.6rem;
   background: none;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.9rem;
   line-height: 1;
   color: var(--text-secondary);
@@ -59,7 +59,7 @@
   padding: 0.35rem 0.7rem;
   background: none;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.85rem;
   line-height: 1;
   color: var(--text-secondary);
@@ -176,7 +176,7 @@
   min-width: 0;
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 0.9rem;
   font-family: inherit;
   outline: none;
@@ -193,7 +193,7 @@
   background-color: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -205,6 +205,6 @@
 }
 
 .botaoEnviar:disabled {
-  background-color: #b3a1d9;
+  background-color: var(--disabled-bg);
   cursor: not-allowed;
 }

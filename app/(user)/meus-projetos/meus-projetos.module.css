@@ -54,7 +54,7 @@
   font-size: 0.83rem;
   font-weight: 700;
   padding: 0.3rem 0.8rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .badgeApto {

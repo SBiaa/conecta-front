@@ -94,9 +94,14 @@ export default function TurmasDoProjetoPage() {
         <h1 className={styles.titulo}>
           {nomeProjeto ? `Turmas — ${nomeProjeto}` : 'Turmas do projeto'}
         </h1>
-        <Link href={`/turmas/nova?projetoId=${id}`} className={styles.botaoNovo}>
-          Nova turma
-        </Link>
+        <div className={styles.headerAcoes}>
+          <Link href={`/projetos/${id}/editar`} className={styles.botaoEditarProjeto}>
+            Editar projeto
+          </Link>
+          <Link href={`/turmas/nova?projetoId=${id}`} className={styles.botaoNovo}>
+            Nova turma
+          </Link>
+        </div>
       </div>
 
       {carregando && <p className={styles.mensagem}>Carregando...</p>}

@@ -10,8 +10,8 @@
 .card {
   background-color: #ffffff;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-card);
   width: 100%;
   max-width: 480px;
 }
@@ -55,7 +55,7 @@
 .campo input {
   padding: 0.6rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
   outline: none;
   transition: border 0.2s;
@@ -83,7 +83,7 @@
   background-color: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -96,7 +96,7 @@
 }
 
 .botao:disabled {
-  background-color: #b3a1d9;
+  background-color: var(--disabled-bg);
   cursor: not-allowed;
 }
 
@@ -117,7 +117,7 @@
 .avisoSenha {
   margin-top: 1.5rem;
   padding: 1.25rem;
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   background-color: #fff7e6;
   border: 2px solid #f59e0b;
 }
@@ -134,7 +134,7 @@
   padding: 0.75rem;
   background-color: #ffffff;
   border: 1px solid #f3d9a4;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-family: inherit;
   font-size: 0.9rem;
   color: #4a3208;
@@ -160,7 +160,7 @@
   background-color: #25d366;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -179,7 +179,7 @@
   background-color: #f59e0b;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -196,7 +196,7 @@
   background-color: #ffffff;
   color: #7c4a03;
   border: 1px solid #f59e0b;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;

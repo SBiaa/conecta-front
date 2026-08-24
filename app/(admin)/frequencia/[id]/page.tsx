@@ -195,11 +195,21 @@ export default function FrequenciaTurmaAdminPage() {
 
           <div className={styles.calendario}>
             <div className={styles.calendarioHeader}>
-              <button type="button" onClick={() => mudarMes(-1)} className={styles.botaoMes}>
+              <button
+                type="button"
+                onClick={() => mudarMes(-1)}
+                className={styles.botaoMes}
+                aria-label="Mês anterior"
+              >
                 <ChevronLeft size={18} />
               </button>
               <span className={styles.nomeMes}>{nomeMes}</span>
-              <button type="button" onClick={() => mudarMes(1)} className={styles.botaoMes}>
+              <button
+                type="button"
+                onClick={() => mudarMes(1)}
+                className={styles.botaoMes}
+                aria-label="Próximo mês"
+              >
                 <ChevronRight size={18} />
               </button>
             </div>

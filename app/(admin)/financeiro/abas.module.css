@@ -12,7 +12,7 @@
 
 .aba {
   padding: 0.55rem 1rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-secondary);

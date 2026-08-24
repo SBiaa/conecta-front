@@ -3,65 +3,104 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--primary);
+  background: linear-gradient(160deg, var(--primary-dark), var(--primary));
+  padding: 1rem;
 }
 
 .card {
-  background-color: #ffffff;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background-color: var(--background);
+  padding: 2.5rem 2rem;
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-pop);
   width: 100%;
-  max-width: 400px;
+  max-width: 380px;
+  text-align: center;
+}
+
+.logo {
+  display: block;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1rem;
+  border-radius: var(--radius-m);
 }
 
 .titulo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 1.5rem;
-  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-bottom: 0.35rem;
+}
+
+.subtitulo {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.75rem;
 }
 
 .campo {
   display: flex;
   flex-direction: column;
   margin-bottom: 1rem;
+  text-align: left;
 }
 
 .campo label {
   font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 0.4rem;
 }
 
 .campo input {
-  padding: 0.6rem 0.8rem;
+  padding: 0.7rem 0.9rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
+  font-family: var(--font-body);
   outline: none;
   transition: border 0.2s;
+  min-height: 44px;
 }
 
 .campo input:focus {
   border-color: var(--primary);
 }
 
-.botao {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 1rem;
-  transition: background-color 0.2s;
+.erro {
+  color: var(--danger);
+  background-color: var(--danger-soft);
+  border-radius: var(--radius-s);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0;
 }
 
-.botao:hover {
-  background-color: var(--primary-dark);
+.botao {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: var(--secondary);
+  color: var(--primary-dark);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 1.25rem;
+  min-height: 44px;
+  transition: background-color 0.2s, transform 0.15s;
+}
+
+.botao:hover:not(:disabled) {
+  background-color: var(--secondary-dark);
+}
+
+.botao:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.botao:disabled {
+  opacity: 0.7;
+  cursor: default;
 }

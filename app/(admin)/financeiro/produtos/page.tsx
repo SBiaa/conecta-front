@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { apiGet, apiPost, apiPatch, apiDelete } from '../../../lib/api'
 import { formatarMoeda } from '../../../lib/formato'
+import ConfirmDialog from '../../../components/ConfirmDialog'
 import styles from '../financeiro.module.css'
 
 type Produto = {
@@ -25,6 +26,9 @@ export default function ProdutosPage() {
   const [ativo, setAtivo] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [erroModal, setErroModal] = useState('')
+
+  const [produtoParaApagar, setProdutoParaApagar] = useState<Produto | null>(null)
+  const [excluindo, setExcluindo] = useState(false)
 
   function buscarProdutos() {
     setCarregando(true)
@@ -92,10 +96,8 @@ export default function ProdutosPage() {
   }
 
   async function apagar(produto: Produto) {
-    const confirmado = window.confirm(`Excluir o produto "${produto.nome}"?`)
-    if (!confirmado) return
-
     setErro('')
+    setExcluindo(true)
     try {
       await apiDelete(`/produtos/${produto.id}`)
       await buscarProdutos()
@@ -103,6 +105,9 @@ export default function ProdutosPage() {
       setErro(
         'Não foi possível excluir. Se já houver vendas deste produto, desative-o em vez de excluir.'
       )
+    } finally {
+      setExcluindo(false)
+      setProdutoParaApagar(null)
     }
   }
 
@@ -139,13 +144,15 @@ export default function ProdutosPage() {
                     className={styles.botaoRegistrar}
                     onClick={() => abrirEdicao(produto)}
                     title="Editar produto"
+                    aria-label={`Editar produto ${produto.nome}`}
                   >
                     <Pencil size={18} />
                   </button>
                   <button
                     className={styles.botaoRegistrar}
-                    onClick={() => apagar(produto)}
+                    onClick={() => setProdutoParaApagar(produto)}
                     title="Excluir produto"
+                    aria-label={`Excluir produto ${produto.nome}`}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -209,6 +216,15 @@ export default function ProdutosPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        aberto={produtoParaApagar !== null}
+        titulo="Excluir produto"
+        mensagem={`Excluir o produto "${produtoParaApagar?.nome}"?`}
+        carregando={excluindo}
+        onConfirmar={() => produtoParaApagar && apagar(produtoParaApagar)}
+        onCancelar={() => setProdutoParaApagar(null)}
+      />
     </div>
   )
 }

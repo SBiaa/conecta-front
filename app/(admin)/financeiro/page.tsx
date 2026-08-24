@@ -10,6 +10,7 @@ import {
   mesAtualISO,
   dataHojeISO,
 } from '../../lib/formato'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import styles from './financeiro.module.css'
 
 type Projeto = {
@@ -109,6 +110,8 @@ export default function FinanceiroPage() {
 
   const [resumo, setResumo] = useState<ResumoFinanceiro | null>(null)
 
+  const [confirmandoGeracao, setConfirmandoGeracao] = useState(false)
+
   useEffect(() => {
     apiGet<Projeto[]>('/projetos').then(setProjetos)
   }, [])
@@ -192,7 +195,7 @@ export default function FinanceiroPage() {
     }
   }
 
-  async function onSubmit(evento: React.FormEvent) {
+  function onSubmit(evento: React.FormEvent) {
     evento.preventDefault()
 
     setSucesso('')
@@ -204,14 +207,10 @@ export default function FinanceiroPage() {
     }
 
     setErroValidacao('')
+    setConfirmandoGeracao(true)
+  }
 
-    const projeto = projetos.find((item) => item.id === projetoId)
-    const confirmado = window.confirm(
-      `Gerar mensalidades de ${formatarMes(mes)} para o projeto ${projeto?.nome ?? ''}? O valor de cada mensalidade é calculado a partir do plano de cada matrícula.`
-    )
-
-    if (!confirmado) return
-
+  async function gerarMensalidades() {
     setGerando(true)
     try {
       const resultado = await apiPost<{ criados: unknown[]; pendentes: { matriculaId: number; nome: string }[] }>(
@@ -240,6 +239,7 @@ export default function FinanceiroPage() {
       setErro('Não foi possível gerar as mensalidades')
     } finally {
       setGerando(false)
+      setConfirmandoGeracao(false)
     }
   }
 
@@ -249,6 +249,8 @@ export default function FinanceiroPage() {
 
   const pagas = pagamentosFiltrados.filter((pagamento) => pagamento.status === 'PAGA')
   const pendentes = pagamentosFiltrados.filter((pagamento) => pagamento.status === 'PENDENTE')
+
+  const projetoDaGeracao = projetos.find((item) => item.id === projetoId)
 
   const totalRecebido = pagas.reduce((soma, pagamento) => soma + Number(pagamento.valor), 0)
   const totalPendente = pendentes.reduce((soma, pagamento) => soma + Number(pagamento.valor), 0)
@@ -626,6 +628,18 @@ export default function FinanceiroPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        aberto={confirmandoGeracao}
+        titulo="Gerar mensalidades"
+        mensagem={`Gerar mensalidades de ${formatarMes(mes)} para o projeto ${projetoDaGeracao?.nome ?? ''}? O valor de cada mensalidade é calculado a partir do plano de cada matrícula.`}
+        confirmarLabel="Gerar"
+        carregandoLabel="Gerando..."
+        perigoso={false}
+        carregando={gerando}
+        onConfirmar={gerarMensalidades}
+        onCancelar={() => setConfirmandoGeracao(false)}
+      />
     </div>
   )
 }

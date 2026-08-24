@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { CalendarCheck, Scale, TrendingDown } from 'lucide-react'
+import { CalendarCheck, Scale, TrendingDown, TrendingUp } from 'lucide-react'
 import { apiGet } from '../../lib/api'
 import { formatarNumero } from '../../lib/formato'
 import { logout } from '../../lib/auth'
@@ -101,7 +101,11 @@ function ResumoDoMes() {
 
         {temPeso && (
           <li className={styles.resumoItem}>
-            <TrendingDown size={18} className={styles.resumoIcone} />
+            {relatorio.peso.variacao! < 0 ? (
+              <TrendingDown size={18} className={styles.resumoIcone} />
+            ) : (
+              <TrendingUp size={18} className={styles.resumoIcone} />
+            )}
             <span>
               {frasePeso(relatorio.peso.variacao!)}
               <span className={styles.resumoNota}>

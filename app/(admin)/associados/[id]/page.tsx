@@ -830,6 +830,7 @@ export default function PerfilAssociadoPage() {
                       className={styles.botaoEditar}
                       onClick={() => abrirModalEdicao(matricula)}
                       title="Editar matrícula"
+                      aria-label="Editar matrícula"
                     >
                       <Pencil size={14} />
                     </button>
@@ -837,6 +838,7 @@ export default function PerfilAssociadoPage() {
                       className={styles.botaoEditar}
                       onClick={() => abrirModalExclusao(matricula)}
                       title="Excluir matrícula"
+                      aria-label="Excluir matrícula"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -892,6 +894,7 @@ export default function PerfilAssociadoPage() {
                       className={styles.botaoRegistrar}
                       onClick={() => abrirModal({ id: pagamento.id, valor: pagamento.valor })}
                       title="Registrar pagamento"
+                      aria-label={`Registrar pagamento de ${formatarMes(pagamento.mesReferencia)}`}
                     >
                       <CirclePlus size={20} />
                     </button>
@@ -1113,6 +1116,7 @@ export default function PerfilAssociadoPage() {
                   className={styles.botaoOlho}
                   onClick={() => setMostrarSenhaInput((v) => !v)}
                   title={mostrarSenhaInput ? 'Ocultar senha' : 'Exibir senha'}
+                  aria-label={mostrarSenhaInput ? 'Ocultar senha' : 'Exibir senha'}
                 >
                   {mostrarSenhaInput ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>

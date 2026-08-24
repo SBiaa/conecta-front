@@ -9,8 +9,8 @@
 .card {
   background-color: #ffffff;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-card);
   width: 100%;
   max-width: 400px;
 }
@@ -39,7 +39,7 @@
 .campo select {
   padding: 0.6rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
   outline: none;
   transition: border 0.2s;
@@ -62,7 +62,7 @@
   color: var(--text-secondary);
   background-color: #eeeeee;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.45rem 0.9rem;
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s;
@@ -99,7 +99,7 @@
   background-color: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -111,7 +111,7 @@
 }
 
 .botao:disabled {
-  background-color: #b3a1d9;
+  background-color: var(--disabled-bg);
   cursor: not-allowed;
 }
 
@@ -121,7 +121,7 @@
   background-color: #eeeeee;
   color: var(--text-primary);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -140,7 +140,7 @@
   background-color: transparent;
   color: var(--danger);
   border: 1px solid var(--danger);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;

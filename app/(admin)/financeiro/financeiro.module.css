@@ -20,8 +20,8 @@
 .card {
   background-color: #ffffff;
   padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-card);
   width: 100%;
 }
 
@@ -37,7 +37,7 @@
   background-color: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -50,7 +50,7 @@
 }
 
 .botaoGerar:disabled {
-  background-color: #b3a1d9;
+  background-color: var(--disabled-bg);
   cursor: not-allowed;
 }
 
@@ -120,7 +120,7 @@
 .campo select {
   padding: 0.6rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
   outline: none;
   transition: border 0.2s;
@@ -154,7 +154,7 @@
   margin: 0.4rem 0 0;
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   overflow: hidden;
   max-height: 180px;
   overflow-y: auto;
@@ -185,7 +185,7 @@
   justify-content: space-between;
   align-items: center;
   background-color: var(--primary-soft);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   padding: 0.55rem 0.8rem;
   font-size: 0.9rem;
   color: var(--primary);
@@ -213,7 +213,7 @@
   background-color: #ffffff;
   color: var(--primary);
   border: 1px solid var(--primary);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -240,7 +240,7 @@
   background-color: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -253,7 +253,7 @@
 }
 
 .botao:disabled {
-  background-color: #b3a1d9;
+  background-color: var(--disabled-bg);
   cursor: not-allowed;
 }
 
@@ -297,7 +297,7 @@
 .item {
   background-color: #f9f9f9;
   padding: 1rem 1.25rem;
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -331,7 +331,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   padding: 0.25rem 0.6rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .statusPaga {
@@ -362,7 +362,7 @@
   min-width: 130px;
   background-color: #f9f9f9;
   padding: 1rem 1.1rem;
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -388,7 +388,7 @@
 .resumoFormas {
   background-color: #f9f9f9;
   padding: 1rem 1.1rem;
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   margin-bottom: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -437,7 +437,7 @@
   font-weight: 600;
   color: var(--primary);
   background-color: var(--primary-soft);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.1rem 0.45rem;
   vertical-align: middle;
 }
@@ -449,9 +449,9 @@
   color: var(--primary);
   background-color: var(--primary-soft);
   border: none;
-  border-radius: 999px;
-  width: 32px;
-  height: 32px;
+  border-radius: var(--radius-pill);
+  width: 44px;
+  height: 44px;
   padding: 0;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -464,17 +464,18 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(11, 22, 32, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 1rem;
   z-index: 10;
 }
 
 .modal {
   background-color: #ffffff;
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 400px;
@@ -500,7 +501,7 @@
   background-color: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -512,7 +513,7 @@
 }
 
 .botaoConfirmar:disabled {
-  background-color: #b3a1d9;
+  background-color: var(--disabled-bg);
   cursor: not-allowed;
 }
 
@@ -522,7 +523,7 @@
   background-color: #eeeeee;
   color: var(--text-primary);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;

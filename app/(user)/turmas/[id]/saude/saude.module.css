@@ -94,7 +94,7 @@
   font-weight: 600;
   color: var(--text-secondary);
   background-color: var(--background);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.25rem 0.65rem;
 }
 
@@ -106,7 +106,7 @@
   font-weight: 700;
   color: var(--warning);
   background-color: #fff3e0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.25rem 0.65rem;
 }
 

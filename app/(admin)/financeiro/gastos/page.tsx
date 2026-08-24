@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { apiGet, apiPost, apiDelete } from '../../../lib/api'
 import { formatarMoeda, formatarData, mesAtualISO, dataHojeISO } from '../../../lib/formato'
+import ConfirmDialog from '../../../components/ConfirmDialog'
 import styles from '../financeiro.module.css'
 
 type Categoria = {
@@ -39,6 +40,11 @@ export default function GastosPage() {
   const [modalCategorias, setModalCategorias] = useState(false)
   const [novaCategoria, setNovaCategoria] = useState('')
   const [erroCategoria, setErroCategoria] = useState('')
+
+  const [despesaParaApagar, setDespesaParaApagar] = useState<Despesa | null>(null)
+  const [excluindoDespesa, setExcluindoDespesa] = useState(false)
+  const [categoriaParaApagar, setCategoriaParaApagar] = useState<Categoria | null>(null)
+  const [excluindoCategoria, setExcluindoCategoria] = useState(false)
 
   function buscarDespesas() {
     setCarregando(true)
@@ -107,14 +113,15 @@ export default function GastosPage() {
   }
 
   async function apagarDespesa(despesa: Despesa) {
-    const confirmado = window.confirm(`Excluir o gasto "${despesa.descricao}"?`)
-    if (!confirmado) return
-
+    setExcluindoDespesa(true)
     try {
       await apiDelete(`/despesas/${despesa.id}`)
       await buscarDespesas()
     } catch {
       setErro('Não foi possível excluir o gasto')
+    } finally {
+      setExcluindoDespesa(false)
+      setDespesaParaApagar(null)
     }
   }
 
@@ -132,17 +139,20 @@ export default function GastosPage() {
   }
 
   async function apagarCategoria(categoria: Categoria) {
-    const confirmado = window.confirm(`Excluir a categoria "${categoria.nome}"?`)
-    if (!confirmado) return
-
     setErroCategoria('')
+    setExcluindoCategoria(true)
     try {
       await apiDelete(`/categorias-despesa/${categoria.id}`)
       await buscarCategorias()
-    } catch {
+    } catch (e) {
       setErroCategoria(
-        'Não foi possível excluir. Se já houver gastos nessa categoria, ela não pode ser removida.'
+        e instanceof Error
+          ? e.message
+          : 'Não foi possível excluir. Se já houver gastos nessa categoria, ela não pode ser removida.'
       )
+    } finally {
+      setExcluindoCategoria(false)
+      setCategoriaParaApagar(null)
     }
   }
 
@@ -228,8 +238,9 @@ export default function GastosPage() {
                   <span className={styles.valorPagamento}>{formatarMoeda(despesa.valor)}</span>
                   <button
                     className={styles.botaoRegistrar}
-                    onClick={() => apagarDespesa(despesa)}
+                    onClick={() => setDespesaParaApagar(despesa)}
                     title="Excluir gasto"
+                    aria-label={`Excluir gasto ${despesa.descricao}`}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -343,8 +354,9 @@ export default function GastosPage() {
                   <span className={styles.nomeUsuario}>{categoria.nome}</span>
                   <button
                     className={styles.botaoRegistrar}
-                    onClick={() => apagarCategoria(categoria)}
+                    onClick={() => setCategoriaParaApagar(categoria)}
                     title="Excluir categoria"
+                    aria-label={`Excluir categoria ${categoria.nome}`}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -366,6 +378,24 @@ export default function GastosPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        aberto={despesaParaApagar !== null}
+        titulo="Excluir gasto"
+        mensagem={`Excluir o gasto "${despesaParaApagar?.descricao}"?`}
+        carregando={excluindoDespesa}
+        onConfirmar={() => despesaParaApagar && apagarDespesa(despesaParaApagar)}
+        onCancelar={() => setDespesaParaApagar(null)}
+      />
+
+      <ConfirmDialog
+        aberto={categoriaParaApagar !== null}
+        titulo="Excluir categoria"
+        mensagem={`Excluir a categoria "${categoriaParaApagar?.nome}"?`}
+        carregando={excluindoCategoria}
+        onConfirmar={() => categoriaParaApagar && apagarCategoria(categoriaParaApagar)}
+        onCancelar={() => setCategoriaParaApagar(null)}
+      />
     </div>
   )
 }

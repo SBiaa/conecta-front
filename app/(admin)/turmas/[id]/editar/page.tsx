@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { apiGet, apiPatch, apiDelete } from '../../../../lib/api'
+import ConfirmDialog from '../../../../components/ConfirmDialog'
 import styles from './editar.module.css'
 
 const turmaSchema = z.object({
@@ -59,6 +60,7 @@ export default function EditarTurmaPage() {
   const [sucesso, setSucesso] = useState(false)
   const [erro, setErro] = useState('')
   const [excluindo, setExcluindo] = useState(false)
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false)
   const [projetoId, setProjetoId] = useState<number | null>(null)
 
   const {
@@ -122,11 +124,6 @@ export default function EditarTurmaPage() {
   }
 
   async function excluirTurma() {
-    const confirmou = window.confirm(
-      'Tem certeza que deseja excluir esta turma? Essa ação não pode ser desfeita.'
-    )
-    if (!confirmou) return
-
     setErro('')
     setExcluindo(true)
     try {
@@ -139,6 +136,7 @@ export default function EditarTurmaPage() {
         setErro('Não foi possível excluir a turma')
       }
       setExcluindo(false)
+      setConfirmandoExclusao(false)
     }
   }
 
@@ -231,7 +229,7 @@ export default function EditarTurmaPage() {
         <button
           type="button"
           className={styles.botaoExcluir}
-          onClick={excluirTurma}
+          onClick={() => setConfirmandoExclusao(true)}
           disabled={excluindo}
         >
           {excluindo ? 'Excluindo...' : 'Excluir turma'}
@@ -240,6 +238,15 @@ export default function EditarTurmaPage() {
         {sucesso && <p className={styles.sucesso}>Turma atualizada!</p>}
         {erro && <p className={styles.mensagemErro}>{erro}</p>}
       </div>
+
+      <ConfirmDialog
+        aberto={confirmandoExclusao}
+        titulo="Excluir turma"
+        mensagem="Tem certeza que deseja excluir esta turma? Essa ação não pode ser desfeita."
+        carregando={excluindo}
+        onConfirmar={excluirTurma}
+        onCancelar={() => setConfirmandoExclusao(false)}
+      />
     </div>
   )
 }

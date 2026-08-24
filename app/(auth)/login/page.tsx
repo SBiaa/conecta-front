@@ -1,64 +1,36 @@
-'use client'  // esta tela roda no navegador (reage a clique/digitação)
+'use client'
 
-import { useState, FormEvent  } from 'react'
-import { useRouter } from 'next/navigation'  // pra redirecionar depois do login
-import { salvarSessao } from '../../lib/auth'  // o helper que VOCÊ fez
+import { useState, type FormEvent } from 'react'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { apiPost } from '../../lib/api'
+import { salvarSessao } from '../../lib/auth'
 import styles from './login.module.css'
 
+type RespostaLogin = {
+  token: string
+  usuario: { papel: 'ADMIN' | 'PROFESSOR' | 'ASSOCIADO' } & Record<string, unknown>
+}
+
 export default function LoginPage() {
-  // "memória" dos campos: cada um guarda o que foi digitado
   const [cpf, setCpf] = useState('')
   const [senha, setSenha] = useState('')
-  const [erro, setErro] = useState('')      // mensagem de erro pra mostrar
-  const [carregando, setCarregando] = useState(false)  // trava o botão enquanto envia
+  const [erro, setErro] = useState('')
+  const [carregando, setCarregando] = useState(false)
 
-  const router = useRouter()  // ferramenta de redirecionamento
+  const router = useRouter()
 
-  // função que roda quando o formulário é enviado
-  async function handleSubmit(evento: React.FormEvent<HTMLFormElement>) {
-      evento.preventDefault();
-
-  setErro('');
-  setCarregando(true);
-    evento.preventDefault()  // impede a página de recarregar (comportamento padrão do form)
-    setErro('')              // limpa erro anterior
-    setCarregando(true)      // trava o botão
+  async function handleSubmit(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault()
+    setErro('')
+    setCarregando(true)
 
     try {
-      // 1. chama a API de login, mandando cpf e senha
- const resposta = await fetch(
-  `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ cpf, senha }),
-  }
-);
-
-      // 2. se a resposta não foi ok (ex: 401 senha errada), mostra erro
-      if (!resposta.ok) {
-        setErro('CPF ou senha inválidos')
-        setCarregando(false)
-        return  // para aqui, não continua
-      }
-
-      // 3. desdobra a resposta (vem { token, usuario })
-      const dados = await resposta.json()
-
-      // 4. guarda a sessão usando o SEU auth.ts
+      const dados = await apiPost<RespostaLogin>('/auth/login', { cpf, senha })
       salvarSessao(dados.token, dados.usuario)
-
-      // 5. redireciona conforme o papel
-      if (dados.usuario.papel === 'ADMIN') {
-        router.push('/inicio-admin')
-      } else {
-        router.push('/inicio')  // ASSOCIADO e PROFESSOR
-      }
-    } catch {
-      // se a API nem respondeu (servidor caído, etc.)
-      setErro('Não foi possível conectar. Tente novamente.')
+      router.push(dados.usuario.papel === 'ADMIN' ? '/inicio-admin' : '/inicio')
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'CPF ou senha inválidos')
       setCarregando(false)
     }
   }
@@ -66,18 +38,28 @@ export default function LoginPage() {
   return (
     <div className={styles.pagina}>
       <div className={styles.card}>
+        <Image
+          src="/logo-novo-millenium.png"
+          alt="Novo Millenium"
+          width={72}
+          height={72}
+          className={styles.logo}
+          priority
+        />
         <h1 className={styles.titulo}>Conecta</h1>
+        <p className={styles.subtitulo}>Entre com seu CPF e senha</p>
 
-        {/* onSubmit liga o form à função acima */}
         <form onSubmit={handleSubmit}>
           <div className={styles.campo}>
             <label htmlFor="cpf">CPF</label>
             <input
               type="text"
               id="cpf"
+              inputMode="numeric"
+              autoComplete="username"
               placeholder="000.000.000-00"
-              value={cpf}                              // mostra o valor guardado
-              onChange={(e) => setCpf(e.target.value)} // atualiza a cada tecla
+              value={cpf}
+              onChange={(e) => setCpf(e.target.value)}
             />
           </div>
 
@@ -86,14 +68,18 @@ export default function LoginPage() {
             <input
               type="password"
               id="senha"
+              autoComplete="current-password"
               placeholder="••••••••"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
             />
           </div>
 
-          {/* só aparece se houver erro */}
-          {erro && <p className={styles.erro}>{erro}</p>}
+          {erro && (
+            <p className={styles.erro} role="alert" aria-live="assertive">
+              {erro}
+            </p>
+          )}
 
           <button className={styles.botao} disabled={carregando}>
             {carregando ? 'Entrando...' : 'Entrar'}

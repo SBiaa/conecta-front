@@ -4,6 +4,7 @@
   align-items: center;
   justify-content: center;
   background-color: var(--background);
+  padding: 1rem;
 }
 
 .card {
@@ -54,8 +55,41 @@
   margin-top: 0.3rem;
 }
 
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin: 0.5rem 0 1.25rem;
+  cursor: pointer;
+}
+
+.toggle input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+}
+
+.acoes {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.botaoCancelar {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: var(--radius-s);
+  background-color: var(--border);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
 .botao {
-  width: 100%;
+  flex: 1;
   padding: 0.75rem;
   background-color: var(--primary);
   color: white;
@@ -64,7 +98,6 @@
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 1rem;
   transition: background-color 0.2s;
 }
 
@@ -77,11 +110,10 @@
   cursor: not-allowed;
 }
 
-.sucesso {
-  font-size: 0.9rem;
-  color: var(--success);
+.mensagem {
+  font-size: 1rem;
+  color: var(--text-secondary);
   text-align: center;
-  margin-top: 1rem;
 }
 
 .mensagemErro {

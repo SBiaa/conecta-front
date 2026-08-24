@@ -2,21 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Home, Users, GraduationCap, FolderKanban, Wallet, User, Rss, CalendarCheck } from 'lucide-react'
 import { getUsuario } from '../lib/auth'
-import BottomNav, { type ItemMenu } from '../components/BottomNav'
+import { itensAdmin } from '../lib/menus'
+import BottomNav from '../components/BottomNav'
 import styles from './layout.module.css'
-
-const itensAdmin: ItemMenu[] = [
-  { label: 'Home', href: '/inicio-admin', icone: Home },
-  { label: 'Feed', href: '/feed', icone: Rss },
-  { label: 'Associados', href: '/associados', icone: Users },
-  { label: 'Professoras', href: '/professores', icone: GraduationCap },
-  { label: 'Projetos', href: '/projetos', icone: FolderKanban },
-  { label: 'Frequência', href: '/frequencia', icone: CalendarCheck },
-  { label: 'Financeiro', href: '/financeiro', icone: Wallet },
-  { label: 'Perfil', href: '/perfil-admin', icone: User },
-]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()

@@ -22,7 +22,7 @@
   background-color: var(--primary);
   color: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   padding: 0.6rem 1rem;
   font-size: 0.9rem;
   font-weight: 600;
@@ -44,7 +44,7 @@
   width: 100%;
   padding: 0.6rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 1rem;
   outline: none;
   transition: border 0.2s;
@@ -63,8 +63,8 @@
 
 .item {
   background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-card);
 }
 
 .link {
@@ -97,7 +97,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   padding: 0.25rem 0.6rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .statusAtivo {

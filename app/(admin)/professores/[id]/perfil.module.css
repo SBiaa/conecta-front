@@ -22,7 +22,7 @@
 .card {
   background-color: #ffffff;
   padding: 1.5rem;
-  border-radius: 12px;
+  border-radius: var(--radius-m);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
 }
 
@@ -45,7 +45,7 @@
   background: none;
   border: 1px solid var(--primary);
   color: var(--primary);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   padding: 0.35rem 0.9rem;
   font-size: 0.82rem;
   font-weight: 600;
@@ -77,7 +77,7 @@
   color: #16a34a;
   background-color: #dcfce7;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   padding: 0.35rem 0.9rem;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -105,7 +105,7 @@
   padding: 0.6rem 0.75rem;
   background-color: #ffffff;
   border: 1px solid #fcd9a4;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-family: inherit;
   font-size: 0.85rem;
   color: var(--text-primary);
@@ -131,7 +131,7 @@
   color: white;
   background-color: #25d366;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   padding: 0.35rem 0.7rem;
   cursor: pointer;
   text-decoration: none;
@@ -147,7 +147,7 @@
   color: var(--primary);
   background-color: #ffffff;
   border: 1px solid var(--primary);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   padding: 0.35rem 0.7rem;
   cursor: pointer;
 }
@@ -257,7 +257,7 @@
 .campoForm select {
   padding: 0.6rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 0.95rem;
   outline: none;
 }
@@ -279,7 +279,7 @@
   background-color: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -291,7 +291,7 @@
 }
 
 .botaoSalvar:disabled {
-  background-color: #b3a1d9;
+  background-color: var(--disabled-bg);
   cursor: not-allowed;
 }
 
@@ -300,7 +300,7 @@
   background: none;
   border: 1px solid var(--border);
   color: var(--text-secondary);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
