@@ -19,10 +19,10 @@
 
 .logo {
   display: block;
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 1rem;
-  border-radius: var(--radius-m);
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  margin: 0 auto 1.25rem;
 }
 
 .titulo {

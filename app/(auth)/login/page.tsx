@@ -41,8 +41,8 @@ export default function LoginPage() {
         <Image
           src="/logo-novo-millenium.png"
           alt="Novo Millenium"
-          width={72}
-          height={72}
+          width={200}
+          height={58}
           className={styles.logo}
           priority
         />
