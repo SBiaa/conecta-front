@@ -1,20 +1,17 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Lock, Plus, Trash2 } from 'lucide-react'
-import { apiDelete, apiGet, apiPost } from '../../lib/api'
-import { comSinal, dataHojeISO, formatarMes, formatarNumero, mesAtualISO } from '../../lib/formato'
+import { ChevronLeft, ChevronRight, Lock } from 'lucide-react'
+import { apiGet } from '../../lib/api'
+import { comSinal, formatarMes, formatarNumero, mesAtualISO } from '../../lib/formato'
 import GraficoLinha from '../../components/GraficoLinha'
 import styles from './progresso.module.css'
 import {
   type Avaliacao,
   CAMPOS_BALANCA,
   CAMPOS_MEDIDA,
-  type CampoBalanca,
   faixaImc,
   LABELS_LOCAL_DOR,
-  LOCAIS_DOR,
-  type LocalDor,
   type Relatorio,
   ROTULOS_DISPOSICAO,
   ROTULOS_DOR,
@@ -43,232 +40,6 @@ function classeSituacao(situacao: string | null): string {
   if (situacao === 'ATENCAO') return styles.seloAtencao
   if (situacao === 'BAIXA') return styles.seloCritico
   return styles.seloSemDados
-}
-
-const BALANCA_VAZIA = Object.fromEntries(CAMPOS_BALANCA.map(({ campo }) => [campo, ''])) as Record<
-  CampoBalanca,
-  string
->
-
-function Formulario({ aoSalvar }: { aoSalvar: () => void }) {
-  const [aberto, setAberto] = useState(false)
-  const [balancaAberta, setBalancaAberta] = useState(false)
-  const [data, setData] = useState(dataHojeISO)
-  const [peso, setPeso] = useState('')
-  const [balanca, setBalanca] = useState<Record<CampoBalanca, string>>(BALANCA_VAZIA)
-  const [nivelDor, setNivelDor] = useState<number | null>(null)
-  const [locaisDor, setLocaisDor] = useState<LocalDor[]>([])
-  const [disposicao, setDisposicao] = useState<number | null>(null)
-  const [observacao, setObservacao] = useState('')
-  const [salvando, setSalvando] = useState(false)
-  const [erro, setErro] = useState('')
-
-  function alternarLocal(local: LocalDor) {
-    setLocaisDor((atuais) =>
-      atuais.includes(local) ? atuais.filter((l) => l !== local) : [...atuais, local]
-    )
-  }
-
-  function limpar() {
-    setData(dataHojeISO())
-    setPeso('')
-    setBalanca(BALANCA_VAZIA)
-    setBalancaAberta(false)
-    setNivelDor(null)
-    setLocaisDor([])
-    setDisposicao(null)
-    setObservacao('')
-    setErro('')
-  }
-
-  async function enviar(evento: React.FormEvent) {
-    evento.preventDefault()
-    setErro('')
-    setSalvando(true)
-
-    try {
-      // Os campos numéricos vão como texto mesmo: a API aceita "67,5" e cuida da
-      // vírgula, que é o que o teclado do celular oferece em pt-BR.
-      await apiPost('/me/saude', {
-        data,
-        peso,
-        ...balanca,
-        nivelDor,
-        locaisDor,
-        disposicao,
-        observacao,
-      })
-      limpar()
-      setAberto(false)
-      aoSalvar()
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Não foi possível salvar seu registro.')
-    } finally {
-      setSalvando(false)
-    }
-  }
-
-  if (!aberto) {
-    return (
-      <button type="button" className={styles.botaoAbrir} onClick={() => setAberto(true)}>
-        <Plus size={18} />
-        Registrar como estou hoje
-      </button>
-    )
-  }
-
-  return (
-    <form className={styles.formulario} onSubmit={enviar}>
-      <label className={styles.campo}>
-        <span className={styles.rotulo}>Dia</span>
-        <input
-          type="date"
-          className={styles.input}
-          value={data}
-          max={dataHojeISO()}
-          onChange={(e) => setData(e.target.value)}
-        />
-      </label>
-
-      <fieldset className={styles.grupo}>
-        <legend className={styles.rotulo}>Como você se sente?</legend>
-        <div className={styles.escala}>
-          {[1, 2, 3, 4, 5].map((valor) => (
-            <button
-              key={valor}
-              type="button"
-              className={`${styles.opcao} ${disposicao === valor ? styles.opcaoAtiva : ''}`}
-              onClick={() => setDisposicao(disposicao === valor ? null : valor)}
-            >
-              {ROTULOS_DISPOSICAO[valor]}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      <fieldset className={styles.grupo}>
-        <legend className={styles.rotulo}>Está com dor?</legend>
-        <div className={styles.escala}>
-          {[0, 1, 2, 3, 4, 5].map((valor) => (
-            <button
-              key={valor}
-              type="button"
-              className={`${styles.opcao} ${nivelDor === valor ? styles.opcaoAtiva : ''}`}
-              onClick={() => setNivelDor(nivelDor === valor ? null : valor)}
-            >
-              {ROTULOS_DOR[valor]}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      {nivelDor !== null && nivelDor > 0 && (
-        <fieldset className={styles.grupo}>
-          <legend className={styles.rotulo}>Onde dói?</legend>
-          <div className={styles.escala}>
-            {LOCAIS_DOR.map((local) => (
-              <button
-                key={local}
-                type="button"
-                className={`${styles.opcao} ${locaisDor.includes(local) ? styles.opcaoAtiva : ''}`}
-                onClick={() => alternarLocal(local)}
-              >
-                {LABELS_LOCAL_DOR[local]}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-      )}
-
-      <label className={styles.campo}>
-        <span className={styles.rotulo}>
-          Peso <span className={styles.opcional}>(opcional)</span>
-        </span>
-        <input
-          type="text"
-          inputMode="decimal"
-          className={styles.input}
-          placeholder="kg"
-          value={peso}
-          onChange={(e) => setPeso(e.target.value)}
-        />
-      </label>
-
-      {/* Recolhido por padrão: são seis números que só fazem sentido se ela usou
-          uma balança de bioimpedância naquele dia. */}
-      <button
-        type="button"
-        className={styles.botaoSecao}
-        onClick={() => setBalancaAberta((v) => !v)}
-        aria-expanded={balancaAberta}
-      >
-        {balancaAberta ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        Dados da balança <span className={styles.opcional}>(opcional)</span>
-      </button>
-
-      {balancaAberta && (
-        <>
-          <p className={styles.ajuda}>
-            Se a sua balança mostra esses números no aplicativo dela, copie aqui — assim seu
-            acompanhamento fica mais completo.
-          </p>
-          <div className={styles.gradeCampos}>
-            {CAMPOS_BALANCA.map(({ campo, label, unidade }) => (
-              <label key={campo} className={styles.campo}>
-                <span className={styles.rotuloPequeno}>
-                  {label} {unidade && <span className={styles.opcional}>({unidade})</span>}
-                </span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  className={styles.input}
-                  value={balanca[campo]}
-                  onChange={(e) => setBalanca({ ...balanca, [campo]: e.target.value })}
-                />
-              </label>
-            ))}
-          </div>
-        </>
-      )}
-
-      <label className={styles.campo}>
-        <span className={styles.rotulo}>
-          Quer anotar mais alguma coisa? <span className={styles.opcional}>(opcional)</span>
-        </span>
-        <textarea
-          className={styles.textarea}
-          rows={2}
-          maxLength={500}
-          value={observacao}
-          onChange={(e) => setObservacao(e.target.value)}
-        />
-      </label>
-
-      {erro && <p className={styles.mensagemErro}>{erro}</p>}
-
-      <div className={styles.acoesFormulario}>
-        <button
-          type="button"
-          className={styles.botaoSecundario}
-          onClick={() => {
-            limpar()
-            setAberto(false)
-          }}
-        >
-          Cancelar
-        </button>
-        <button type="submit" className={styles.botaoPrimario} disabled={salvando}>
-          {salvando ? 'Salvando...' : 'Salvar'}
-        </button>
-      </div>
-
-      <p className={styles.aviso}>
-        <Lock size={13} />
-        Seus dados de saúde ficam visíveis pra você, pra professora da sua turma e pra
-        coordenação — pra poderem adaptar os exercícios.
-      </p>
-    </form>
-  )
 }
 
 function CartaoComposicao({ relatorio }: { relatorio: Relatorio }) {
@@ -360,16 +131,6 @@ export default function MeuProgressoPage() {
 
   useEffect(carregar, [carregar])
 
-  async function apagar(id: number) {
-    if (!confirm('Apagar este registro?')) return
-    try {
-      await apiDelete(`/me/saude/${id}`)
-      carregar()
-    } catch {
-      setErro('Não foi possível apagar o registro.')
-    }
-  }
-
   const ehMesAtual = mes === mesAtualISO()
 
   return (
@@ -397,7 +158,12 @@ export default function MeuProgressoPage() {
         </button>
       </div>
 
-      {ehMesAtual && <Formulario aoSalvar={carregar} />}
+      <p className={styles.aviso}>
+        <Lock size={13} />
+        Sua professora registra sua saúde do dia (peso, disposição, dor) durante a aula, na balança
+        da turma. Fica visível pra você, pra ela e pra coordenação — pra poderem adaptar os
+        exercícios.
+      </p>
 
       {erro && <p className={styles.mensagemErro}>{erro}</p>}
       {carregando && <p className={styles.mensagem}>Carregando...</p>}
@@ -452,7 +218,7 @@ export default function MeuProgressoPage() {
               <h2 className={styles.tituloCartao}>Como você esteve</h2>
               <p className={styles.vazio}>
                 {ehMesAtual
-                  ? 'Você ainda não registrou nada neste mês. Que tal começar hoje?'
+                  ? 'Nada registrado ainda neste mês — sua professora lança isso durante a aula.'
                   : 'Nenhum registro neste mês.'}
               </p>
             </section>
@@ -553,14 +319,9 @@ export default function MeuProgressoPage() {
                       <li key={registro.id} className={styles.registro}>
                         <div className={styles.registroTopo}>
                           <span className={styles.registroData}>{formatarDDMM(registro.data)}</span>
-                          <button
-                            type="button"
-                            className={styles.botaoApagar}
-                            onClick={() => apagar(registro.id)}
-                            aria-label={`Apagar registro de ${formatarDDMM(registro.data)}`}
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          {registro.registradoPor && (
+                            <span className={styles.registradoPor}>por {registro.registradoPor}</span>
+                          )}
                         </div>
 
                         <p className={styles.registroLinha}>

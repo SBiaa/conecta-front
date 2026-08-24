@@ -5,8 +5,9 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import FormularioAvaliacao from '../../../../../components/FormularioAvaliacao'
+import FormularioRegistroSaude from '../../../../../components/FormularioRegistroSaude'
 import RelatorioSaude from '../../../../../components/RelatorioSaude'
-import type { Avaliacao, RelatorioDaAluna } from '../../../../../lib/saude'
+import type { Avaliacao, RegistroSaude, RelatorioDaAluna } from '../../../../../lib/saude'
 import styles from './aluna.module.css'
 
 export default function AlunaDaTurmaPage() {
@@ -14,8 +15,9 @@ export default function AlunaDaTurmaPage() {
   const [nome, setNome] = useState('')
   const [alturaCm, setAlturaCm] = useState<number | null>(null)
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([])
+  const [registros, setRegistros] = useState<RegistroSaude[]>([])
   // Trocar a key remonta o relatório, que é como ele recarrega depois que uma
-  // avaliação nova é salva.
+  // avaliação ou um registro novo é salvo.
   const [versao, setVersao] = useState(0)
 
   // useCallback porque o RelatorioSaude tem esse callback nas dependências do
@@ -24,6 +26,7 @@ export default function AlunaDaTurmaPage() {
     setNome(relatorio.aluna.nome)
     setAlturaCm(relatorio.alturaCm)
     setAvaliacoes(relatorio.avaliacoes)
+    setRegistros(relatorio.registros)
   }, [])
 
   return (
@@ -36,6 +39,12 @@ export default function AlunaDaTurmaPage() {
       <h1 className={styles.titulo}>{nome || 'Carregando...'}</h1>
 
       <div className={styles.cartao}>
+        <FormularioRegistroSaude
+          caminho={`/professor/alunas/${usuarioId}/registros-saude`}
+          registros={registros}
+          aoSalvar={() => setVersao((v) => v + 1)}
+        />
+
         <FormularioAvaliacao
           caminho={`/professor/alunas/${usuarioId}/avaliacoes`}
           alturaAtual={alturaCm}

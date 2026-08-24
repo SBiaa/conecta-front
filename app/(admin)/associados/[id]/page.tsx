@@ -17,9 +17,10 @@ import BlocoInscricao, {
   type EstadoInscricao,
 } from '../../../components/BlocoInscricao'
 import FormularioAvaliacao from '../../../components/FormularioAvaliacao'
+import FormularioRegistroSaude from '../../../components/FormularioRegistroSaude'
 import RelatorioSaude from '../../../components/RelatorioSaude'
 import Avatar from '../../../components/Avatar'
-import type { Avaliacao, RelatorioDaAluna } from '../../../lib/saude'
+import type { Avaliacao, RegistroSaude, RelatorioDaAluna } from '../../../lib/saude'
 import styles from './perfil.module.css'
 
 const FLORES = [
@@ -179,9 +180,11 @@ export default function PerfilAssociadoPage() {
   const [alturaAluna, setAlturaAluna] = useState<number | null>(null)
   const [versaoSaude, setVersaoSaude] = useState(0)
   const [avaliacoesAluna, setAvaliacoesAluna] = useState<Avaliacao[]>([])
+  const [registrosAluna, setRegistrosAluna] = useState<RegistroSaude[]>([])
   const aoCarregarSaude = useCallback((relatorio: RelatorioDaAluna) => {
     setAlturaAluna(relatorio.alturaCm)
     setAvaliacoesAluna(relatorio.avaliacoes)
+    setRegistrosAluna(relatorio.registros)
   }, [])
 
   const [associado, setAssociado] = useState<Associado | null>(null)
@@ -913,9 +916,15 @@ export default function PerfilAssociadoPage() {
         </div>
 
         <p className={styles.avisoSaude}>
-          Dado de saúde informado pela própria associada. Use só para acompanhar e adaptar as
-          atividades dela.
+          Dado de saúde registrado pela professora da turma dela (ou pela coordenação). Use só para
+          acompanhar e adaptar as atividades dela.
         </p>
+
+        <FormularioRegistroSaude
+          caminho={`/usuarios/${id}/registros-saude`}
+          registros={registrosAluna}
+          aoSalvar={() => setVersaoSaude((v) => v + 1)}
+        />
 
         <FormularioAvaliacao
           caminho={`/usuarios/${id}/avaliacoes`}

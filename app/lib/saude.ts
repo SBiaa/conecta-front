@@ -49,6 +49,7 @@ export type RegistroSaude = {
   massaOssea: number | null
   gorduraVisceral: number | null
   taxaMetabolica: number | null
+  registradoPor: string | null
 }
 
 // Os campos que a balança entrega junto com o peso. A ordem aqui é a ordem em
