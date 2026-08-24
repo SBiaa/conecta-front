@@ -10,5 +10,11 @@
   .conteudo {
     margin-left: 220px;
     padding-bottom: 0;
+    /* Sem isso, páginas sem largura própria (ex: perfil da associada) esticam
+       os cards até a borda da janela em monitores largos — o "Dados
+       pessoais" vira uma linha só, com os campos espalhados longe um do
+       outro. As páginas que já definem sua própria largura (listas, 720px)
+       continuam menores que isso e não são afetadas. */
+    max-width: 960px;
   }
 }
