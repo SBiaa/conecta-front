@@ -41,6 +41,13 @@ function formatarMoeda(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
+function formatarData(data: string): string {
+  const d = new Date(data)
+  const dia = String(d.getUTCDate()).padStart(2, '0')
+  const mes = String(d.getUTCMonth() + 1).padStart(2, '0')
+  return `${dia}/${mes}/${d.getUTCFullYear()}`
+}
+
 function getSituacao(pagamento: Pagamento): Situacao {
   if (pagamento.status === 'PAGA') return 'PAGA'
   const hoje = new Date()
@@ -159,9 +166,11 @@ export default function ContribuicoesPage() {
                 </span>
               </div>
 
-              {situacao === 'PAGA' && p.formaPagamento && (
+              {situacao === 'PAGA' && (
                 <p className={styles.formaPagamento}>
-                  via {FORMA_LABELS[p.formaPagamento] ?? p.formaPagamento}
+                  {p.dataPagamento && `Pago em ${formatarData(p.dataPagamento)}`}
+                  {p.dataPagamento && p.formaPagamento && ' · '}
+                  {p.formaPagamento && `via ${FORMA_LABELS[p.formaPagamento] ?? p.formaPagamento}`}
                 </p>
               )}
             </li>

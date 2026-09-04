@@ -34,6 +34,7 @@ type Pagamento = {
   valor: string
   status: 'PAGA' | 'PENDENTE'
   vencimento: string
+  dataPagamento: string | null
   formaPagamento: FormaPagamento | null
   matricula: {
     usuario: { nome: string }
@@ -429,6 +430,11 @@ export default function FinanceiroPage() {
                     {pagamento.formaPagamento && (
                       <span className={styles.detalhe}>
                         {LABELS_FORMA_PAGAMENTO[pagamento.formaPagamento]}
+                      </span>
+                    )}
+                    {pagamento.status === 'PAGA' && pagamento.dataPagamento && (
+                      <span className={styles.detalhe}>
+                        Pago em {formatarData(pagamento.dataPagamento)}
                       </span>
                     )}
                   </div>

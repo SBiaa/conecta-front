@@ -20,17 +20,26 @@ function trataSessaoExpirada(response: Response) {
   }
 }
 
+export class ApiError extends Error {
+  status: number
+
+  constructor(mensagem: string, status: number) {
+    super(mensagem)
+    this.status = status
+  }
+}
+
 // A API responde os erros como { erro: "mensagem" }. Quando existir, usa essa
 // mensagem — assim a tela pode mostrar o motivo real em vez de um texto genérico.
 async function erroDaResposta(response: Response, padrao: string): Promise<Error> {
   trataSessaoExpirada(response)
   try {
     const corpo = await response.json()
-    if (corpo?.erro) return new Error(corpo.erro)
+    if (corpo?.erro) return new ApiError(corpo.erro, response.status)
   } catch {
     // resposta sem corpo JSON — cai no texto padrão
   }
-  return new Error(padrao)
+  return new ApiError(padrao, response.status)
 }
 
 export async function apiGet<T>(path: string): Promise<T> {

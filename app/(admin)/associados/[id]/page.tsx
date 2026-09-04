@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { CirclePlus, Pencil, Trash2, KeyRound, Eye, EyeOff, MessageCircle } from 'lucide-react'
-import { apiGet, apiPatch, apiPost, apiDelete } from '../../../lib/api'
+import { apiGet, apiPatch, apiPost, apiDelete, ApiError } from '../../../lib/api'
 import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
 import { mesAtualISO, ultimoDiaDoMesISO } from '../../../lib/formato'
 import SeletorTurmasSemana, {
@@ -80,6 +80,7 @@ type Pagamento = {
   status: 'PAGA' | 'PENDENTE'
   mesReferencia: string
   vencimento: string
+  dataPagamento: string | null
   formaPagamento: FormaPagamento | null
   matricula: {
     usuario: { nome: string }
@@ -234,6 +235,7 @@ export default function PerfilAssociadoPage() {
 
   const [matriculaParaExcluir, setMatriculaParaExcluir] = useState<Matricula | null>(null)
   const [excluindoMatricula, setExcluindoMatricula] = useState(false)
+  const [vinculosParaApagar, setVinculosParaApagar] = useState('')
   const [erroExclusao, setErroExclusao] = useState('')
 
   const [modalDadosAberto, setModalDadosAberto] = useState(false)
@@ -524,22 +526,30 @@ export default function PerfilAssociadoPage() {
   function abrirModalExclusao(matricula: Matricula) {
     setMatriculaParaExcluir(matricula)
     setErroExclusao('')
+    setVinculosParaApagar('')
   }
 
   function fecharModalExclusao() {
     setMatriculaParaExcluir(null)
+    setVinculosParaApagar('')
   }
 
-  async function confirmarExclusao() {
+  async function confirmarExclusao(forcar = false) {
     if (!matriculaParaExcluir) return
     setExcluindoMatricula(true)
     setErroExclusao('')
     try {
-      await apiDelete(`/matriculas/${matriculaParaExcluir.id}`)
+      await apiDelete(`/matriculas/${matriculaParaExcluir.id}${forcar ? '?forcar=true' : ''}`)
       await buscarAssociado()
       fecharModalExclusao()
-    } catch {
-      setErroExclusao('Não foi possível excluir a matrícula. Verifique se há pagamentos ou presenças vinculados a ela.')
+    } catch (erro) {
+      // 409 = a matrícula tem histórico vinculado. Não é um erro sem saída: a
+      // coordenação pode confirmar de novo e apagar o histórico junto.
+      if (erro instanceof ApiError && erro.status === 409) {
+        setVinculosParaApagar(erro.message)
+      } else {
+        setErroExclusao('Não foi possível excluir a matrícula. Tente novamente.')
+      }
     } finally {
       setExcluindoMatricula(false)
     }
@@ -882,6 +892,11 @@ export default function PerfilAssociadoPage() {
                     Vencimento: {formatarData(pagamento.vencimento)}
                     {pagamento.formaPagamento && ` · ${LABELS_FORMA[pagamento.formaPagamento]}`}
                   </span>
+                  {pagamento.status === 'PAGA' && pagamento.dataPagamento && (
+                    <span className={styles.detalhe}>
+                      Pago em: {formatarData(pagamento.dataPagamento)}
+                    </span>
+                  )}
                 </div>
                 <div className={styles.acoesPagamento}>
                   <span className={styles.valorPagamento}>{formatarMoeda(pagamento.valor)}</span>
@@ -1249,11 +1264,19 @@ export default function PerfilAssociadoPage() {
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3 className={styles.modalTitulo}>Excluir matrícula</h3>
 
-            <p className={styles.mensagem}>
-              Tem certeza que deseja excluir a matrícula em{' '}
-              {matriculaParaExcluir.turmas.map((turma) => turma.nome).join(', ') || 'turma não informada'}?
-              Essa ação não pode ser desfeita.
-            </p>
+            {vinculosParaApagar ? (
+              <p className={styles.mensagem}>
+                {vinculosParaApagar} Se você excluir mesmo assim, esse histórico
+                é apagado junto: as presenças somem da frequência e as cobranças
+                somem do financeiro. Essa ação não pode ser desfeita.
+              </p>
+            ) : (
+              <p className={styles.mensagem}>
+                Tem certeza que deseja excluir a matrícula em{' '}
+                {matriculaParaExcluir.turmas.map((turma) => turma.nome).join(', ') || 'turma não informada'}?
+                Essa ação não pode ser desfeita.
+              </p>
+            )}
 
             {erroExclusao && <p className={styles.erroModal}>{erroExclusao}</p>}
 
@@ -1263,10 +1286,14 @@ export default function PerfilAssociadoPage() {
               </button>
               <button
                 className={styles.botaoConfirmar}
-                onClick={confirmarExclusao}
+                onClick={() => confirmarExclusao(Boolean(vinculosParaApagar))}
                 disabled={excluindoMatricula}
               >
-                {excluindoMatricula ? 'Excluindo...' : 'Excluir'}
+                {excluindoMatricula
+                  ? 'Excluindo...'
+                  : vinculosParaApagar
+                    ? 'Excluir mesmo assim'
+                    : 'Excluir'}
               </button>
             </div>
           </div>
