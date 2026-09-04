@@ -540,7 +540,8 @@ export default function PerfilAssociadoPage() {
     setErroExclusao('')
     try {
       await apiDelete(`/matriculas/${matriculaParaExcluir.id}${forcar ? '?forcar=true' : ''}`)
-      await buscarAssociado()
+      // A exclusão forçada leva as cobranças junto, então o extrato também precisa recarregar.
+      await Promise.all([buscarAssociado(), buscarPagamentos()])
       fecharModalExclusao()
     } catch (erro) {
       // 409 = a matrícula tem histórico vinculado. Não é um erro sem saída: a
