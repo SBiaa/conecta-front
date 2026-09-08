@@ -329,6 +329,26 @@
   background-color: #ddd6fe;
 }
 
+.botaoExcluirAssociado {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--danger);
+  background-color: var(--danger-soft);
+  border: none;
+  border-radius: var(--radius-s);
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoExcluirAssociado:hover {
+  background-color: var(--danger);
+  color: #ffffff;
+}
+
 .campoSenha {
   display: flex;
   align-items: center;

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { CirclePlus, Pencil, Trash2, KeyRound, Eye, EyeOff, MessageCircle } from 'lucide-react'
 import { apiGet, apiPatch, apiPost, apiDelete, ApiError } from '../../../lib/api'
@@ -176,6 +176,7 @@ function montarEndereco(a: Associado): string | null {
 
 export default function PerfilAssociadoPage() {
   const { id } = useParams<{ id: string }>()
+  const router = useRouter()
   // Altura e versão do bloco de saúde: a versão remonta o relatório depois que
   // uma avaliação nova é salva.
   const [alturaAluna, setAlturaAluna] = useState<number | null>(null)
@@ -237,6 +238,12 @@ export default function PerfilAssociadoPage() {
   const [excluindoMatricula, setExcluindoMatricula] = useState(false)
   const [vinculosParaApagar, setVinculosParaApagar] = useState('')
   const [erroExclusao, setErroExclusao] = useState('')
+
+  const [modalExcluirAberto, setModalExcluirAberto] = useState(false)
+  const [excluindoAssociado, setExcluindoAssociado] = useState(false)
+  const [vinculosAssociadoParaApagar, setVinculosAssociadoParaApagar] = useState('')
+  const [bloqueioPermanenteAssociado, setBloqueioPermanenteAssociado] = useState(false)
+  const [erroExclusaoAssociado, setErroExclusaoAssociado] = useState('')
 
   const [modalDadosAberto, setModalDadosAberto] = useState(false)
   const [nomeEdit, setNomeEdit] = useState('')
@@ -556,6 +563,40 @@ export default function PerfilAssociadoPage() {
     }
   }
 
+  function abrirModalExcluir() {
+    setErroExclusaoAssociado('')
+    setVinculosAssociadoParaApagar('')
+    setBloqueioPermanenteAssociado(false)
+    setModalExcluirAberto(true)
+  }
+
+  function fecharModalExcluir() {
+    setModalExcluirAberto(false)
+    setVinculosAssociadoParaApagar('')
+    setBloqueioPermanenteAssociado(false)
+  }
+
+  async function confirmarExclusaoAssociado(forcar = false) {
+    setExcluindoAssociado(true)
+    setErroExclusaoAssociado('')
+    try {
+      await apiDelete(`/usuarios/${id}${forcar ? '?forcar=true' : ''}`)
+      router.push('/associados')
+    } catch (erro) {
+      // 409 = existe histórico vinculado. Se for vínculo de responsabilidade
+      // sobre dado de OUTRA pessoa (bloqueioPermanente), forçar não resolve —
+      // precisa arrumar isso à mão antes (ex.: trocar o professor da turma).
+      if (erro instanceof ApiError && erro.status === 409) {
+        setVinculosAssociadoParaApagar(erro.message)
+        setBloqueioPermanenteAssociado(Boolean(erro.corpo?.bloqueioPermanente))
+      } else {
+        setErroExclusaoAssociado('Não foi possível excluir o associado. Tente novamente.')
+      }
+    } finally {
+      setExcluindoAssociado(false)
+    }
+  }
+
   function abrirModalDados() {
     if (!associado) return
     setNomeEdit(associado.nome)
@@ -688,6 +729,10 @@ export default function PerfilAssociadoPage() {
             >
               <MessageCircle size={14} />
               {gerandoAcesso ? 'Gerando...' : 'Enviar acesso'}
+            </button>
+            <button className={styles.botaoExcluirAssociado} onClick={abrirModalExcluir}>
+              <Trash2 size={14} />
+              Excluir associado
             </button>
           </div>
         </div>
@@ -1296,6 +1341,48 @@ export default function PerfilAssociadoPage() {
                     ? 'Excluir mesmo assim'
                     : 'Excluir'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal excluir associado */}
+      {modalExcluirAberto && (
+        <div className={styles.overlay} onClick={fecharModalExcluir}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitulo}>Excluir associado</h3>
+
+            {vinculosAssociadoParaApagar ? (
+              <p className={styles.mensagem}>
+                {vinculosAssociadoParaApagar}
+                {!bloqueioPermanenteAssociado &&
+                  ' Se você excluir mesmo assim, esse histórico é apagado junto e não pode ser recuperado.'}
+              </p>
+            ) : (
+              <p className={styles.mensagem}>
+                Tem certeza que deseja excluir {associado.nome}? Essa ação não pode ser desfeita.
+              </p>
+            )}
+
+            {erroExclusaoAssociado && <p className={styles.erroModal}>{erroExclusaoAssociado}</p>}
+
+            <div className={styles.acoesModal}>
+              <button className={styles.botaoCancelar} onClick={fecharModalExcluir}>
+                Cancelar
+              </button>
+              {!bloqueioPermanenteAssociado && (
+                <button
+                  className={styles.botaoConfirmar}
+                  onClick={() => confirmarExclusaoAssociado(Boolean(vinculosAssociadoParaApagar))}
+                  disabled={excluindoAssociado}
+                >
+                  {excluindoAssociado
+                    ? 'Excluindo...'
+                    : vinculosAssociadoParaApagar
+                      ? 'Excluir mesmo assim'
+                      : 'Excluir'}
+                </button>
+              )}
             </div>
           </div>
         </div>

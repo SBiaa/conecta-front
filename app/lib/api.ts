@@ -22,20 +22,25 @@ function trataSessaoExpirada(response: Response) {
 
 export class ApiError extends Error {
   status: number
+  corpo?: Record<string, unknown>
 
-  constructor(mensagem: string, status: number) {
+  constructor(mensagem: string, status: number, corpo?: Record<string, unknown>) {
     super(mensagem)
     this.status = status
+    this.corpo = corpo
   }
 }
 
 // A API responde os erros como { erro: "mensagem" }. Quando existir, usa essa
 // mensagem — assim a tela pode mostrar o motivo real em vez de um texto genérico.
+// Guarda o corpo inteiro também: alguns endpoints (ex. excluir associado) mandam
+// campos extras (como "bloqueioPermanente") que a tela precisa pra decidir se
+// oferece a opção de forçar a exclusão.
 async function erroDaResposta(response: Response, padrao: string): Promise<Error> {
   trataSessaoExpirada(response)
   try {
     const corpo = await response.json()
-    if (corpo?.erro) return new ApiError(corpo.erro, response.status)
+    if (corpo?.erro) return new ApiError(corpo.erro, response.status, corpo)
   } catch {
     // resposta sem corpo JSON — cai no texto padrão
   }
