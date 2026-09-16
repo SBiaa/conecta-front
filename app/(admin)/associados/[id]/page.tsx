@@ -34,7 +34,7 @@ function gerarSenhaSugerida() {
   return `${flor}${digitos}`
 }
 
-type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO'
+type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO' | 'ABONADO'
 
 type Matricula = {
   id: string
@@ -82,6 +82,7 @@ type Pagamento = {
   vencimento: string
   dataPagamento: string | null
   formaPagamento: FormaPagamento | null
+  editadoEm: string | null
   matricula: {
     usuario: { nome: string }
     turmas: { nome: string; diasContratados: string[]; projeto: { nome: string } }[]
@@ -91,6 +92,14 @@ type Pagamento = {
 type PagamentoParaRegistrar = {
   id: string
   valor: string
+}
+
+type PagamentoParaEditar = {
+  id: string
+  valor: string
+  formaPagamento: FormaPagamento | null
+  mesReferencia: string
+  vencimento: string
 }
 
 type TurmaOpcao = {
@@ -131,6 +140,7 @@ const LABELS_FORMA: Record<FormaPagamento, string> = {
   DINHEIRO: 'Dinheiro',
   PIX: 'Pix',
   CARTAO: 'Cartão',
+  ABONADO: 'Abonado',
 }
 
 function formatarMes(mes: string) {
@@ -202,6 +212,14 @@ export default function PerfilAssociadoPage() {
   const [valorModal, setValorModal] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [erroModal, setErroModal] = useState('')
+
+  const [pagamentoEditando, setPagamentoEditando] = useState<PagamentoParaEditar | null>(null)
+  const [valorEdicao, setValorEdicao] = useState('')
+  const [formaPagamentoEdicao, setFormaPagamentoEdicao] = useState<FormaPagamento | ''>('')
+  const [mesReferenciaEdicao, setMesReferenciaEdicao] = useState('')
+  const [vencimentoEdicao, setVencimentoEdicao] = useState('')
+  const [enviandoEdicaoPagamento, setEnviandoEdicaoPagamento] = useState(false)
+  const [erroEdicaoPagamento, setErroEdicaoPagamento] = useState('')
 
   const [modalSenhaAberto, setModalSenhaAberto] = useState(false)
   const [novaSenhaInput, setNovaSenhaInput] = useState('')
@@ -316,6 +334,51 @@ export default function PerfilAssociadoPage() {
       setErroModal('Não foi possível registrar o pagamento')
     } finally {
       setEnviando(false)
+    }
+  }
+
+  function abrirModalEdicaoPagamento(pagamento: Pagamento) {
+    setPagamentoEditando({
+      id: pagamento.id,
+      valor: pagamento.valor,
+      formaPagamento: pagamento.formaPagamento,
+      mesReferencia: pagamento.mesReferencia,
+      vencimento: pagamento.vencimento,
+    })
+    setValorEdicao(pagamento.valor)
+    setFormaPagamentoEdicao(pagamento.formaPagamento ?? '')
+    setMesReferenciaEdicao(pagamento.mesReferencia)
+    setVencimentoEdicao(pagamento.vencimento.slice(0, 10))
+    setErroEdicaoPagamento('')
+  }
+
+  function fecharModalEdicaoPagamento() {
+    setPagamentoEditando(null)
+  }
+
+  async function confirmarEdicaoPagamento() {
+    if (!pagamentoEditando) return
+
+    if (valorEdicao === '' || Number(valorEdicao) < 0) {
+      setErroEdicaoPagamento('Informe um valor válido')
+      return
+    }
+
+    setEnviandoEdicaoPagamento(true)
+    setErroEdicaoPagamento('')
+    try {
+      await apiPatch(`/pagamentos/${pagamentoEditando.id}`, {
+        valor: Number(valorEdicao),
+        formaPagamento: formaPagamentoEdicao || undefined,
+        mesReferencia: mesReferenciaEdicao,
+        vencimento: vencimentoEdicao,
+      })
+      await buscarPagamentos()
+      fecharModalEdicaoPagamento()
+    } catch {
+      setErroEdicaoPagamento('Não foi possível salvar a correção')
+    } finally {
+      setEnviandoEdicaoPagamento(false)
     }
   }
 
@@ -943,6 +1006,11 @@ export default function PerfilAssociadoPage() {
                       Pago em: {formatarData(pagamento.dataPagamento)}
                     </span>
                   )}
+                  {pagamento.editadoEm && (
+                    <span className={styles.detalhe}>
+                      Corrigido em: {formatarData(pagamento.editadoEm)}
+                    </span>
+                  )}
                 </div>
                 <div className={styles.acoesPagamento}>
                   <span className={styles.valorPagamento}>{formatarMoeda(pagamento.valor)}</span>
@@ -963,6 +1031,14 @@ export default function PerfilAssociadoPage() {
                       <CirclePlus size={20} />
                     </button>
                   )}
+                  <button
+                    className={styles.botaoRegistrar}
+                    onClick={() => abrirModalEdicaoPagamento(pagamento)}
+                    title="Corrigir pagamento"
+                    aria-label={`Corrigir pagamento de ${formatarMes(pagamento.mesReferencia)}`}
+                  >
+                    <Pencil size={18} />
+                  </button>
                 </div>
               </li>
             ))}
@@ -1472,11 +1548,16 @@ export default function PerfilAssociadoPage() {
               <select
                 id="formaPagamento"
                 value={formaPagamentoModal}
-                onChange={(e) => setFormaPagamentoModal(e.target.value as FormaPagamento)}
+                onChange={(e) => {
+                  const forma = e.target.value as FormaPagamento
+                  setFormaPagamentoModal(forma)
+                  if (forma === 'ABONADO') setValorModal('0')
+                }}
               >
                 <option value="DINHEIRO">Dinheiro</option>
                 <option value="PIX">Pix</option>
                 <option value="CARTAO">Cartão</option>
+                <option value="ABONADO">Abonado</option>
               </select>
             </div>
 
@@ -1495,7 +1576,8 @@ export default function PerfilAssociadoPage() {
               <input
                 type="number"
                 id="valorPago"
-                value={valorModal}
+                value={formaPagamentoModal === 'ABONADO' ? '0' : valorModal}
+                disabled={formaPagamentoModal === 'ABONADO'}
                 onChange={(e) => setValorModal(e.target.value)}
               />
             </div>
@@ -1508,6 +1590,86 @@ export default function PerfilAssociadoPage() {
               </button>
               <button className={styles.botaoConfirmar} onClick={confirmarRegistro} disabled={enviando}>
                 {enviando ? 'Salvando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal corrigir pagamento */}
+      {pagamentoEditando && (
+        <div className={styles.overlay} onClick={fecharModalEdicaoPagamento}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitulo}>Corrigir pagamento</h3>
+
+            <div className={styles.campo}>
+              <label htmlFor="valorEdicaoPagamento">Valor</label>
+              <input
+                type="number"
+                id="valorEdicaoPagamento"
+                step="0.01"
+                min="0"
+                value={formaPagamentoEdicao === 'ABONADO' ? '0' : valorEdicao}
+                disabled={formaPagamentoEdicao === 'ABONADO'}
+                onChange={(e) => setValorEdicao(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="formaPagamentoEdicao">Forma de pagamento</label>
+              <select
+                id="formaPagamentoEdicao"
+                value={formaPagamentoEdicao}
+                onChange={(e) => {
+                  const forma = e.target.value as FormaPagamento | ''
+                  setFormaPagamentoEdicao(forma)
+                  if (forma === 'ABONADO') setValorEdicao('0')
+                }}
+              >
+                <option value="">— não informada —</option>
+                <option value="DINHEIRO">Dinheiro</option>
+                <option value="PIX">Pix</option>
+                <option value="CARTAO">Cartão</option>
+                <option value="ABONADO">Abonado</option>
+              </select>
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="mesReferenciaEdicao">Mês</label>
+              <input
+                type="month"
+                id="mesReferenciaEdicao"
+                value={mesReferenciaEdicao}
+                onChange={(e) => setMesReferenciaEdicao(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="vencimentoEdicao">Vencimento</label>
+              <input
+                type="date"
+                id="vencimentoEdicao"
+                value={vencimentoEdicao}
+                onChange={(e) => setVencimentoEdicao(e.target.value)}
+              />
+            </div>
+
+            {erroEdicaoPagamento && <p className={styles.erroModal}>{erroEdicaoPagamento}</p>}
+
+            <div className={styles.acoesModal}>
+              <button
+                className={styles.botaoCancelar}
+                onClick={fecharModalEdicaoPagamento}
+                disabled={enviandoEdicaoPagamento}
+              >
+                Cancelar
+              </button>
+              <button
+                className={styles.botaoConfirmar}
+                onClick={confirmarEdicaoPagamento}
+                disabled={enviandoEdicaoPagamento}
+              >
+                {enviandoEdicaoPagamento ? 'Salvando...' : 'Salvar correção'}
               </button>
             </div>
           </div>

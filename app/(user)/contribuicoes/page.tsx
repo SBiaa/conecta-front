@@ -29,6 +29,7 @@ const FORMA_LABELS: Record<string, string> = {
   DINHEIRO: 'Dinheiro',
   PIX: 'Pix',
   CARTAO: 'Cartão',
+  ABONADO: 'Abonado',
 }
 
 function formatarMes(mesRef: string): string {

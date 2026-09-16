@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { apiGet } from '../lib/api'
 
-export type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO'
+export type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO' | 'ABONADO'
 
 export type EstadoInscricao = {
   cobrar: boolean
@@ -71,7 +71,8 @@ export default function BlocoInscricao({ valor: estado, onChange, styles, titulo
               id="valorInscricao"
               step="0.01"
               min="0"
-              value={estado.valor}
+              value={estado.status === 'PAGA' && estado.formaPagamento === 'ABONADO' ? '0' : estado.valor}
+              disabled={estado.status === 'PAGA' && estado.formaPagamento === 'ABONADO'}
               onChange={(evento) => onChange({ ...estado, valor: evento.target.value })}
             />
           </div>
@@ -96,13 +97,19 @@ export default function BlocoInscricao({ valor: estado, onChange, styles, titulo
               <select
                 id="formaPagamentoInscricao"
                 value={estado.formaPagamento}
-                onChange={(evento) =>
-                  onChange({ ...estado, formaPagamento: evento.target.value as FormaPagamento })
-                }
+                onChange={(evento) => {
+                  const formaPagamento = evento.target.value as FormaPagamento
+                  onChange({
+                    ...estado,
+                    formaPagamento,
+                    valor: formaPagamento === 'ABONADO' ? '0' : estado.valor,
+                  })
+                }}
               >
                 <option value="DINHEIRO">Dinheiro</option>
                 <option value="PIX">Pix</option>
                 <option value="CARTAO">Cartão</option>
+                <option value="ABONADO">Abonado</option>
               </select>
             </div>
           )}

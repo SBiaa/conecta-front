@@ -5,7 +5,7 @@ import { apiGet } from '../../../lib/api'
 import { formatarMoeda, dataHojeISO } from '../../../lib/formato'
 import styles from '../financeiro.module.css'
 
-type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO'
+type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO' | 'ABONADO'
 
 type Entrada = {
   id: string
@@ -28,6 +28,7 @@ type CaixaDoDia = {
   entradas: {
     total: number
     porForma: Record<FormaPagamento, number>
+    quantidadePorForma: Record<FormaPagamento, number>
     itens: Entrada[]
   }
   saidas: {
@@ -42,9 +43,10 @@ const LABELS_FORMA: Record<FormaPagamento, string> = {
   DINHEIRO: 'Dinheiro',
   PIX: 'Pix',
   CARTAO: 'Cartão',
+  ABONADO: 'Abonado',
 }
 
-const FORMAS: FormaPagamento[] = ['DINHEIRO', 'PIX', 'CARTAO']
+const FORMAS: FormaPagamento[] = ['DINHEIRO', 'PIX', 'CARTAO', 'ABONADO']
 
 export default function CaixaDoDiaPage() {
   const [data, setData] = useState(dataHojeISO())
@@ -115,7 +117,11 @@ export default function CaixaDoDiaPage() {
                 {FORMAS.map((forma) => (
                   <li key={forma} className={styles.linhaForma}>
                     <span>{LABELS_FORMA[forma]}</span>
-                    <span>{formatarMoeda(caixa.entradas.porForma[forma] ?? 0)}</span>
+                    <span>
+                      {forma === 'ABONADO'
+                        ? `${caixa.entradas.quantidadePorForma[forma] ?? 0} aluna(s)`
+                        : formatarMoeda(caixa.entradas.porForma[forma] ?? 0)}
+                    </span>
                   </li>
                 ))}
                 <li className={`${styles.linhaForma} ${styles.linhaSaldo}`}>

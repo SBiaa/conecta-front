@@ -5,7 +5,7 @@ import { apiGet } from '../../../lib/api'
 import { formatarMoeda, formatarMes, mesAtualISO } from '../../../lib/formato'
 import styles from '../financeiro.module.css'
 
-type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO'
+type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO' | 'ABONADO'
 
 type Fechamento = {
   mes: string
@@ -16,6 +16,7 @@ type Fechamento = {
       vendas: number
       total: number
       porForma: Record<FormaPagamento, number>
+      quantidadePorForma: Record<FormaPagamento, number>
     }
     saidas: {
       total: number
@@ -37,9 +38,10 @@ const LABELS_FORMA: Record<FormaPagamento, string> = {
   DINHEIRO: 'Dinheiro',
   PIX: 'Pix',
   CARTAO: 'Cartão',
+  ABONADO: 'Abonado',
 }
 
-const FORMAS: FormaPagamento[] = ['DINHEIRO', 'PIX', 'CARTAO']
+const FORMAS: FormaPagamento[] = ['DINHEIRO', 'PIX', 'CARTAO', 'ABONADO']
 
 export default function FechamentoDoMesPage() {
   const [mes, setMes] = useState(mesAtualISO())
@@ -137,7 +139,11 @@ export default function FechamentoDoMesPage() {
                 {FORMAS.map((forma) => (
                   <li key={forma} className={styles.linhaForma}>
                     <span>{LABELS_FORMA[forma]}</span>
-                    <span>{formatarMoeda(fechamento.caixa.entradas.porForma[forma] ?? 0)}</span>
+                    <span>
+                      {forma === 'ABONADO'
+                        ? `${fechamento.caixa.entradas.quantidadePorForma[forma] ?? 0} aluna(s)`
+                        : formatarMoeda(fechamento.caixa.entradas.porForma[forma] ?? 0)}
+                    </span>
                   </li>
                 ))}
               </ul>

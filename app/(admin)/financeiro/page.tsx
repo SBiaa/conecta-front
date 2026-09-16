@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CirclePlus } from 'lucide-react'
+import { CirclePlus, Pencil } from 'lucide-react'
 import { apiGet, apiPatch, apiPost } from '../../lib/api'
 import {
   formatarMoeda,
@@ -18,7 +18,7 @@ type Projeto = {
   nome: string
 }
 
-type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO'
+type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO' | 'ABONADO'
 
 type TipoPagamento = 'MENSALIDADE' | 'INSCRICAO'
 
@@ -33,9 +33,11 @@ type Pagamento = {
   tipo: TipoPagamento
   valor: string
   status: 'PAGA' | 'PENDENTE'
+  mesReferencia: string
   vencimento: string
   dataPagamento: string | null
   formaPagamento: FormaPagamento | null
+  editadoEm: string | null
   matricula: {
     usuario: { nome: string }
     turmas: {
@@ -66,10 +68,20 @@ type PagamentoParaRegistrar = {
   matricula: { usuario: { nome: string } }
 }
 
+type PagamentoParaEditar = {
+  id: string
+  valor: string
+  formaPagamento: FormaPagamento | null
+  mesReferencia: string
+  vencimento: string
+  nomeUsuario: string
+}
+
 const LABELS_FORMA_PAGAMENTO: Record<FormaPagamento, string> = {
   DINHEIRO: 'Dinheiro',
   PIX: 'Pix',
   CARTAO: 'Cartão',
+  ABONADO: 'Abonado',
 }
 
 function descricaoTurmas(turmas: { nome: string; projeto: { nome: string } }[]) {
@@ -105,6 +117,14 @@ export default function FinanceiroPage() {
   const [valorModal, setValorModal] = useState('')
   const [enviandoRegistro, setEnviandoRegistro] = useState(false)
   const [erroModalRegistro, setErroModalRegistro] = useState('')
+
+  const [pagamentoEditando, setPagamentoEditando] = useState<PagamentoParaEditar | null>(null)
+  const [valorEdicao, setValorEdicao] = useState('')
+  const [formaPagamentoEdicao, setFormaPagamentoEdicao] = useState<FormaPagamento | ''>('')
+  const [mesReferenciaEdicao, setMesReferenciaEdicao] = useState('')
+  const [vencimentoEdicao, setVencimentoEdicao] = useState('')
+  const [enviandoEdicaoPagamento, setEnviandoEdicaoPagamento] = useState(false)
+  const [erroEdicaoPagamento, setErroEdicaoPagamento] = useState('')
 
   const [atrasados, setAtrasados] = useState<Atrasado[]>([])
   const [carregandoAtrasados, setCarregandoAtrasados] = useState(true)
@@ -196,6 +216,52 @@ export default function FinanceiroPage() {
     }
   }
 
+  function abrirModalEdicao(pagamento: Pagamento) {
+    setPagamentoEditando({
+      id: pagamento.id,
+      valor: pagamento.valor,
+      formaPagamento: pagamento.formaPagamento,
+      mesReferencia: pagamento.mesReferencia,
+      vencimento: pagamento.vencimento,
+      nomeUsuario: pagamento.matricula.usuario.nome,
+    })
+    setValorEdicao(pagamento.valor)
+    setFormaPagamentoEdicao(pagamento.formaPagamento ?? '')
+    setMesReferenciaEdicao(pagamento.mesReferencia)
+    setVencimentoEdicao(pagamento.vencimento.slice(0, 10))
+    setErroEdicaoPagamento('')
+  }
+
+  function fecharModalEdicao() {
+    setPagamentoEditando(null)
+  }
+
+  async function confirmarEdicaoPagamento() {
+    if (!pagamentoEditando) return
+
+    if (valorEdicao === '' || Number(valorEdicao) < 0) {
+      setErroEdicaoPagamento('Informe um valor válido')
+      return
+    }
+
+    setEnviandoEdicaoPagamento(true)
+    setErroEdicaoPagamento('')
+    try {
+      await apiPatch(`/pagamentos/${pagamentoEditando.id}`, {
+        valor: Number(valorEdicao),
+        formaPagamento: formaPagamentoEdicao || undefined,
+        mesReferencia: mesReferenciaEdicao,
+        vencimento: vencimentoEdicao,
+      })
+      await Promise.all([buscarPagamentos(), buscarAtrasados(), buscarResumo()])
+      fecharModalEdicao()
+    } catch {
+      setErroEdicaoPagamento('Não foi possível salvar a correção')
+    } finally {
+      setEnviandoEdicaoPagamento(false)
+    }
+  }
+
   function onSubmit(evento: React.FormEvent) {
     evento.preventDefault()
 
@@ -257,10 +323,14 @@ export default function FinanceiroPage() {
   const totalPendente = pendentes.reduce((soma, pagamento) => soma + Number(pagamento.valor), 0)
   const totalGeral = totalRecebido + totalPendente
 
-  const porFormaPagamento = new Map<string, number>()
+  const porFormaPagamento = new Map<string, { total: number; quantidade: number }>()
   pagas.forEach((pagamento) => {
     const chave = pagamento.formaPagamento ?? 'Não informado'
-    porFormaPagamento.set(chave, (porFormaPagamento.get(chave) ?? 0) + Number(pagamento.valor))
+    const atual = porFormaPagamento.get(chave) ?? { total: 0, quantidade: 0 }
+    porFormaPagamento.set(chave, {
+      total: atual.total + Number(pagamento.valor),
+      quantidade: atual.quantidade + 1,
+    })
   })
 
   return (
@@ -304,10 +374,14 @@ export default function FinanceiroPage() {
                 )}
                 {porFormaPagamento.size > 0 && (
                   <ul className={styles.listaFormas}>
-                    {Array.from(porFormaPagamento.entries()).map(([forma, total]) => (
+                    {Array.from(porFormaPagamento.entries()).map(([forma, { total, quantidade }]) => (
                       <li key={forma} className={styles.linhaForma}>
                         <span>{LABELS_FORMA_PAGAMENTO[forma as FormaPagamento] ?? forma}</span>
-                        <span>{formatarMoeda(total)}</span>
+                        <span>
+                          {forma === 'ABONADO'
+                            ? `${quantidade} aluna${quantidade === 1 ? '' : 's'}`
+                            : formatarMoeda(total)}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -437,6 +511,11 @@ export default function FinanceiroPage() {
                         Pago em {formatarData(pagamento.dataPagamento)}
                       </span>
                     )}
+                    {pagamento.editadoEm && (
+                      <span className={styles.detalhe}>
+                        Corrigido em {formatarData(pagamento.editadoEm)}
+                      </span>
+                    )}
                   </div>
                   <div className={styles.acoesItem}>
                     {pagamento.status === 'PAGA' && (
@@ -457,6 +536,14 @@ export default function FinanceiroPage() {
                         </button>
                       </>
                     )}
+                    <button
+                      className={styles.botaoRegistrar}
+                      onClick={() => abrirModalEdicao(pagamento)}
+                      aria-label="Corrigir pagamento"
+                      title="Corrigir pagamento"
+                    >
+                      <Pencil size={18} />
+                    </button>
                   </div>
                 </li>
               ))}
@@ -583,13 +670,16 @@ export default function FinanceiroPage() {
               <select
                 id="formaPagamentoModal"
                 value={formaPagamentoModal}
-                onChange={(evento) =>
-                  setFormaPagamentoModal(evento.target.value as FormaPagamento)
-                }
+                onChange={(evento) => {
+                  const forma = evento.target.value as FormaPagamento
+                  setFormaPagamentoModal(forma)
+                  if (forma === 'ABONADO') setValorModal('0')
+                }}
               >
                 <option value="DINHEIRO">Dinheiro</option>
                 <option value="PIX">Pix</option>
                 <option value="CARTAO">Cartão</option>
+                <option value="ABONADO">Abonado</option>
               </select>
             </div>
 
@@ -608,7 +698,8 @@ export default function FinanceiroPage() {
               <input
                 type="number"
                 id="valorModal"
-                value={valorModal}
+                value={formaPagamentoModal === 'ABONADO' ? '0' : valorModal}
+                disabled={formaPagamentoModal === 'ABONADO'}
                 onChange={(evento) => setValorModal(evento.target.value)}
               />
             </div>
@@ -629,6 +720,87 @@ export default function FinanceiroPage() {
                 disabled={enviandoRegistro}
               >
                 Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pagamentoEditando && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <h2 className={styles.modalTitulo}>
+              Corrigir pagamento — {pagamentoEditando.nomeUsuario}
+            </h2>
+
+            <div className={styles.campo}>
+              <label htmlFor="valorEdicaoPagamento">Valor</label>
+              <input
+                type="number"
+                id="valorEdicaoPagamento"
+                step="0.01"
+                min="0"
+                value={formaPagamentoEdicao === 'ABONADO' ? '0' : valorEdicao}
+                disabled={formaPagamentoEdicao === 'ABONADO'}
+                onChange={(evento) => setValorEdicao(evento.target.value)}
+              />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="formaPagamentoEdicao">Forma de pagamento</label>
+              <select
+                id="formaPagamentoEdicao"
+                value={formaPagamentoEdicao}
+                onChange={(evento) => {
+                  const forma = evento.target.value as FormaPagamento | ''
+                  setFormaPagamentoEdicao(forma)
+                  if (forma === 'ABONADO') setValorEdicao('0')
+                }}
+              >
+                <option value="">— não informada —</option>
+                <option value="DINHEIRO">Dinheiro</option>
+                <option value="PIX">Pix</option>
+                <option value="CARTAO">Cartão</option>
+                <option value="ABONADO">Abonado</option>
+              </select>
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="mesReferenciaEdicao">Mês</label>
+              <input
+                type="month"
+                id="mesReferenciaEdicao"
+                value={mesReferenciaEdicao}
+                onChange={(evento) => setMesReferenciaEdicao(evento.target.value)}
+              />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="vencimentoEdicao">Vencimento</label>
+              <input
+                type="date"
+                id="vencimentoEdicao"
+                value={vencimentoEdicao}
+                onChange={(evento) => setVencimentoEdicao(evento.target.value)}
+              />
+            </div>
+
+            {erroEdicaoPagamento && <p className={styles.erroModal}>{erroEdicaoPagamento}</p>}
+
+            <div className={styles.acoesModal}>
+              <button
+                className={styles.botaoCancelar}
+                onClick={fecharModalEdicao}
+                disabled={enviandoEdicaoPagamento}
+              >
+                Cancelar
+              </button>
+              <button
+                className={styles.botaoConfirmar}
+                onClick={confirmarEdicaoPagamento}
+                disabled={enviandoEdicaoPagamento}
+              >
+                {enviandoEdicaoPagamento ? 'Salvando...' : 'Salvar correção'}
               </button>
             </div>
           </div>
