@@ -1,0 +1,118 @@
+.pagina {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background-color: var(--background);
+}
+
+.voltar {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 540px;
+  margin-bottom: 1.25rem;
+}
+
+.titulo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+.card {
+  max-width: 540px;
+  margin-bottom: 1rem;
+  padding: 1.1rem 1.25rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.subtitulo {
+  margin: 0 0 0.8rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detalhe {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.bloco + .bloco {
+  margin-top: 1rem;
+}
+
+.resumo {
+  margin: 0 0 0.5rem;
+}
+
+.datas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.datas li {
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+}
+
+.presente {
+  background-color: var(--success-soft);
+  color: var(--success);
+}
+
+.ausente {
+  background-color: var(--warning-soft);
+  color: var(--warning);
+}
+
+.pagamento {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.paga {
+  font-weight: 700;
+  color: var(--success);
+}
+
+.pendente {
+  font-weight: 700;
+  color: var(--warning);
+}
+
+.mensagem {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.mensagemErro {
+  font-size: 1rem;
+  color: var(--danger);
+}

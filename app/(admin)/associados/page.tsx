@@ -8,9 +8,10 @@ import styles from './associados.module.css'
 type Associado = {
   id: string
   nome: string
-  cpf: string
+  cpf: string | null
   telefone: string | null
   status: 'ATIVO' | 'INATIVO'
+  responsavel: { id: string; nome: string } | null
 }
 
 export default function AssociadosPage() {
@@ -65,7 +66,9 @@ export default function AssociadosPage() {
               <Link href={`/associados/${associado.id}`} className={styles.link}>
                 <div className={styles.info}>
                   <span className={styles.nome}>{associado.nome}</span>
-                  <span className={styles.detalhe}>{associado.cpf}</span>
+                  <span className={styles.detalhe}>
+                    {associado.responsavel ? `Dependente de ${associado.responsavel.nome}` : associado.cpf}
+                  </span>
                   <span className={styles.detalhe}>{associado.telefone || '—'}</span>
                 </div>
                 <span

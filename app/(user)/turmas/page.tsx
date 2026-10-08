@@ -67,9 +67,15 @@ export default function MinhasTurmasPage() {
                 <Link href={`/turmas/${turma.id}/frequencia`} className={styles.linkFrequencia}>
                   Ver frequência
                 </Link>
-                <Link href={`/turmas/${turma.id}/saude`} className={styles.linkFrequencia}>
-                  Como estão
-                </Link>
+                {/natação|natacao/i.test(turma.projeto.nome) ? (
+                  <Link href={`/turmas/${turma.id}/natacao`} className={styles.linkFrequencia}>
+                    Níveis
+                  </Link>
+                ) : (
+                  <Link href={`/turmas/${turma.id}/saude`} className={styles.linkFrequencia}>
+                    Como estão
+                  </Link>
+                )}
               </div>
             </li>
           ))}

@@ -19,6 +19,8 @@ import BlocoInscricao, {
 import FormularioAvaliacao from '../../../components/FormularioAvaliacao'
 import FormularioRegistroSaude from '../../../components/FormularioRegistroSaude'
 import RelatorioSaude from '../../../components/RelatorioSaude'
+import PainelNivelNatacao from '../../../components/PainelNivelNatacao'
+import VincularResponsavel from '../../../components/VincularResponsavel'
 import Avatar from '../../../components/Avatar'
 import type { Avaliacao, RegistroSaude, RelatorioDaAluna } from '../../../lib/saude'
 import styles from './perfil.module.css'
@@ -55,7 +57,9 @@ type Matricula = {
 type Associado = {
   id: string
   nome: string
-  cpf: string
+  cpf: string | null
+  responsavel: { id: string; nome: string; telefone: string | null } | null
+  dependentes: { id: string; nome: string; dataNascimento: string | null }[]
   email: string | null
   telefone: string | null
   fotoUrl: string | null
@@ -427,7 +431,7 @@ export default function PerfilAssociadoPage() {
   }
 
   async function abrirAcesso() {
-    if (!associado) return
+    if (!associado || !associado.cpf) return
     setErroAcesso('')
 
     if (senhaSalva) {
@@ -663,7 +667,7 @@ export default function PerfilAssociadoPage() {
   function abrirModalDados() {
     if (!associado) return
     setNomeEdit(associado.nome)
-    setCpfEdit(associado.cpf)
+    setCpfEdit(associado.cpf ?? '')
     setTelefoneEdit(associado.telefone ?? '')
     setEmailEdit(associado.email ?? '')
     setStatusEdit(associado.status)
@@ -720,7 +724,7 @@ export default function PerfilAssociadoPage() {
       return
     }
 
-    if (!cpfEdit.trim()) {
+    if (!cpfEdit.trim() && !associado?.responsavel) {
       setErroDados('O CPF é obrigatório')
       return
     }
@@ -781,18 +785,22 @@ export default function PerfilAssociadoPage() {
               <Pencil size={14} />
               Editar dados
             </button>
-            <button className={styles.botaoAlterarSenha} onClick={abrirModalSenha}>
-              <KeyRound size={14} />
-              Alterar senha
-            </button>
-            <button
-              className={styles.botaoEnviarAcesso}
-              onClick={abrirAcesso}
-              disabled={gerandoAcesso}
-            >
-              <MessageCircle size={14} />
-              {gerandoAcesso ? 'Gerando...' : 'Enviar acesso'}
-            </button>
+            {!associado.responsavel && (
+              <>
+                <button className={styles.botaoAlterarSenha} onClick={abrirModalSenha}>
+                  <KeyRound size={14} />
+                  Alterar senha
+                </button>
+                <button
+                  className={styles.botaoEnviarAcesso}
+                  onClick={abrirAcesso}
+                  disabled={gerandoAcesso}
+                >
+                  <MessageCircle size={14} />
+                  {gerandoAcesso ? 'Gerando...' : 'Enviar acesso'}
+                </button>
+              </>
+            )}
             <button className={styles.botaoExcluirAssociado} onClick={abrirModalExcluir}>
               <Trash2 size={14} />
               Excluir associado
@@ -856,7 +864,7 @@ export default function PerfilAssociadoPage() {
         <dl className={styles.grade}>
           <div className={styles.campo}>
             <dt>CPF</dt>
-            <dd>{associado.cpf}</dd>
+            <dd>{associado.cpf || '—'}</dd>
           </div>
           <div className={styles.campo}>
             <dt>Telefone</dt>
@@ -893,6 +901,60 @@ export default function PerfilAssociadoPage() {
             </dd>
           </div>
         </dl>
+      </div>
+
+      {/* Bloco 1b — Responsável e dependentes */}
+      <div className={styles.card}>
+        <div className={styles.cabecalhoSecao}>
+          <h2 className={styles.subtitulo}>
+            {associado.responsavel ? 'Responsável' : 'Dependentes'}
+          </h2>
+          {!associado.responsavel && (
+            <Link href={`/associados/novo?responsavel=${id}`} className={styles.botaoNovaMatricula}>
+              Cadastrar dependente
+            </Link>
+          )}
+        </div>
+
+        {associado.responsavel ? (
+          <>
+            <p className={styles.avisoSaude}>
+              Este cadastro é de um dependente: não tem login. A cobrança e o acompanhamento ficam com o
+              responsável.
+            </p>
+            <p>
+              <Link href={`/associados/${associado.responsavel.id}`}>{associado.responsavel.nome}</Link>
+              {associado.responsavel.telefone ? ` · ${associado.responsavel.telefone}` : ''}
+            </p>
+            <button
+              type="button"
+              className={styles.botaoAlterarSenha}
+              onClick={async () => {
+                await apiPatch(`/usuarios/${id}`, { responsavelId: null })
+                buscarAssociado()
+              }}
+            >
+              Desvincular do responsável
+            </button>
+          </>
+        ) : (
+          <>
+            {associado.dependentes.length === 0 ? (
+              <p className={styles.avisoSaude}>Nenhum dependente cadastrado.</p>
+            ) : (
+              <ul>
+                {associado.dependentes.map((d) => (
+                  <li key={d.id}>
+                    <Link href={`/associados/${d.id}`}>{d.nome}</Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {associado.dependentes.length === 0 && (
+              <VincularResponsavel usuarioId={id} aoVincular={buscarAssociado} />
+            )}
+          </>
+        )}
       </div>
 
       {/* Bloco 2 — Matrículas */}
@@ -1045,6 +1107,18 @@ export default function PerfilAssociadoPage() {
           </ul>
         )}
       </div>
+
+      {/* Bloco 3b — Nível na natação (só faz sentido se há matrícula em projeto de natação) */}
+      {associado.matriculas.some((m) =>
+        m.turmas.some((t) => /nata[cç][aã]o/i.test(t.projeto.nome))
+      ) && (
+        <div className={styles.card}>
+          <div className={styles.cabecalhoSecao}>
+            <h2 className={styles.subtitulo}>Nível na natação</h2>
+          </div>
+          <PainelNivelNatacao caminho={`/usuarios/${id}/niveis-natacao`} />
+        </div>
+      )}
 
       {/* Bloco 4 — Saúde e progresso */}
       <div className={styles.card}>

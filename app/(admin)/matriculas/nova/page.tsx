@@ -53,13 +53,15 @@ type MatriculaFormOutput = z.output<typeof matriculaSchema>
 type AssociadaResumo = {
   id: string
   nome: string
-  cpf: string
+  cpf: string | null
+  responsavel: { id: string; nome: string } | null
 }
 
 type AssociadaCompleta = {
   id: string
   nome: string
-  cpf: string
+  cpf: string | null
+  responsavel: { id: string; nome: string; telefone: string | null } | null
   telefone: string | null
   rg: string | null
   dataNascimento: string | null
@@ -371,6 +373,10 @@ export default function NovaMatriculaPage() {
 
       setSucesso(true)
 
+      // Dependente (criança) não tem login — quem acessa é o responsável —,
+      // então não há senha a gerar nem acesso a enviar.
+      if (associadaSelecionada.responsavel) return
+
       // Não há como recuperar a senha atual (fica só o hash), então geramos
       // uma nova senha real para poder mandar no acesso.
       try {
@@ -380,7 +386,7 @@ export default function NovaMatriculaPage() {
         )
         setAcesso({
           nome: associadaSelecionada.nome,
-          cpf: associadaSelecionada.cpf,
+          cpf: associadaSelecionada.cpf ?? '',
           senha: respostaSenha.senha,
           telefone: dados.telefone || associadaSelecionada.telefone,
         })
@@ -434,7 +440,9 @@ export default function NovaMatriculaPage() {
                       onClick={() => selecionarAssociada(resumo)}
                     >
                       <span className={styles.resultadoNome}>{resumo.nome}</span>
-                      <span className={styles.resultadoCpf}>{resumo.cpf}</span>
+                      <span className={styles.resultadoCpf}>
+                        {resumo.responsavel ? `Dependente de ${resumo.responsavel.nome}` : resumo.cpf}
+                      </span>
                     </button>
                   </li>
                 ))}

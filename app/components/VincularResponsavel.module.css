@@ -1,0 +1,63 @@
+.abrir,
+.cancelar {
+  align-self: flex-start;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background-color: #ffffff;
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancelar {
+  color: var(--text-secondary);
+}
+
+.caixa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.busca {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background-color: #ffffff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item span {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.erro {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--danger);
+}

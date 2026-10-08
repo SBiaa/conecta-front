@@ -1,16 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { apiPost } from '../../../lib/api'
+import { apiGet, apiPost } from '../../../lib/api'
 import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
 import styles from './novo.module.css'
 
+// O CPF é obrigatório para adultos, mas não para o dependente (criança): quem
+// decide é a tela, pelo ?responsavel= — ver onSubmit.
 const associadoSchema = z.object({
   nome: z.string().min(1, 'Informe o nome'),
-  cpf: z.string().min(1, 'Informe o CPF'),
+  cpf: z.string().optional(),
+  dataNascimento: z.string().optional(),
   telefone: z.string().optional(),
   cep: z.string().optional(),
   logradouro: z.string().optional(),
@@ -31,18 +35,34 @@ type RespostaViaCep = {
   uf?: string
 }
 
+type AssociadoSimilar = {
+  id: string
+  nome: string
+  cpf: string | null
+  telefone: string | null
+}
+
 export default function NovoAssociadoPage() {
+  const router = useRouter()
+  // /associados/novo?responsavel=<id> cadastra um dependente (criança) desse
+  // responsável: sem CPF obrigatório, sem senha, sem endereço (herda o dele).
+  const responsavelId = useSearchParams().get('responsavel')
+  const [responsavelNome, setResponsavelNome] = useState('')
+
   const [cepNaoEncontrado, setCepNaoEncontrado] = useState(false)
   const [sucesso, setSucesso] = useState(false)
   const [erro, setErro] = useState('')
   const [acesso, setAcesso] = useState<AcessoGerado | null>(null)
   const [copiado, setCopiado] = useState(false)
+  const [similares, setSimilares] = useState<AssociadoSimilar[]>([])
+  const [avisoDispensado, setAvisoDispensado] = useState(false)
 
   const {
     register,
     handleSubmit,
     setValue,
     getValues,
+    watch,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<AssociadoForm>({
@@ -50,6 +70,39 @@ export default function NovoAssociadoPage() {
   })
 
   const registroCep = register('cep')
+  const nome = watch('nome')
+
+  useEffect(() => {
+    if (!responsavelId) return
+    apiGet<{ nome: string }>(`/usuarios/${responsavelId}`)
+      .then((r) => setResponsavelNome(r.nome))
+      .catch(() => setErro('Responsável não encontrado.'))
+  }, [responsavelId])
+
+  // Cadastro duplicado por nome parecido (ex: "Maria Aparecida Soares de
+  // Oliveira" x "...Oliveira Silva") passava batido porque só o CPF tem
+  // constraint de unicidade no banco. Avisa antes de deixar cadastrar de novo.
+  useEffect(() => {
+    const nomeBusca = (nome ?? '').trim()
+
+    if (nomeBusca.length < 4 || responsavelId) {
+      setSimilares([])
+      return
+    }
+
+    const timeout = setTimeout(() => {
+      apiGet<AssociadoSimilar[]>(`/usuarios?papel=ASSOCIADO&busca=${encodeURIComponent(nomeBusca)}`)
+        .then((encontrados) => {
+          setSimilares(encontrados)
+          setAvisoDispensado(false)
+        })
+        .catch(() => setSimilares([]))
+    }, 400)
+
+    return () => clearTimeout(timeout)
+  }, [nome, responsavelId])
+
+  const temAvisoDuplicata = similares.length > 0 && !avisoDispensado
 
   async function buscarCep() {
     const cepLimpo = (getValues('cep') ?? '').replace(/\D/g, '')
@@ -83,10 +136,29 @@ export default function NovoAssociadoPage() {
     setSucesso(false)
     setAcesso(null)
 
+    if (!responsavelId && !dados.cpf?.trim()) {
+      setErro('Informe o CPF')
+      return
+    }
+
+    if (responsavelId) {
+      try {
+        const criado = await apiPost<{ id: string }>('/usuarios', {
+          nome: dados.nome,
+          dataNascimento: dados.dataNascimento || undefined,
+          responsavelId,
+        })
+        router.push(`/associados/${criado.id}`)
+      } catch (e) {
+        setErro(e instanceof Error ? e.message : 'Não foi possível cadastrar o dependente.')
+      }
+      return
+    }
+
     try {
       const usuarioCriado = await apiPost<{ senhaInicial?: string }>('/usuarios', {
         nome: dados.nome,
-        cpf: dados.cpf,
+        cpf: dados.cpf ?? '',
         telefone: dados.telefone,
         // Sem senha: a API sempre gera uma senha amigável (ex: "girassol42")
         // pra associada, nunca aceita o CPF como senha — ver usuarioController.
@@ -103,13 +175,15 @@ export default function NovoAssociadoPage() {
       if (usuarioCriado.senhaInicial) {
         setAcesso({
           nome: dados.nome,
-          cpf: dados.cpf,
+          cpf: dados.cpf ?? '',
           senha: usuarioCriado.senhaInicial,
           telefone: dados.telefone,
         })
       }
       reset()
       setCepNaoEncontrado(false)
+      setSimilares([])
+      setAvisoDispensado(false)
     } catch {
       setErro('Não foi possível cadastrar o associado. Verifique se o CPF já está cadastrado.')
     }
@@ -130,7 +204,13 @@ export default function NovoAssociadoPage() {
   return (
     <div className={styles.pagina}>
       <div className={styles.card}>
-        <h1 className={styles.titulo}>Novo associado</h1>
+        <h1 className={styles.titulo}>{responsavelId ? 'Novo dependente' : 'Novo associado'}</h1>
+        {responsavelId && (
+          <p className={styles.aviso}>
+            Dependente de <strong>{responsavelNome || '...'}</strong>. Não tem login: quem acompanha é o
+            responsável.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className={styles.campo}>
@@ -139,17 +219,56 @@ export default function NovoAssociadoPage() {
             {errors.nome && <span className={styles.erro}>{errors.nome.message}</span>}
           </div>
 
-          <div className={styles.campo}>
-            <label htmlFor="cpf">CPF</label>
-            <input type="text" id="cpf" {...register('cpf')} />
-            {errors.cpf && <span className={styles.erro}>{errors.cpf.message}</span>}
-          </div>
+          {responsavelId ? (
+            <div className={styles.campo}>
+              <label htmlFor="dataNascimento">Data de nascimento</label>
+              <input type="date" id="dataNascimento" {...register('dataNascimento')} />
+            </div>
+          ) : (
+            <>
+              <div className={styles.campo}>
+                <label htmlFor="cpf">CPF</label>
+                <input type="text" id="cpf" {...register('cpf')} />
+                {errors.cpf && <span className={styles.erro}>{errors.cpf.message}</span>}
+              </div>
 
-          <div className={styles.campo}>
-            <label htmlFor="telefone">Telefone</label>
-            <input type="text" id="telefone" {...register('telefone')} />
-          </div>
+              <div className={styles.campo}>
+                <label htmlFor="telefone">Telefone</label>
+                <input type="text" id="telefone" {...register('telefone')} />
+              </div>
+            </>
+          )}
 
+          {similares.length > 0 && (
+            <div className={styles.avisoDuplicata}>
+              <p className={styles.avisoDuplicataTexto}>
+                Já existe {similares.length === 1 ? 'um cadastro parecido' : 'cadastros parecidos'}:
+              </p>
+              <ul className={styles.avisoDuplicataLista}>
+                {similares.map((associado) => (
+                  <li key={associado.id} className={styles.avisoDuplicataItem}>
+                    <strong>{associado.nome}</strong>
+                    <span>
+                      CPF {associado.cpf}
+                      {associado.telefone ? ` · Tel. ${associado.telefone}` : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {!avisoDispensado && (
+                <button
+                  type="button"
+                  className={styles.avisoDuplicataConfirmar}
+                  onClick={() => setAvisoDispensado(true)}
+                >
+                  Não é a mesma pessoa, continuar cadastro
+                </button>
+              )}
+            </div>
+          )}
+
+          {!responsavelId && (
+            <>
           <h2 className={styles.subtitulo}>Endereço</h2>
 
           <div className={styles.campo}>
@@ -200,7 +319,10 @@ export default function NovoAssociadoPage() {
             </div>
           </div>
 
-          <button className={styles.botao} disabled={isSubmitting}>
+            </>
+          )}
+
+          <button className={styles.botao} disabled={isSubmitting || temAvisoDuplicata}>
             Cadastrar
           </button>
         </form>
