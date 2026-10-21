@@ -1,0 +1,206 @@
+.pagina {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background-color: var(--background);
+}
+
+.controles {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.voltar {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.campoMes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.mesInput {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+}
+
+.botaoImprimir {
+  padding: 0.65rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background-color: var(--primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.botaoImprimir:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mensagem,
+.mensagemErro {
+  margin: 1rem 0;
+  color: var(--text-secondary);
+}
+
+.mensagemErro {
+  color: #b3261e;
+}
+
+.folha {
+  overflow-x: auto;
+  background: #fff;
+  color: #000;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid #22b8b0;
+}
+
+.logo {
+  height: 64px;
+  width: auto;
+}
+
+.tituloBloco {
+  text-align: right;
+}
+
+.rotulo {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #22b8b0;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #02566b;
+}
+
+.dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.5rem 1.25rem;
+  margin: 0.75rem 0 1rem;
+  padding: 0.6rem 0.9rem;
+  background: #eef8f8;
+  border-radius: 6px;
+}
+
+.dados dt {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #02566b;
+}
+
+.dados dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabela th,
+.tabela td {
+  border: 1px solid #9bb8bd;
+  padding: 0.4rem 0.3rem;
+  height: 1.9rem;
+}
+
+.tabela th {
+  background: #02566b;
+  border-color: #02566b;
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+.tabela tbody tr:nth-child(even) td {
+  background: #f4fafa;
+}
+
+.colNumero {
+  width: 2rem;
+  text-align: center;
+}
+
+.colNome {
+  text-align: left;
+  white-space: nowrap;
+  min-width: 14rem;
+}
+
+.colDia {
+  width: 2.2rem;
+  text-align: center;
+}
+
+.legenda {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.75rem 0 0;
+  font-size: 0.75rem;
+  color: #02566b;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 1cm;
+  }
+
+  .controles {
+    display: none;
+  }
+
+  .pagina {
+    min-height: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .folha {
+    padding: 0;
+    overflow: visible;
+  }
+
+  .tabela tr {
+    break-inside: avoid;
+  }
+}

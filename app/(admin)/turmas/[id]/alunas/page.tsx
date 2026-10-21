@@ -81,6 +81,9 @@ export default function AlunasDaTurmaPage() {
           <Link href={`/frequencia/${id}`} className={styles.botaoEditar}>
             Ver frequência
           </Link>
+          <Link href={`/turmas/${id}/imprimir-lista`} className={styles.botaoEditar}>
+            Lista p/ imprimir
+          </Link>
           <Link href={`/turmas/${id}/editar`} className={styles.botaoEditar}>
             Editar turma
           </Link>
