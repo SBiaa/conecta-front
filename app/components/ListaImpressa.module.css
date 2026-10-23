@@ -175,7 +175,8 @@
 }
 
 @media print {
-  * {
+  .folha,
+  .folha * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
