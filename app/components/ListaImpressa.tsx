@@ -25,6 +25,14 @@ type ListaMensal = {
 // pra professora anotar à mão quem chegar depois.
 const MINIMO_LINHAS = 20
 
+// Medidas da folha A4 com margem de 1 cm (em cm). A tabela divide o espaço que
+// sobra depois do cabeçalho, da faixa de dados e do rodapé, pra caber sempre
+// em UMA página, não importa quantas alunas a turma tenha.
+const FOLHA_PAISAGEM_ALTURA = 19
+const FOLHA_RETRATO_ALTURA = 27.7
+const ESPACO_FIXO_CM = 5.2
+const LINHAS_MAXIMO_PAISAGEM = 24
+
 const MESES = [
   'Janeiro',
   'Fevereiro',
@@ -66,8 +74,21 @@ export default function ListaImpressa({ hrefVoltar }: { hrefVoltar: (id: string)
       .catch(() => setErro('Não foi possível carregar a lista.'))
   }, [id, mes])
 
+  const totalLinhas = lista ? Math.max(MINIMO_LINHAS, lista.alunas.length) : MINIMO_LINHAS
+  const paisagem = totalLinhas <= LINHAS_MAXIMO_PAISAGEM
+  const alturaFolha = paisagem ? FOLHA_PAISAGEM_ALTURA : FOLHA_RETRATO_ALTURA
+  // +1 da linha de cabeçalho da tabela
+  const alturaLinhaCm = (alturaFolha - ESPACO_FIXO_CM) / (totalLinhas + 1)
+
   return (
     <div className={styles.pagina}>
+      {/* Orientação depende do nº de linhas; o menu e as margens do layout
+          não podem ocupar espaço da folha. */}
+      <style>{`@media print {
+        @page { size: A4 ${paisagem ? 'landscape' : 'portrait'}; margin: 1cm; }
+        nav { display: none !important; }
+        main { margin: 0 !important; padding: 0 !important; max-width: none !important; }
+      }`}</style>
       <div className={styles.controles}>
         <Link href={hrefVoltar(id)} className={styles.voltar}>
           ← Voltar
@@ -95,7 +116,15 @@ export default function ListaImpressa({ hrefVoltar }: { hrefVoltar: (id: string)
       {!erro && !lista && <p className={styles.mensagem}>Carregando...</p>}
 
       {lista && (
-        <div className={styles.folha}>
+        <div
+          className={styles.folha}
+          style={
+            {
+              '--altura-folha': `${alturaFolha}cm`,
+              '--altura-linha': `${alturaLinhaCm.toFixed(3)}cm`,
+            } as React.CSSProperties
+          }
+        >
           <header className={styles.cabecalho}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -140,14 +169,16 @@ export default function ListaImpressa({ hrefVoltar }: { hrefVoltar: (id: string)
           </dl>
 
           {lista.turma.dias.length === 0 && (
-            <p className={styles.mensagem}>
+            <p className={`${styles.mensagem} ${styles.soTela}`}>
               Esta turma não tem dias de aula cadastrados. Peça à coordenação para preencher os dias
               da turma.
             </p>
           )}
 
           {lista.alunas.length === 0 && (
-            <p className={styles.mensagem}>Nenhuma aluna ativa nesta turma.</p>
+            <p className={`${styles.mensagem} ${styles.soTela}`}>
+              Nenhuma aluna ativa nesta turma.
+            </p>
           )}
           <table className={styles.tabela}>
             <thead>
