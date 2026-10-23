@@ -50,6 +50,22 @@
   cursor: default;
 }
 
+.botaoSecundario {
+  padding: 0.65rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+  background-color: #fff;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dadosBranco dd {
+  min-height: 1.3rem;
+  border-bottom: 1px solid #02566b;
+}
+
 .mensagem,
 .mensagemErro {
   margin: 1rem 0;

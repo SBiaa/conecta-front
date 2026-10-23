@@ -33,6 +33,11 @@ const FOLHA_RETRATO_ALTURA = 27.7
 const ESPACO_FIXO_CM = 5.2
 const LINHAS_MAXIMO_PAISAGEM = 24
 
+// Folha em branco: nada preenchido, pra escrever tudo à mão (turma nova,
+// aula avulsa, ou quando o sistema não estiver à mão).
+const BRANCO_LINHAS = 20
+const BRANCO_COLUNAS = 15
+
 const MESES = [
   'Janeiro',
   'Fevereiro',
@@ -64,6 +69,7 @@ export default function ListaImpressa({ hrefVoltar }: { hrefVoltar: (id: string)
   const [mes, setMes] = useState(mesAtualISO())
   const [lista, setLista] = useState<ListaMensal | null>(null)
   const [erro, setErro] = useState('')
+  const [emBranco, setEmBranco] = useState(false)
 
   useEffect(() => {
     if (!mes) return
@@ -75,10 +81,11 @@ export default function ListaImpressa({ hrefVoltar }: { hrefVoltar: (id: string)
   }, [id, mes])
 
   const totalLinhas = lista ? Math.max(MINIMO_LINHAS, lista.alunas.length) : MINIMO_LINHAS
-  const paisagem = totalLinhas <= LINHAS_MAXIMO_PAISAGEM
+  const paisagem = emBranco || totalLinhas <= LINHAS_MAXIMO_PAISAGEM
   const alturaFolha = paisagem ? FOLHA_PAISAGEM_ALTURA : FOLHA_RETRATO_ALTURA
   // +1 da linha de cabeçalho da tabela
-  const alturaLinhaCm = (alturaFolha - ESPACO_FIXO_CM) / (totalLinhas + 1)
+  const linhasNaFolha = emBranco ? BRANCO_LINHAS : totalLinhas
+  const alturaLinhaCm = (alturaFolha - ESPACO_FIXO_CM) / (linhasNaFolha + 1)
 
   return (
     <div className={styles.pagina}>
@@ -104,6 +111,13 @@ export default function ListaImpressa({ hrefVoltar }: { hrefVoltar: (id: string)
         </label>
         <button
           type="button"
+          className={styles.botaoSecundario}
+          onClick={() => setEmBranco((atual) => !atual)}
+        >
+          {emBranco ? 'Ver lista com nomes' : 'Folha em branco'}
+        </button>
+        <button
+          type="button"
           className={styles.botaoImprimir}
           onClick={() => window.print()}
           disabled={!lista}
@@ -115,7 +129,86 @@ export default function ListaImpressa({ hrefVoltar }: { hrefVoltar: (id: string)
       {erro && <p className={styles.mensagemErro}>{erro}</p>}
       {!erro && !lista && <p className={styles.mensagem}>Carregando...</p>}
 
-      {lista && (
+      {lista && emBranco && (
+        <div
+          className={styles.folha}
+          style={
+            {
+              '--altura-folha': `${alturaFolha}cm`,
+              '--altura-linha': `${alturaLinhaCm.toFixed(3)}cm`,
+            } as React.CSSProperties
+          }
+        >
+          <header className={styles.cabecalho}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={
+                /hidro/i.test(lista.turma.projeto ?? '')
+                  ? '/logo-viva-bem-hidro.webp'
+                  : '/logo-novo-millenium.png'
+              }
+              alt="Logo"
+              className={styles.logo}
+            />
+            <div className={styles.tituloBloco}>
+              <span className={styles.rotulo}>Lista de chamada</span>
+            </div>
+          </header>
+
+          <dl className={`${styles.dados} ${styles.dadosBranco}`}>
+            <div>
+              <dt>Turma</dt>
+              <dd />
+            </div>
+            <div>
+              <dt>Projeto</dt>
+              <dd />
+            </div>
+            <div>
+              <dt>Dias e horário</dt>
+              <dd />
+            </div>
+            <div>
+              <dt>Professora</dt>
+              <dd />
+            </div>
+            <div>
+              <dt>Mês / ano</dt>
+              <dd />
+            </div>
+          </dl>
+
+          <table className={styles.tabela}>
+            <thead>
+              <tr>
+                <th className={styles.colNumero}>Nº</th>
+                <th className={styles.colNome}>Nome</th>
+                {Array.from({ length: BRANCO_COLUNAS }).map((_, i) => (
+                  <th key={i} className={styles.colDia} />
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: BRANCO_LINHAS }).map((_, i) => (
+                <tr key={i}>
+                  <td className={styles.colNumero}>{i + 1}</td>
+                  <td className={styles.colNome} />
+                  {Array.from({ length: BRANCO_COLUNAS }).map((_, j) => (
+                    <td key={j} className={styles.colDia} />
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <p className={styles.legenda}>
+            <span>Escreva o dia no alto de cada coluna · P = presente · F = falta</span>
+            <span>Associação Novo Millenium</span>
+          </p>
+        </div>
+      )}
+
+      {lista && !emBranco && (
         <div
           className={styles.folha}
           style={
