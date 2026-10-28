@@ -22,6 +22,7 @@ import RelatorioSaude from '../../../components/RelatorioSaude'
 import PainelNivelNatacao from '../../../components/PainelNivelNatacao'
 import VincularResponsavel from '../../../components/VincularResponsavel'
 import Avatar from '../../../components/Avatar'
+import { buscarValoresDoProjeto, rotuloPlano, type PlanoValor } from '../../../lib/valores'
 import type { Avaliacao, RegistroSaude, RelatorioDaAluna } from '../../../lib/saude'
 import styles from './perfil.module.css'
 
@@ -112,12 +113,6 @@ type TurmaOpcao = {
   horario: string | null
   dias: string[]
 }
-
-const PLANOS = [
-  { frequencia: 2, valor: 85 },
-  { frequencia: 3, valor: 120 },
-  { frequencia: 4, valor: 160 },
-]
 
 const NOMES_MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -253,6 +248,7 @@ export default function PerfilAssociadoPage() {
   const [inscricaoModal, setInscricaoModal] = useState<EstadoInscricao>(INSCRICAO_INICIAL)
   const [diaSelecoesModal, setDiaSelecoesModal] = useState<string[]>([])
   const [frequenciaModal, setFrequenciaModal] = useState<number | ''>('')
+  const [planosModal, setPlanosModal] = useState<PlanoValor[]>([])
   const [enviandoEdicao, setEnviandoEdicao] = useState(false)
   const [erroModalEdicao, setErroModalEdicao] = useState('')
 
@@ -542,6 +538,12 @@ export default function PerfilAssociadoPage() {
     setTurmasModal([])
     setCarregandoTurmasModal(true)
     const projetoId = matricula.turmas[0]?.projeto.id
+    setPlanosModal([])
+    if (projetoId) {
+      buscarValoresDoProjeto(projetoId)
+        .then((valores) => setPlanosModal(valores.planos))
+        .catch(() => setPlanosModal([]))
+    }
     apiGet<TurmaOpcao[]>(`/turmas?projetoId=${projetoId ?? ''}`)
       .then(setTurmasModal)
       .finally(() => setCarregandoTurmasModal(false))
@@ -1399,9 +1401,9 @@ export default function PerfilAssociadoPage() {
                 onChange={(e) => setFrequenciaModal(e.target.value ? Number(e.target.value) : '')}
               >
                 <option value="">Selecione...</option>
-                {PLANOS.map((plano) => (
-                  <option key={plano.frequencia} value={plano.frequencia}>
-                    {plano.frequencia} aulas — R$ {plano.valor}
+                {planosModal.map((plano) => (
+                  <option key={plano.aulasPorSemana} value={plano.aulasPorSemana}>
+                    {rotuloPlano(plano.aulasPorSemana)} — R$ {plano.valorMensal}
                   </option>
                 ))}
               </select>
@@ -1433,6 +1435,7 @@ export default function PerfilAssociadoPage() {
                 onChange={setInscricaoModal}
                 styles={styles}
                 titulo="Rematrícula"
+                projetoId={matriculaParaEditar?.turmas[0]?.projeto.id}
               />
             )}
 

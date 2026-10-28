@@ -1,0 +1,160 @@
+.pagina {
+  padding: 1.5rem 2rem 3rem;
+}
+
+.titulo {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.explicacao {
+  max-width: 640px;
+  margin: 0 0 1.5rem;
+  color: var(--text-secondary);
+}
+
+.card {
+  max-width: 640px;
+  margin-bottom: 1.25rem;
+  padding: 1.25rem 1.375rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+}
+
+.projeto {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.inativo {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.subtitulo {
+  margin: 1.25rem 0 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.campo label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.campo input {
+  width: 100%;
+  max-width: 180px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  font: inherit;
+}
+
+.planos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.plano {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background-color: var(--background);
+}
+
+.uso {
+  flex-basis: 100%;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.remover {
+  padding: 0.5rem 0.8rem;
+  border: none;
+  background: none;
+  color: var(--danger);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+}
+
+.salvar,
+.secundario {
+  padding: 0.65rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.salvar {
+  border: none;
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.salvar:disabled {
+  background-color: var(--disabled-bg);
+  cursor: not-allowed;
+}
+
+.secundario {
+  border: 1px solid var(--border-strong);
+  background-color: #ffffff;
+  color: var(--primary);
+}
+
+.aviso {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-s);
+  background-color: var(--warning-soft);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.mensagem {
+  margin: 0 0 0.6rem;
+  color: var(--text-secondary);
+}
+
+.sucesso {
+  margin: 0.75rem 0 0;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.erro {
+  margin: 0.75rem 0 0;
+  color: var(--danger);
+}

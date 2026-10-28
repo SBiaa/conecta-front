@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
-import { apiGet } from '../lib/api'
+import { useEffect, useRef } from 'react'
+import { buscarValoresDoProjeto } from '../lib/valores'
 
 export type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO' | 'ABONADO'
 
@@ -35,18 +35,29 @@ type Props = {
   onChange: (estado: EstadoInscricao) => void
   styles: Record<string, string>
   titulo?: string
+  // A taxa sugerida é a do projeto (editável em Financeiro > Valores).
+  projetoId?: number | string
 }
 
-export default function BlocoInscricao({ valor: estado, onChange, styles, titulo }: Props) {
-  // O valor padrão vem da API pra não ficar duplicado no front.
-  useEffect(() => {
-    if (estado.valor !== '') return
+export default function BlocoInscricao({ valor: estado, onChange, styles, titulo, projetoId }: Props) {
+  // Só sobrescreve o valor se a pessoa ainda não digitou outro: vazio ou o
+  // último valor sugerido (ao trocar de projeto, a sugestão acompanha).
+  const ultimaSugestao = useRef<string>('')
 
-    apiGet<{ taxaMatriculaPadrao: number }>('/financeiro/config')
-      .then((config) => onChange({ ...estado, valor: String(config.taxaMatriculaPadrao) }))
-      .catch(() => onChange({ ...estado, valor: '15' }))
+  useEffect(() => {
+    if (!projetoId) return
+
+    buscarValoresDoProjeto(projetoId)
+      .then(({ taxaInscricao }) => {
+        if (estado.valor !== '' && estado.valor !== ultimaSugestao.current) return
+        ultimaSugestao.current = String(taxaInscricao)
+        onChange({ ...estado, valor: String(taxaInscricao) })
+      })
+      .catch(() => {
+        if (estado.valor === '') onChange({ ...estado, valor: '15' })
+      })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [projetoId])
 
   return (
     <div>

@@ -101,6 +101,25 @@ export async function apiDelete<T>(path: string): Promise<T> {
   return response.json()
 }
 
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(body),
+    })
+  } catch {
+    throw new Error(`Falha ao conectar com a API em ${path}`)
+  }
+
+  if (!response.ok) {
+    throw await erroDaResposta(response, `Erro na requisição PUT ${path}: ${response.status}`)
+  }
+
+  return response.json()
+}
+
 export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   let response: Response
   try {

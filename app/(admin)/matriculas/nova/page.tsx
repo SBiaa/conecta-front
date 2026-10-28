@@ -16,13 +16,8 @@ import BlocoInscricao, {
   inscricaoParaPayload,
   type EstadoInscricao,
 } from '../../../components/BlocoInscricao'
+import { buscarValoresDoProjeto, rotuloPlano, type PlanoValor } from '../../../lib/valores'
 import styles from './nova.module.css'
-
-const PLANOS = [
-  { frequencia: 2, valor: 85 },
-  { frequencia: 3, valor: 120 },
-  { frequencia: 4, valor: 160 },
-]
 
 const matriculaSchema = z.object({
   telefone: z.string().optional(),
@@ -38,9 +33,7 @@ const matriculaSchema = z.object({
   cidade: z.string().optional(),
   uf: z.string().optional(),
   projetoId: z.coerce.number({ message: 'Escolha um projeto' }),
-  frequenciaSemanal: z.coerce.number().refine((valor) => PLANOS.some((plano) => plano.frequencia === valor), {
-    message: 'Escolha um plano',
-  }),
+  frequenciaSemanal: z.coerce.number().int().min(1, { message: 'Escolha um plano' }),
   diaSelecoes: z.array(z.string()).min(1, { message: 'Escolha os dias que a aluna vai frequentar' }),
   exameMedico: z.enum(['APTO', 'NAO_APTO', 'AGUARDANDO'], {
     message: 'Escolha o exame médico',
@@ -162,6 +155,8 @@ export default function NovaMatriculaPage() {
   const [copiado, setCopiado] = useState(false)
   const [erroAcesso, setErroAcesso] = useState('')
   const [inscricao, setInscricao] = useState<EstadoInscricao>(INSCRICAO_INICIAL)
+  // Planos do projeto escolhido (cada projeto tem os seus — Financeiro > Valores).
+  const [planos, setPlanos] = useState<PlanoValor[]>([])
 
   const {
     register,
@@ -230,11 +225,21 @@ export default function NovaMatriculaPage() {
   useEffect(() => {
     if (!projetoId) {
       setTurmas([])
+      setPlanos([])
       return
     }
 
-    apiGet<Turma[]>(`/turmas?projetoId=${projetoId}`).then((data) => {
+    Promise.all([
+      apiGet<Turma[]>(`/turmas?projetoId=${projetoId}`),
+      buscarValoresDoProjeto(Number(projetoId)),
+    ]).then(([data, valores]) => {
       setTurmas(data)
+      setPlanos(valores.planos)
+      const temPlano = (aulas: number) => valores.planos.some((plano) => plano.aulasPorSemana === aulas)
+      // O plano escolhido antes pode não existir no projeto novo.
+      if (!temPlano(Number(getValues('frequenciaSemanal')))) {
+        setValue('frequenciaSemanal', '' as unknown as number)
+      }
       if (pendingTurmaIdRef.current !== null) {
         const turmaPreSelecionada = data.find((t) => Number(t.id) === pendingTurmaIdRef.current)
         setValue(
@@ -243,7 +248,7 @@ export default function NovaMatriculaPage() {
             ? turmaPreSelecionada.dias.map((dia) => chaveDiaSelecao(turmaPreSelecionada.id, dia))
             : []
         )
-        if (turmaPreSelecionada && PLANOS.some((plano) => plano.frequencia === turmaPreSelecionada.dias.length)) {
+        if (turmaPreSelecionada && temPlano(turmaPreSelecionada.dias.length)) {
           setValue('frequenciaSemanal', turmaPreSelecionada.dias.length)
         }
         pendingTurmaIdRef.current = null
@@ -251,7 +256,7 @@ export default function NovaMatriculaPage() {
         setValue('diaSelecoes', [])
       }
     })
-  }, [projetoId, setValue])
+  }, [projetoId, setValue, getValues])
 
   // Pre-select project + turma when ?turmaId= is given.
   // Searches projects sequentially until the turma is found.
@@ -565,12 +570,17 @@ export default function NovaMatriculaPage() {
                 <label htmlFor="frequenciaSemanal">Plano</label>
                 <select id="frequenciaSemanal" {...register('frequenciaSemanal')}>
                   <option value="">Selecione...</option>
-                  {PLANOS.map((plano) => (
-                    <option key={plano.frequencia} value={plano.frequencia}>
-                      {plano.frequencia} aulas — R$ {plano.valor}
+                  {planos.map((plano) => (
+                    <option key={plano.aulasPorSemana} value={plano.aulasPorSemana}>
+                      {rotuloPlano(plano.aulasPorSemana)} — R$ {plano.valorMensal}
                     </option>
                   ))}
                 </select>
+                {temProjeto && planos.length === 0 && (
+                  <span className={styles.aviso}>
+                    Este projeto ainda não tem planos. Cadastre em Financeiro &gt; Valores.
+                  </span>
+                )}
                 {errors.frequenciaSemanal && (
                   <span className={styles.erro}>{errors.frequenciaSemanal.message}</span>
                 )}
@@ -618,6 +628,7 @@ export default function NovaMatriculaPage() {
                 onChange={setInscricao}
                 styles={styles}
                 titulo="Taxa de inscrição"
+                projetoId={projetoId ? Number(projetoId) : undefined}
               />
 
               <button
