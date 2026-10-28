@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUsuario } from '../lib/auth'
-import { itensAdmin } from '../lib/menus'
-import BottomNav from '../components/BottomNav'
+import MenuAdmin from '../components/MenuAdmin'
 import styles from './layout.module.css'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -33,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className={styles.layout}>
-      <BottomNav itens={itensAdmin} />
+      <MenuAdmin />
       <main className={styles.conteudo}>{children}</main>
     </div>
   )

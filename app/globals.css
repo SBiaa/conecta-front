@@ -6,6 +6,10 @@
    (var(--primary), var(--border) etc.) de propósito: trocar só o valor
    aqui já rebrandeia todas as telas, sem precisar editar cada CSS Module. */
 :root {
+  /* -- largura do menu lateral da coordenação (MenuAdmin muda pra
+     "mini" quando a pessoa minimiza) -- */
+  --menu-largura: 220px;
+
   /* -- cores de marca -- */
   --primary: #136f83;        /* teal-600 */
   --primary-light: #1c8fa0;  /* teal-500 */
@@ -76,4 +80,8 @@ h1, h2, h3 {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+html[data-menu="mini"] {
+  --menu-largura: 68px;
 }

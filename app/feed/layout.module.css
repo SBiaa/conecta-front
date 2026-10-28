@@ -8,7 +8,8 @@
 
 @media (min-width: 768px) {
   .conteudo {
-    margin-left: 220px;
+    margin-left: var(--menu-largura);
+    transition: margin-left 0.2s var(--ease-standard);
     padding-bottom: 0;
   }
 }

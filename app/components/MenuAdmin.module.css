@@ -1,0 +1,256 @@
+/* ---------- Computador: coluna lateral ---------- */
+
+.lateral {
+  display: none;
+}
+
+.item,
+.minimizar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: none;
+  background: none;
+  border-radius: var(--radius-s);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.item:hover,
+.minimizar:hover {
+  background-color: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+.item svg,
+.minimizar svg {
+  flex-shrink: 0;
+}
+
+.texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ativo {
+  background-color: var(--primary-soft);
+  color: var(--primary);
+}
+
+.minimizar {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.grupo {
+  margin-top: 0.75rem;
+}
+
+.tituloGrupo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.35rem 0.85rem;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.tituloGrupo:hover {
+  opacity: 1;
+}
+
+.itens {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.linhaProjeto {
+  display: flex;
+  align-items: center;
+}
+
+.linhaProjeto .item {
+  flex: 1;
+  min-width: 0;
+}
+
+.seta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  border-radius: var(--radius-s);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.seta:hover {
+  background-color: var(--primary-soft);
+}
+
+.turmas {
+  display: flex;
+  flex-direction: column;
+  margin: 0.1rem 0 0.35rem 1.45rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--border);
+}
+
+.turma {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-s);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.turma:hover {
+  background-color: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+.ponto {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: var(--accent-hidro);
+}
+
+.turmaAtiva {
+  background-color: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.rodape {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+@media (min-width: 768px) {
+  .lateral {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--menu-largura);
+    padding: 1.25rem 0.75rem;
+    overflow-y: auto;
+    background-color: #ffffff;
+    border-right: 1px solid var(--border);
+    z-index: 20;
+    transition: width 0.2s var(--ease-standard);
+  }
+
+  .mini .texto {
+    display: none;
+  }
+
+  .mini .item,
+  .mini .minimizar {
+    justify-content: center;
+    padding: 0.7rem 0;
+  }
+}
+
+/* ---------- Celular: barra de baixo + gaveta ---------- */
+
+.barra {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 0.4rem 0;
+  background-color: #ffffff;
+  border-top: 1px solid var(--border);
+  z-index: 20;
+}
+
+.botaoBarra {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.3rem 0.5rem;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.botaoBarraAtivo {
+  color: var(--primary);
+}
+
+.fundoGaveta {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(11, 22, 32, 0.35);
+  z-index: 30;
+}
+
+.gaveta {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(300px, 85vw);
+  padding: 1rem 0.75rem 2rem;
+  overflow-y: auto;
+  background-color: #ffffff;
+  box-shadow: var(--shadow-pop);
+}
+
+.fecharGaveta {
+  display: flex;
+  margin-left: auto;
+  padding: 0.4rem;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .barra,
+  .fundoGaveta {
+    display: none;
+  }
+}
