@@ -23,7 +23,7 @@ type Usuario = {
 type Pagamento = {
   id: number
   valor: string
-  status: 'PAGA' | 'PENDENTE'
+  status: 'PAGA' | 'PENDENTE' | 'CANCELADA'
 }
 
 type PagamentoAtrasado = {
@@ -236,7 +236,11 @@ export default function InicioAdminPage() {
             <span className={styles.resumoLabel}>Pendente no mês</span>
           </div>
 
-          <div className={`${styles.resumoCard} ${styles.resumoDanger}`}>
+          <Link
+            href="/financeiro/atrasados"
+            className={`${styles.resumoCard} ${styles.resumoDanger} ${styles.resumoCardLink}`}
+            title="Ver quem está com mensalidade atrasada"
+          >
             <div className={styles.iconeWrap}>
               <AlertCircle size={20} />
             </div>
@@ -247,8 +251,9 @@ export default function InicioAdminPage() {
                 ? '—'
                 : `${resumo.atrasadosQtd} · ${typeof resumo.atrasadosTotal === 'number' ? moeda(resumo.atrasadosTotal) : '—'}`}
             </span>
-            <span className={styles.resumoLabel}>Atrasados</span>
-          </div>
+            <span className={styles.resumoLabel}>Mensalidades atrasadas</span>
+            <span className={styles.resumoLinkTexto}>Ver por aluna →</span>
+          </Link>
 
           <div className={`${styles.resumoCard} ${styles.resumoPrimary}`}>
             <div className={styles.iconeWrap}>

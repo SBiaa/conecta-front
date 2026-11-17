@@ -10,7 +10,7 @@ const CHAVE_PIX = '06.659.481/0001-28'
 type Pagamento = {
   id: number
   valor: string
-  status: 'PAGA' | 'PENDENTE'
+  status: 'PAGA' | 'PENDENTE' | 'CANCELADA'
   mesReferencia: string
   vencimento: string
   formaPagamento: string | null

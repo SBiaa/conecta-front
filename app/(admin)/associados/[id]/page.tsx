@@ -82,7 +82,7 @@ type Associado = {
 type Pagamento = {
   id: string
   valor: string
-  status: 'PAGA' | 'PENDENTE'
+  status: 'PAGA' | 'PENDENTE' | 'CANCELADA'
   mesReferencia: string
   vencimento: string
   dataPagamento: string | null
@@ -105,6 +105,7 @@ type PagamentoParaEditar = {
   formaPagamento: FormaPagamento | null
   mesReferencia: string
   vencimento: string
+  status: Pagamento['status']
 }
 
 type TurmaOpcao = {
@@ -217,6 +218,8 @@ export default function PerfilAssociadoPage() {
   const [formaPagamentoEdicao, setFormaPagamentoEdicao] = useState<FormaPagamento | ''>('')
   const [mesReferenciaEdicao, setMesReferenciaEdicao] = useState('')
   const [vencimentoEdicao, setVencimentoEdicao] = useState('')
+  const [dataPagamentoEdicao, setDataPagamentoEdicao] = useState('')
+  const [confirmandoDesfazer, setConfirmandoDesfazer] = useState(false)
   const [enviandoEdicaoPagamento, setEnviandoEdicaoPagamento] = useState(false)
   const [erroEdicaoPagamento, setErroEdicaoPagamento] = useState('')
 
@@ -344,12 +347,31 @@ export default function PerfilAssociadoPage() {
       formaPagamento: pagamento.formaPagamento,
       mesReferencia: pagamento.mesReferencia,
       vencimento: pagamento.vencimento,
+      status: pagamento.status,
     })
     setValorEdicao(pagamento.valor)
     setFormaPagamentoEdicao(pagamento.formaPagamento ?? '')
     setMesReferenciaEdicao(pagamento.mesReferencia)
     setVencimentoEdicao(pagamento.vencimento.slice(0, 10))
+    setDataPagamentoEdicao(pagamento.dataPagamento ? pagamento.dataPagamento.slice(0, 10) : '')
+    setConfirmandoDesfazer(false)
     setErroEdicaoPagamento('')
+  }
+
+  async function desfazerPagamento() {
+    if (!pagamentoEditando) return
+
+    setEnviandoEdicaoPagamento(true)
+    setErroEdicaoPagamento('')
+    try {
+      await apiPatch(`/pagamentos/${pagamentoEditando.id}/desfazer`, {})
+      await buscarPagamentos()
+      fecharModalEdicaoPagamento()
+    } catch {
+      setErroEdicaoPagamento('Não foi possível desfazer o pagamento')
+    } finally {
+      setEnviandoEdicaoPagamento(false)
+    }
   }
 
   function fecharModalEdicaoPagamento() {
@@ -364,6 +386,12 @@ export default function PerfilAssociadoPage() {
       return
     }
 
+    const estaPaga = pagamentoEditando.status === 'PAGA'
+    if (estaPaga && !dataPagamentoEdicao) {
+      setErroEdicaoPagamento('Informe a data do pagamento')
+      return
+    }
+
     setEnviandoEdicaoPagamento(true)
     setErroEdicaoPagamento('')
     try {
@@ -372,11 +400,14 @@ export default function PerfilAssociadoPage() {
         formaPagamento: formaPagamentoEdicao || undefined,
         mesReferencia: mesReferenciaEdicao,
         vencimento: vencimentoEdicao,
+        ...(estaPaga ? { dataPagamento: dataPagamentoEdicao } : {}),
       })
       await buscarPagamentos()
       fecharModalEdicaoPagamento()
-    } catch {
-      setErroEdicaoPagamento('Não foi possível salvar a correção')
+    } catch (erro) {
+      setErroEdicaoPagamento(
+        erro instanceof ApiError && erro.status < 500 ? erro.message : 'Não foi possível salvar a correção'
+      )
     } finally {
       setEnviandoEdicaoPagamento(false)
     }
@@ -1080,10 +1111,23 @@ export default function PerfilAssociadoPage() {
                   <span className={styles.valorPagamento}>{formatarMoeda(pagamento.valor)}</span>
                   <span
                     className={`${styles.statusBadge} ${
-                      pagamento.status === 'PAGA' ? styles.statusPaga : styles.statusPendente
+                      pagamento.status === 'PAGA'
+                        ? styles.statusPaga
+                        : pagamento.status === 'CANCELADA'
+                        ? styles.statusCancelada
+                        : styles.statusPendente
                     }`}
+                    title={
+                      pagamento.status === 'CANCELADA'
+                        ? 'Matrícula encerrada: esta cobrança não é mais cobrada'
+                        : undefined
+                    }
                   >
-                    {pagamento.status === 'PAGA' ? 'Paga' : 'Pendente'}
+                    {pagamento.status === 'PAGA'
+                      ? 'Paga'
+                      : pagamento.status === 'CANCELADA'
+                      ? 'Cancelada'
+                      : 'Pendente'}
                   </span>
                   {pagamento.status === 'PENDENTE' && (
                     <button
@@ -1731,6 +1775,18 @@ export default function PerfilAssociadoPage() {
               />
             </div>
 
+            {pagamentoEditando.status === 'PAGA' && (
+              <div className={styles.campo}>
+                <label htmlFor="dataPagamentoEdicao">Data do pagamento</label>
+                <input
+                  type="date"
+                  id="dataPagamentoEdicao"
+                  value={dataPagamentoEdicao}
+                  onChange={(e) => setDataPagamentoEdicao(e.target.value)}
+                />
+              </div>
+            )}
+
             {erroEdicaoPagamento && <p className={styles.erroModal}>{erroEdicaoPagamento}</p>}
 
             <div className={styles.acoesModal}>
@@ -1749,6 +1805,23 @@ export default function PerfilAssociadoPage() {
                 {enviandoEdicaoPagamento ? 'Salvando...' : 'Salvar correção'}
               </button>
             </div>
+
+            {pagamentoEditando.status === 'PAGA' && (
+              <div className={styles.blocoDesfazer}>
+                <p className={styles.textoDesfazer}>
+                  {confirmandoDesfazer
+                    ? 'Tem certeza? Esta cobrança volta a ficar pendente, sem data nem forma de pagamento.'
+                    : 'Registrou o pagamento no mês errado? Desfaça aqui e depois registre no mês certo.'}
+                </p>
+                <button
+                  className={styles.botaoDesfazer}
+                  onClick={confirmandoDesfazer ? desfazerPagamento : () => setConfirmandoDesfazer(true)}
+                  disabled={enviandoEdicaoPagamento}
+                >
+                  {confirmandoDesfazer ? 'Sim, desfazer pagamento' : 'Desfazer pagamento'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

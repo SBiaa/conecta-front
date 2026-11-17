@@ -11,7 +11,7 @@ import styles from './inicio.module.css'
 type Pagamento = {
   id: number
   valor: string
-  status: 'PAGA' | 'PENDENTE'
+  status: 'PAGA' | 'PENDENTE' | 'CANCELADA'
   mesReferencia: string
   vencimento: string
   formaPagamento: string | null

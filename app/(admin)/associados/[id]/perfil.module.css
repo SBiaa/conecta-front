@@ -676,3 +676,44 @@
   line-height: 1.45;
   margin: 0 0 1rem;
 }
+
+/* Desfazer pagamento lançado por engano (dentro do modal de correção) */
+.blocoDesfazer {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eeeeee;
+}
+
+.textoDesfazer {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #666666);
+  margin: 0 0 0.6rem;
+}
+
+.botaoDesfazer {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--danger);
+  background-color: var(--danger-soft);
+  border: none;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoDesfazer:hover:not(:disabled) {
+  background-color: var(--danger);
+  color: #ffffff;
+}
+
+.botaoDesfazer:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.statusCancelada {
+  color: var(--text-secondary);
+  background-color: #eef1f1;
+}

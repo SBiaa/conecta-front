@@ -1,0 +1,150 @@
+.explicacao {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: -0.75rem 0 0.75rem;
+  max-width: 60rem;
+}
+
+.aviso {
+  background-color: var(--success-soft);
+  color: var(--success);
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-s);
+  margin-bottom: 1rem;
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.marcarTodas {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.marcarTodas input,
+.check {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.totais {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.item {
+  justify-content: flex-start;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nome {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.nome:hover {
+  text-decoration: underline;
+}
+
+.presenca {
+  font-size: 0.9rem;
+  font-weight: 600;
+  align-self: flex-start;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-pill);
+  margin-top: 0.15rem;
+}
+
+.presencaBoa {
+  background-color: var(--success-soft);
+  color: var(--success);
+}
+
+.presencaAtencao {
+  background-color: var(--warning-soft);
+  color: var(--warning);
+}
+
+.presencaRuim {
+  background-color: var(--danger-soft);
+  color: var(--danger);
+}
+
+.botaoInativar,
+.botaoInativarLote {
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-s);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.botaoInativar {
+  background-color: #ffffff;
+  color: var(--danger);
+  border: 1.5px solid var(--danger);
+}
+
+.botaoInativar:hover {
+  background-color: var(--danger-soft);
+}
+
+.botaoInativarLote {
+  margin-left: auto;
+  background-color: var(--danger);
+  color: #ffffff;
+  border: none;
+}
+
+.botaoInativarLote:hover {
+  filter: brightness(0.92);
+}
+
+@media (max-width: 640px) {
+  .item {
+    flex-wrap: wrap;
+  }
+
+  .botaoInativar {
+    width: 100%;
+  }
+
+  .botaoInativarLote {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+.alerta {
+  background-color: var(--warning-soft);
+  color: var(--text-primary);
+  border-left: 4px solid var(--warning);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-s);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+  max-width: 60rem;
+}

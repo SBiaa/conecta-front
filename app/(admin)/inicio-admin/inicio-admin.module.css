@@ -324,3 +324,23 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Card "Atrasados" clicável: leva à lista por aluna. */
+.resumoCardLink {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.resumoCardLink:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.resumoLinkTexto {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--danger);
+}

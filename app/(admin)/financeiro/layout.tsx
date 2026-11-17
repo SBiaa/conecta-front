@@ -6,6 +6,7 @@ import styles from './abas.module.css'
 
 const ABAS = [
   { label: 'Mensalidades', href: '/financeiro' },
+  { label: 'Atrasados', href: '/financeiro/atrasados' },
   { label: 'Vendas', href: '/financeiro/vendas' },
   { label: 'Produtos', href: '/financeiro/produtos' },
   { label: 'Gastos', href: '/financeiro/gastos' },
