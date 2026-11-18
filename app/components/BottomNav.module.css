@@ -16,12 +16,21 @@
   padding: 0.4rem 0;
 }
 
+.lista > li {
+  /* No celular os itens dividem a largura por igual: com 7 itens (ex.: quem
+     tem viagem ou filhos) ninguém fica cortado pra fora da tela. */
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .link {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
-  padding: 0.3rem 0.5rem;
+  padding: 0.3rem 0.1rem;
+  text-align: center;
+  line-height: 1.15;
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 0.7rem;
@@ -55,8 +64,13 @@
     padding: 0 0.75rem;
   }
 
+  .lista > li {
+    flex: none;
+  }
+
   .link {
     flex-direction: row;
+    text-align: left;
     justify-content: flex-start;
     gap: 0.75rem;
     padding: 0.75rem 1rem;

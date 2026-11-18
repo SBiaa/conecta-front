@@ -35,3 +35,47 @@ export function redimensionarImagem(arquivo: File, tamanho = 256, qualidade = 0.
     leitor.readAsDataURL(arquivo)
   })
 }
+
+// Reduz uma foto de câmera (que costuma ter 4000px e vários MB) pra no máximo
+// `ladoMaximo` no lado maior, mantendo a proporção. Devolve um arquivo JPEG
+// pronto pra enviar. Fotos que o navegador não consegue abrir (ex.: HEIC no
+// Chrome do Windows) voltam como estão — o envio continua, só sem reduzir.
+export function reduzirFoto(arquivo: File, ladoMaximo = 1920, qualidade = 0.85): Promise<File> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(arquivo)
+    const imagem = new Image()
+
+    imagem.onerror = () => {
+      URL.revokeObjectURL(url)
+      resolve(arquivo)
+    }
+    imagem.onload = () => {
+      URL.revokeObjectURL(url)
+      const escala = Math.min(1, ladoMaximo / Math.max(imagem.width, imagem.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(imagem.width * escala)
+      canvas.height = Math.round(imagem.height * escala)
+
+      const contexto = canvas.getContext('2d')
+      if (!contexto) {
+        resolve(arquivo)
+        return
+      }
+      contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height)
+      canvas.toBlob(
+        (blob) => {
+          if (!blob || blob.size >= arquivo.size) {
+            resolve(arquivo)
+            return
+          }
+          const nome = arquivo.name.replace(/\.[^.]+$/, '') + '.jpg'
+          resolve(new File([blob], nome, { type: 'image/jpeg' }))
+        },
+        'image/jpeg',
+        qualidade,
+      )
+    }
+
+    imagem.src = url
+  })
+}

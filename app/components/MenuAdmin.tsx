@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Home, Rss, Users, GraduationCap, FolderKanban, Wallet, User, CalendarCheck,
-  ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Menu, X, LayoutGrid, Tag,
+  ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Menu, X, LayoutGrid, Tag, Bus,
   type LucideIcon,
 } from 'lucide-react'
 import { apiGet } from '../lib/api'
@@ -28,6 +28,7 @@ const GESTAO: Item[] = [
   { label: 'Professoras', href: '/professores', icone: GraduationCap },
   { label: 'Financeiro', href: '/financeiro', icone: Wallet },
   { label: 'Valores', href: '/financeiro/valores', icone: Tag },
+  { label: 'Viagens', href: '/viagens', icone: Bus },
 ]
 
 const PERFIL: Item = { label: 'Perfil', href: '/perfil-admin', icone: User }

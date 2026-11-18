@@ -1,4 +1,4 @@
-import { Home, Users, GraduationCap, FolderKanban, Wallet, User, Rss, HandCoins, CalendarCheck } from 'lucide-react'
+import { Home, Users, GraduationCap, FolderKanban, Wallet, User, Rss, HandCoins, CalendarCheck, Bus } from 'lucide-react'
 import type { ItemMenu } from '../components/BottomNav'
 
 // Fonte única dos itens de menu por papel. Antes cada layout (admin, user,
@@ -13,6 +13,7 @@ export const itensAdmin: ItemMenu[] = [
   { label: 'Projetos', href: '/projetos', icone: FolderKanban },
   { label: 'Frequência', href: '/frequencia', icone: CalendarCheck },
   { label: 'Financeiro', href: '/financeiro', icone: Wallet },
+  { label: 'Viagens', href: '/viagens', icone: Bus },
   { label: 'Perfil', href: '/perfil-admin', icone: User },
 ]
 
