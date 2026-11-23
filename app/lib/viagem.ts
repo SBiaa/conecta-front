@@ -36,7 +36,24 @@ export type ViagemDetalhe = ViagemResumo & {
   eventos: EventoViagem[]
   avisos: AvisoViagem[]
   checklist: ItemChecklist[]
-  participantes: (Pessoa & { papel: string })[]
+  participantes: (Pessoa & { papel: string; celular?: string | null })[]
+  // Só vêm pra coordenação.
+  codigoAcesso?: string | null
+  acessoAte?: string | null
+}
+
+// Uma linha da lista colada pela coordenação, já lida pela API.
+export type LinhaImportacao = {
+  nome: string
+  celular: string | null
+  sugestao: { id: string; nome: string; papel: string } | null
+  jaNaViagem: boolean
+  celularRepetido: boolean
+}
+
+export function linkDaViagem(codigo: string) {
+  const origem = typeof window !== 'undefined' ? window.location.origin : ''
+  return `${origem}/v/${codigo}`
 }
 
 export type MidiaViagem = {

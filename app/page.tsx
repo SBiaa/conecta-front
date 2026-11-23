@@ -15,6 +15,10 @@ export default function HomePage() {
       return
     }
 
+    if (usuario.papel === 'CONVIDADO') {
+      router.replace(`/viagem/${usuario.viagemId}`)
+      return
+    }
     router.replace(usuario.papel === 'ADMIN' ? '/inicio-admin' : '/inicio')
   }, [router])
 

@@ -1,4 +1,4 @@
-import { getToken, logout } from './auth'
+import { getToken, getUsuario, logout } from './auth'
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL!;
@@ -11,8 +11,27 @@ function authHeaders(): Record<string, string> {
 // Sessão expirada/token inválido: sem isso, toda tela mostrava "não foi
 // possível carregar" (mensagem de erro de conexão) quando na verdade era
 // só precisar entrar de novo — confuso pra quem não é técnico.
+// Várias chamadas podem voltar 401 juntas: só a primeira decide pra onde ir.
+let redirecionando = false
+
 function trataSessaoExpirada(response: Response) {
   if (response.status === 401 && typeof window !== 'undefined') {
+    if (redirecionando) return
+    // Quem entrou pelo link da viagem só tem a viagem. Fora dela, volta pra
+    // viagem sem sair. Se a própria viagem recusar (link trocado ou vencido),
+    // sai e volta pro link — não pra tela de CPF e senha, que ela nem tem.
+    const usuario = getUsuario()
+    if (usuario?.papel === 'CONVIDADO') {
+      redirecionando = true
+      const daViagem = new URL(response.url).pathname.startsWith('/viagens')
+      if (!daViagem) {
+        window.location.href = `/viagem/${usuario.viagemId}`
+        return
+      }
+      logout()
+      window.location.href = usuario.codigo ? `/v/${usuario.codigo}` : '/v'
+      return
+    }
     logout()
     if (window.location.pathname !== '/login') {
       window.location.href = '/login'

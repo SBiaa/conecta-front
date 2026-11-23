@@ -121,6 +121,10 @@ textarea.campo {
 }
 
 .botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   background: var(--primary);
   color: #ffffff;
   border: none;
@@ -144,6 +148,10 @@ textarea.campo {
 }
 
 .botaoSecundario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   background: #ffffff;
   color: var(--primary);
   border: 1px solid var(--primary);

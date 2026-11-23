@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { Trash2, UserPlus } from 'lucide-react'
+import { Check, Pencil, Trash2, UserPlus, X } from 'lucide-react'
 import { apiDelete, apiGet, apiPost, apiPut } from '../../../lib/api'
 import {
   deInputDataHora,
@@ -14,6 +14,7 @@ import {
 } from '../../../lib/viagem'
 import Avatar from '../../../components/Avatar'
 import ConfirmDialog from '../../../components/ConfirmDialog'
+import { ImportarLista, LinkDoGrupo } from './AcessoPeloLink'
 import styles from '../viagens.module.css'
 
 type UsuarioBusca = {
@@ -24,7 +25,12 @@ type UsuarioBusca = {
   responsavel: { id: string; nome: string } | null
 }
 
-const PAPEL: Record<string, string> = { ADMIN: 'Coordenação', PROFESSOR: 'Professora', ASSOCIADO: 'Associada' }
+const PAPEL: Record<string, string> = {
+  ADMIN: 'Coordenação',
+  PROFESSOR: 'Professora',
+  ASSOCIADO: 'Associada',
+  CONVIDADO: 'Convidada',
+}
 
 // Cada bloco salva sozinho e recarrega a viagem; o erro aparece no próprio bloco.
 function useAcao(recarregar: () => void) {
@@ -140,6 +146,16 @@ function Participantes({ viagem, recarregar }: { viagem: ViagemDetalhe; recarreg
   const [resultados, setResultados] = useState<UsuarioBusca[]>([])
   const { erro, executar } = useAcao(recarregar)
   const jaVai = new Set(viagem.participantes.map((p) => p.id))
+  // Celular sendo corrigido: é com ele que a pessoa entra pelo link.
+  const [editando, setEditando] = useState<{ id: string; celular: string } | null>(null)
+
+  const salvarCelular = async () => {
+    if (!editando) return
+    const ok = await executar(() =>
+      apiPut(`/viagens/${viagem.id}/participantes/${editando.id}/celular`, { celular: editando.celular }),
+    )
+    if (ok) setEditando(null)
+  }
 
   useEffect(() => {
     const termo = busca.trim()
@@ -157,6 +173,8 @@ function Participantes({ viagem, recarregar }: { viagem: ViagemDetalhe; recarreg
     <section className={styles.card}>
       <h2 className={styles.secaoTitulo}>Quem vai ({viagem.participantes.length})</h2>
       <p className={styles.ajuda}>Só essas pessoas veem a área da viagem no Conecta.</p>
+      <ImportarLista viagem={viagem} recarregar={recarregar} />
+      <h3 className={styles.nome}>Ou buscar quem já tem cadastro</h3>
       <input
         className={styles.campo}
         placeholder="Buscar por nome ou CPF para adicionar"
@@ -187,8 +205,47 @@ function Participantes({ viagem, recarregar }: { viagem: ViagemDetalhe; recarreg
             <Avatar nome={p.nome} fotoUrl={p.fotoUrl} tamanho={32} />
             <div className={styles.linhaTexto}>
               <span className={styles.nome}>{p.nome}</span>
-              <span className={styles.detalhe}>{PAPEL[p.papel] ?? p.papel}</span>
+              {editando?.id === p.id ? (
+                <form
+                  className={styles.linha}
+                  style={{ marginTop: '0.3rem' }}
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    salvarCelular()
+                  }}
+                >
+                  <input
+                    className={styles.campo}
+                    type="tel"
+                    autoFocus
+                    placeholder="(11) 99999-9999"
+                    value={editando.celular}
+                    onChange={(e) => setEditando({ ...editando, celular: e.target.value })}
+                    aria-label={`Celular de ${p.nome}`}
+                  />
+                  <button className={styles.botaoIcone} aria-label="Salvar celular">
+                    <Check size={18} />
+                  </button>
+                  <button type="button" className={styles.botaoIcone} aria-label="Cancelar" onClick={() => setEditando(null)}>
+                    <X size={18} />
+                  </button>
+                </form>
+              ) : (
+                <span className={styles.detalhe}>
+                  {PAPEL[p.papel] ?? p.papel} ·{' '}
+                  {p.celular ?? <strong style={{ color: 'var(--danger)' }}>sem celular</strong>}
+                </span>
+              )}
             </div>
+            {editando?.id !== p.id && (
+              <button
+                className={styles.botaoIcone}
+                aria-label={`Corrigir o celular de ${p.nome}`}
+                onClick={() => setEditando({ id: p.id, celular: p.celular ?? '' })}
+              >
+                <Pencil size={18} />
+              </button>
+            )}
             <button
               className={styles.botaoIcone}
               aria-label={`Tirar ${p.nome} da viagem`}
@@ -443,6 +500,7 @@ export default function OrganizarViagemPage() {
 
       <DadosDaViagem viagem={viagem} recarregar={carregar} />
       <Participantes viagem={viagem} recarregar={carregar} />
+      <LinkDoGrupo viagem={viagem} recarregar={carregar} />
       <Cronograma viagem={viagem} recarregar={carregar} />
       <Avisos viagem={viagem} recarregar={carregar} />
       <Checklist viagem={viagem} recarregar={carregar} />

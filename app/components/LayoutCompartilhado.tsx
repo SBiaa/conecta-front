@@ -8,9 +8,9 @@ import BottomNav from './BottomNav'
 import MenuAdmin from './MenuAdmin'
 import styles from '../feed/layout.module.css'
 
-type Papel = 'ADMIN' | 'PROFESSOR' | 'ASSOCIADO'
+type Papel = 'ADMIN' | 'PROFESSOR' | 'ASSOCIADO' | 'CONVIDADO'
 
-// Moldura das telas que os três papéis abrem (Feed, Viagem): checa o login e
+// Moldura das telas que os papéis abrem (Feed, Viagem): checa o login e
 // mostra o menu certo — o lateral da coordenação ou o de baixo das demais.
 export default function LayoutCompartilhado({
   children,
@@ -19,7 +19,7 @@ export default function LayoutCompartilhado({
 }) {
   const router = useRouter()
   const [papel, setPapel] = useState<Papel | null>(null)
-  const itens = useItensMenu(papel && papel !== 'ADMIN' ? papel : null)
+  const itens = useItensMenu(papel === 'ASSOCIADO' || papel === 'PROFESSOR' ? papel : null)
 
   useEffect(() => {
     const usuario = getUsuario()
@@ -31,6 +31,15 @@ export default function LayoutCompartilhado({
   }, [router])
 
   if (!papel) return null
+
+  // Quem entrou pelo link da viagem só tem a viagem: sem menu do resto do app.
+  if (papel === 'CONVIDADO') {
+    return (
+      <div className={styles.layout}>
+        <main className={styles.conteudo}>{children(papel)}</main>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.layout}>
