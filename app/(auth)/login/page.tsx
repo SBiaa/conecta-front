@@ -12,9 +12,20 @@ type RespostaLogin = {
   usuario: { papel: 'ADMIN' | 'PROFESSOR' | 'ASSOCIADO' } & Record<string, unknown>
 }
 
+// Máscara 000.000.000-00 enquanto digita; o que vai pra API são
+// só os dígitos (a API guarda e compara o CPF sem pontuação).
+function mascararCpf(valor: string): string {
+  const d = valor.replace(/\D/g, '').slice(0, 11)
+  if (d.length <= 3) return d
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`
+}
+
 export default function LoginPage() {
   const [cpf, setCpf] = useState('')
   const [senha, setSenha] = useState('')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
 
@@ -26,7 +37,7 @@ export default function LoginPage() {
     setCarregando(true)
 
     try {
-      const dados = await apiPost<RespostaLogin>('/auth/login', { cpf, senha })
+      const dados = await apiPost<RespostaLogin>('/auth/login', { cpf: cpf.replace(/\D/g, ''), senha })
       salvarSessao(dados.token, dados.usuario)
       router.push(dados.usuario.papel === 'ADMIN' ? '/inicio-admin' : '/inicio')
     } catch (e) {
@@ -59,20 +70,31 @@ export default function LoginPage() {
               autoComplete="username"
               placeholder="000.000.000-00"
               value={cpf}
-              onChange={(e) => setCpf(e.target.value)}
+              maxLength={14}
+              onChange={(e) => setCpf(mascararCpf(e.target.value))}
             />
           </div>
 
           <div className={styles.campo}>
             <label htmlFor="senha">Senha</label>
-            <input
-              type="password"
-              id="senha"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-            />
+            <div className={styles.senhaLinha}>
+              <input
+                type={mostrarSenha ? 'text' : 'password'}
+                id="senha"
+                autoComplete="current-password"
+                placeholder="••••••••"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+              />
+              <button
+                type="button"
+                className={styles.mostrarSenha}
+                aria-pressed={mostrarSenha}
+                onClick={() => setMostrarSenha((v) => !v)}
+              >
+                {mostrarSenha ? 'Esconder senha' : 'Mostrar senha'}
+              </button>
+            </div>
           </div>
 
           {erro && (
@@ -84,6 +106,8 @@ export default function LoginPage() {
           <button className={styles.botao} disabled={carregando}>
             {carregando ? 'Entrando...' : 'Entrar'}
           </button>
+
+          <p className={styles.ajuda}>Esqueceu a senha? Fale com a coordenação.</p>
         </form>
       </div>
     </div>

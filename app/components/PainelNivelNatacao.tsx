@@ -9,6 +9,7 @@ import {
   type NivelNatacao,
 } from '../lib/natacao'
 import { formatarData } from '../lib/formato'
+import ConfirmDialog from './ConfirmDialog'
 import styles from './PainelNivelNatacao.module.css'
 
 type Props = {
@@ -26,6 +27,8 @@ export default function PainelNivelNatacao({ caminho, historico: historicoPronto
   const [nivel, setNivel] = useState<NivelNatacao | ''>('')
   const [observacao, setObservacao] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const [apagando, setApagando] = useState<{ id: number; nivel: string } | null>(null)
+  const [apagandoCarregando, setApagandoCarregando] = useState(false)
 
   const carregar = useCallback(() => {
     if (!caminho) return
@@ -62,12 +65,17 @@ export default function PainelNivelNatacao({ caminho, historico: historicoPronto
   async function apagar(registroId: number) {
     if (!caminho) return
     setErro('')
+    setApagandoCarregando(true)
     try {
       await apiDelete(`${caminho}/${registroId}`)
+      setApagando(null)
       carregar()
       aoMudar?.()
     } catch {
+      setApagando(null)
       setErro('Não foi possível apagar o registro.')
+    } finally {
+      setApagandoCarregando(false)
     }
   }
 
@@ -133,7 +141,7 @@ export default function PainelNivelNatacao({ caminho, historico: historicoPronto
                 {registro.observacao && <p className={styles.itemObs}>{registro.observacao}</p>}
               </div>
               {!somenteLeitura && caminho && (
-                <button type="button" className={styles.apagar} onClick={() => apagar(registro.id)}>
+                <button type="button" className={styles.apagar} onClick={() => setApagando({ id: registro.id, nivel: labelNivel(registro.nivel) })}>
                   Apagar
                 </button>
               )}
@@ -141,6 +149,17 @@ export default function PainelNivelNatacao({ caminho, historico: historicoPronto
           ))}
         </ul>
       )}
+
+      <ConfirmDialog
+        aberto={apagando !== null}
+        titulo="Apagar este registro de nível?"
+        mensagem={`O registro "${apagando?.nivel ?? ''}" será removido do histórico.`}
+        confirmarLabel="Apagar"
+        carregandoLabel="Apagando..."
+        carregando={apagandoCarregando}
+        onConfirmar={() => apagando && apagar(apagando.id)}
+        onCancelar={() => setApagando(null)}
+      />
     </div>
   )
 }

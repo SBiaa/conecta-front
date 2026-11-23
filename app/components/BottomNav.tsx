@@ -15,7 +15,7 @@ export default function BottomNav({ itens }: { itens: ItemMenu[] }) {
   const pathname = usePathname()
 
   return (
-    <nav className={styles.nav}>
+    <nav className={styles.nav} aria-label="Menu principal">
       <ul className={styles.lista}>
         {itens.map((item) => {
           const Icone = item.icone
@@ -27,6 +27,7 @@ export default function BottomNav({ itens }: { itens: ItemMenu[] }) {
               <Link
                 href={item.href}
                 className={`${styles.link} ${ativo ? styles.linkAtivo : ''}`}
+                aria-current={ativo ? 'page' : undefined}
               >
                 <Icone size={22} />
                 <span className={styles.label}>{item.label}</span>

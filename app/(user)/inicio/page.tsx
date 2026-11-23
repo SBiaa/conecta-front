@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { FolderOpen, Wallet, User, GraduationCap } from 'lucide-react'
+import { FolderOpen, Wallet, User, GraduationCap, Bus, Baby } from 'lucide-react'
 import { getUsuario } from '../../lib/auth'
 import { apiGet } from '../../lib/api'
 import { diaSemanaHoje } from '../../lib/dias'
+import { resumirPendencias } from '../../lib/pagamentos'
 import styles from './inicio.module.css'
 
 type Pagamento = {
@@ -27,7 +28,7 @@ type SituacaoInfo =
   | { tipo: 'carregando' }
   | { tipo: 'erro' }
   | { tipo: 'emDia' }
-  | { tipo: 'atrasada'; quantidade: number }
+  | { tipo: 'atrasada'; quantidade: number; valor: number }
   | { tipo: 'pendente'; mesReferencia: string; vencimento: string }
 
 type ExameMedico = 'APTO' | 'NAO_APTO' | 'AGUARDANDO'
@@ -110,24 +111,14 @@ function truncar(texto: string, max: number): string {
 }
 
 function calcularSituacao(pagamentos: Pagamento[]): SituacaoInfo {
-  const pendentes = pagamentos.filter((p) => p.status === 'PENDENTE')
-  if (pendentes.length === 0) return { tipo: 'emDia' }
-
-  const hoje = new Date()
-  hoje.setHours(0, 0, 0, 0)
-
-  const atrasados = pendentes.filter((p) => {
-    const venc = new Date(p.vencimento)
-    venc.setHours(0, 0, 0, 0)
-    return venc < hoje
-  })
-
-  if (atrasados.length > 0) return { tipo: 'atrasada', quantidade: atrasados.length }
-
-  const proxima = [...pendentes].sort(
-    (a, b) => new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime()
-  )[0]
-
+  const { pendentes, atrasados, proxima } = resumirPendencias(pagamentos)
+  if (pendentes.length === 0 || !proxima) return { tipo: 'emDia' }
+  if (atrasados.length > 0)
+    return {
+      tipo: 'atrasada',
+      quantidade: atrasados.length,
+      valor: atrasados.reduce((acc, p) => acc + Number(p.valor), 0),
+    }
   return { tipo: 'pendente', mesReferencia: proxima.mesReferencia, vencimento: proxima.vencimento }
 }
 
@@ -164,26 +155,56 @@ export default function InicioPage() {
     typeof window !== 'undefined' ? getUsuario() : null
   )
   const [situacao, setSituacao] = useState<SituacaoInfo>({ tipo: 'carregando' })
-  const [matriculas, setMatriculas] = useState<Matricula[]>([])
-  const [frequencia, setFrequencia] = useState<FrequenciaTurma[]>([])
-  const [turmasProfessor, setTurmasProfessor] = useState<TurmaProfessor[]>([])
+  // null = carregando; lista = carregou; erro = falhou (nunca confundir com "vazio")
+  const [matriculas, setMatriculas] = useState<Matricula[] | null>(null)
+  const [erroMatriculas, setErroMatriculas] = useState(false)
+  const [frequencia, setFrequencia] = useState<FrequenciaTurma[] | null>(null)
+  const [erroFrequencia, setErroFrequencia] = useState(false)
+  const [turmasProfessor, setTurmasProfessor] = useState<TurmaProfessor[] | null>(null)
+  const [erroTurmas, setErroTurmas] = useState(false)
+  const [temViagem, setTemViagem] = useState<string | null>(null)
+  const [temFilhos, setTemFilhos] = useState(false)
+  const [tentativa, setTentativa] = useState(0)
   const [posts, setPosts] = useState<PostResumo[]>([])
   const ehProfessor = usuario?.papel === 'PROFESSOR'
   const hoje = diaSemanaHoje()
 
   useEffect(() => {
     if (ehProfessor) return
+    setSituacao({ tipo: 'carregando' })
+    setErroMatriculas(false)
+    setErroFrequencia(false)
     apiGet<Pagamento[]>('/me/pagamentos')
       .then((dados) => setSituacao(calcularSituacao(dados)))
       .catch(() => setSituacao({ tipo: 'erro' }))
-    apiGet<Matricula[]>('/me/matriculas').then(setMatriculas).catch(() => {})
-    apiGet<FrequenciaTurma[]>('/me/frequencia').then(setFrequencia).catch(() => {})
-  }, [ehProfessor])
+    apiGet<Matricula[]>('/me/matriculas')
+      .then(setMatriculas)
+      .catch(() => setErroMatriculas(true))
+    apiGet<FrequenciaTurma[]>('/me/frequencia')
+      .then(setFrequencia)
+      .catch(() => setErroFrequencia(true))
+    apiGet<unknown[]>('/me/dependentes')
+      .then((lista) => setTemFilhos(lista.length > 0))
+      .catch(() => setTemFilhos(false))
+  }, [ehProfessor, tentativa])
 
   useEffect(() => {
     if (!ehProfessor) return
-    apiGet<TurmaProfessor[]>('/professor/turmas').then(setTurmasProfessor).catch(() => {})
-  }, [ehProfessor])
+    setErroTurmas(false)
+    apiGet<TurmaProfessor[]>('/professor/turmas')
+      .then(setTurmasProfessor)
+      .catch(() => setErroTurmas(true))
+  }, [ehProfessor, tentativa])
+
+  // Viagem ativa vira atalho aqui (o menu de baixo tem no máximo 5 itens).
+  useEffect(() => {
+    apiGet<{ id: number }[]>('/viagens')
+      .then((lista) => {
+        if (lista.length === 0) setTemViagem(null)
+        else setTemViagem(lista.length === 1 ? `/viagem/${lista[0].id}` : '/viagem')
+      })
+      .catch(() => setTemViagem(null))
+  }, [])
 
   useEffect(() => {
     apiGet<PostResumo[]>('/posts/feed?limit=3').then(setPosts).catch(() => {})
@@ -192,7 +213,7 @@ export default function InicioPage() {
   const nome = usuario?.nome ? primeiroNome(usuario.nome) : '...'
 
   if (ehProfessor) {
-    const turmasHoje = turmasProfessor
+    const turmasHoje = (turmasProfessor ?? [])
       .filter((t) => t.temAulaHoje)
       .sort((a, b) => (a.horario ?? '').localeCompare(b.horario ?? ''))
 
@@ -203,7 +224,16 @@ export default function InicioPage() {
         <h2 className={styles.tituloSecao}>Hoje</h2>
 
         <div className={styles.hoje}>
-          {turmasHoje.length === 0 ? (
+          {erroTurmas ? (
+            <div role="alert">
+              <p className={styles.hojeErro}>Não foi possível carregar suas turmas.</p>
+              <button type="button" className={styles.botaoTentar} onClick={() => setTentativa((n) => n + 1)}>
+                Tentar de novo
+              </button>
+            </div>
+          ) : turmasProfessor === null ? (
+            <p className={styles.hojeVazio}>Carregando suas aulas...</p>
+          ) : turmasHoje.length === 0 ? (
             <p className={styles.hojeVazio}>Sem aulas hoje.</p>
           ) : (
             turmasHoje.map((turma) => (
@@ -232,6 +262,12 @@ export default function InicioPage() {
             <GraduationCap size={30} />
             <span>Minhas Turmas</span>
           </Link>
+          {temViagem && (
+            <Link href={temViagem} className={styles.atalho}>
+              <Bus size={30} />
+              <span>Viagem</span>
+            </Link>
+          )}
           <Link href="/perfil" className={styles.atalho}>
             <User size={30} />
             <span>Perfil</span>
@@ -252,17 +288,17 @@ export default function InicioPage() {
       ? styles.situacaoPendente
       : ''
 
-  const matriculaComPendenciaExame = matriculas.find(
+  const matriculaComPendenciaExame = (matriculas ?? []).find(
     (m) => m.ativa && (m.exameMedico === 'AGUARDANDO' || m.exameMedico === 'NAO_APTO')
   )
 
-  const turmasHoje = matriculas
+  const turmasHoje = (matriculas ?? [])
     .filter((m) => m.ativa)
     .flatMap((m) => m.turmas)
     .filter((t) => t.diasContratados.includes(hoje))
 
-  const totalRegistros = frequencia.reduce((acc, f) => acc + f.totalRegistros, 0)
-  const totalFaltas = frequencia.reduce((acc, f) => acc + f.faltas, 0)
+  const totalRegistros = (frequencia ?? []).reduce((acc, f) => acc + f.totalRegistros, 0)
+  const totalFaltas = (frequencia ?? []).reduce((acc, f) => acc + f.faltas, 0)
   const percentualPresenca =
     totalRegistros > 0 ? Math.round(((totalRegistros - totalFaltas) / totalRegistros) * 100) : null
 
@@ -275,7 +311,12 @@ export default function InicioPage() {
           <p className={styles.situacaoTexto}>Verificando sua situação...</p>
         )}
         {situacao.tipo === 'erro' && (
-          <p className={styles.situacaoTexto}>Não foi possível carregar agora.</p>
+          <>
+            <p className={styles.situacaoTexto}>Não foi possível carregar agora.</p>
+            <button type="button" className={styles.botaoTentar} onClick={() => setTentativa((n) => n + 1)}>
+              Tentar de novo
+            </button>
+          </>
         )}
         {situacao.tipo === 'emDia' && (
           <p className={styles.situacaoTexto}>Você está em dia ✓</p>
@@ -283,7 +324,8 @@ export default function InicioPage() {
         {situacao.tipo === 'atrasada' && (
           <p className={styles.situacaoTexto}>
             Você tem {situacao.quantidade}{' '}
-            {situacao.quantidade === 1 ? 'mensalidade atrasada' : 'mensalidades atrasadas'}
+            {situacao.quantidade === 1 ? 'mensalidade atrasada' : 'mensalidades atrasadas'} ·{' '}
+            {situacao.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </p>
         )}
         {situacao.tipo === 'pendente' && (
@@ -312,7 +354,16 @@ export default function InicioPage() {
       <h2 className={styles.tituloSecao}>Hoje</h2>
 
       <div className={styles.hoje}>
-        {turmasHoje.length === 0 ? (
+        {erroMatriculas ? (
+          <div role="alert">
+            <p className={styles.hojeErro}>Não foi possível carregar suas aulas.</p>
+            <button type="button" className={styles.botaoTentar} onClick={() => setTentativa((n) => n + 1)}>
+              Tentar de novo
+            </button>
+          </div>
+        ) : matriculas === null ? (
+          <p className={styles.hojeVazio}>Carregando suas aulas...</p>
+        ) : turmasHoje.length === 0 ? (
           <p className={styles.hojeVazio}>Sem aula hoje.</p>
         ) : (
           turmasHoje.map((turma, indice) => (
@@ -325,6 +376,15 @@ export default function InicioPage() {
           ))
         )}
       </div>
+
+      {erroFrequencia && (
+        <div className={styles.frequencia} role="alert">
+          <span className={styles.frequenciaTexto}>Não foi possível carregar sua presença.</span>
+          <button type="button" className={styles.botaoTentar} onClick={() => setTentativa((n) => n + 1)}>
+            Tentar de novo
+          </button>
+        </div>
+      )}
 
       {percentualPresenca !== null && (
         <div className={styles.frequencia}>
@@ -346,6 +406,18 @@ export default function InicioPage() {
           <Wallet size={30} />
           <span>Contribuições</span>
         </Link>
+        {temViagem && (
+          <Link href={temViagem} className={styles.atalho}>
+            <Bus size={30} />
+            <span>Viagem</span>
+          </Link>
+        )}
+        {temFilhos && (
+          <Link href="/meus-filhos" className={styles.atalho}>
+            <Baby size={30} />
+            <span>Meus filhos</span>
+          </Link>
+        )}
         <Link href="/perfil" className={styles.atalho}>
           <User size={30} />
           <span>Perfil</span>

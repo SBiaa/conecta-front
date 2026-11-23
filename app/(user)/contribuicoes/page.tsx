@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { apiGet } from '../../lib/api'
+import { estaAtrasado, resumirPendencias } from '../../lib/pagamentos'
 import styles from './contribuicoes.module.css'
 
 const CHAVE_PIX = '06.659.481/0001-28'
@@ -23,7 +24,7 @@ type Pagamento = {
   }
 }
 
-type Situacao = 'PAGA' | 'PENDENTE' | 'ATRASADA'
+type Situacao = 'PAGA' | 'PENDENTE' | 'ATRASADA' | 'CANCELADA'
 
 const FORMA_LABELS: Record<string, string> = {
   DINHEIRO: 'Dinheiro',
@@ -49,25 +50,31 @@ function formatarData(data: string): string {
   return `${dia}/${mes}/${d.getUTCFullYear()}`
 }
 
+function formatarDDMM(data: string): string {
+  const d = new Date(data)
+  const dia = String(d.getUTCDate()).padStart(2, '0')
+  const mes = String(d.getUTCMonth() + 1).padStart(2, '0')
+  return `${dia}/${mes}`
+}
+
 function getSituacao(pagamento: Pagamento): Situacao {
   if (pagamento.status === 'PAGA') return 'PAGA'
-  const hoje = new Date()
-  hoje.setHours(0, 0, 0, 0)
-  const venc = new Date(pagamento.vencimento)
-  venc.setHours(0, 0, 0, 0)
-  return venc < hoje ? 'ATRASADA' : 'PENDENTE'
+  if (pagamento.status === 'CANCELADA') return 'CANCELADA'
+  return estaAtrasado(pagamento) ? 'ATRASADA' : 'PENDENTE'
 }
 
 export default function ContribuicoesPage() {
   const [pagamentos, setPagamentos] = useState<Pagamento[] | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [chaveCopiada, setChaveCopiada] = useState(false)
+  const [tentativa, setTentativa] = useState(0)
 
   useEffect(() => {
+    setErro(null)
     apiGet<Pagamento[]>('/me/pagamentos')
       .then(setPagamentos)
       .catch(() => setErro('Não foi possível carregar as contribuições.'))
-  }, [])
+  }, [tentativa])
 
   function copiarChavePix() {
     navigator.clipboard.writeText(CHAVE_PIX).then(() => {
@@ -86,6 +93,9 @@ export default function ContribuicoesPage() {
         {chaveCopiada ? <Check size={16} /> : <Copy size={16} />}
         {chaveCopiada ? 'Copiada!' : 'Copiar chave'}
       </button>
+      <p className={styles.pixPasso}>
+        Depois de pagar, avise a coordenação e envie o comprovante.
+      </p>
     </div>
   )
 
@@ -95,6 +105,9 @@ export default function ContribuicoesPage() {
         <h1 className={styles.titulo}>Minhas Contribuições</h1>
         {cartaoPix}
         <p className={styles.mensagemErro}>{erro}</p>
+        <button type="button" className={styles.botaoTentar} onClick={() => setTentativa((n) => n + 1)}>
+          Tentar de novo
+        </button>
       </div>
     )
   }
@@ -119,9 +132,10 @@ export default function ContribuicoesPage() {
     )
   }
 
-  const naoPagas = pagamentos.filter((p) => p.status !== 'PAGA')
-  const totalPendente = naoPagas.reduce((acc, p) => acc + Number(p.valor), 0)
+  // Mesma regra do Início: só PENDENTE conta; CANCELADA fica fora do total.
+  const { pendentes: naoPagas, atrasados, total: totalPendente, proxima } = resumirPendencias(pagamentos)
   const emDia = naoPagas.length === 0
+  const totalAtrasado = atrasados.reduce((acc, p) => acc + Number(p.valor), 0)
 
   return (
     <div className={styles.pagina}>
@@ -134,8 +148,14 @@ export default function ContribuicoesPage() {
           <span>Você está em dia ✓</span>
         ) : (
           <span>
-            {naoPagas.length} {naoPagas.length === 1 ? 'pendente' : 'pendentes'}{' '}
-            · {formatarMoeda(totalPendente)}
+            Para pagar: {formatarMoeda(totalPendente)}
+            <span className={styles.resumoDetalhe}>
+              {atrasados.length > 0
+                ? `${formatarMoeda(totalAtrasado)} já ${atrasados.length === 1 ? 'venceu' : `venceram (${atrasados.length} meses)`}`
+                : proxima && !estaAtrasado(proxima)
+                ? `Próximo vencimento: ${formatarDDMM(proxima.vencimento)}`
+                : `${naoPagas.length} ${naoPagas.length === 1 ? 'cobrança pendente' : 'cobranças pendentes'}`}
+            </span>
           </span>
         )}
       </div>
@@ -160,12 +180,26 @@ export default function ContribuicoesPage() {
                       ? styles.situacaoPaga
                       : situacao === 'ATRASADA'
                       ? styles.situacaoAtrasada
+                      : situacao === 'CANCELADA'
+                      ? styles.situacaoCancelada
                       : styles.situacaoPendente
                   }`}
                 >
-                  {situacao === 'PAGA' ? 'Paga' : situacao === 'ATRASADA' ? 'Atrasada' : 'Pendente'}
+                  {situacao === 'PAGA'
+                    ? 'Paga'
+                    : situacao === 'ATRASADA'
+                    ? 'Atrasada'
+                    : situacao === 'CANCELADA'
+                    ? 'Cancelada'
+                    : 'Pendente'}
                 </span>
               </div>
+
+              {(situacao === 'PENDENTE' || situacao === 'ATRASADA') && (
+                <p className={situacao === 'ATRASADA' ? styles.vencimentoAtrasado : styles.vencimento}>
+                  {situacao === 'ATRASADA' ? 'Venceu em' : 'Vence em'} {formatarDDMM(p.vencimento)}
+                </p>
+              )}
 
               {situacao === 'PAGA' && (
                 <p className={styles.formaPagamento}>

@@ -5,6 +5,7 @@ import { Plus, Ruler } from 'lucide-react'
 import { apiPost } from '../lib/api'
 import { dataHojeISO } from '../lib/formato'
 import { type Avaliacao, CAMPOS_MEDIDA, type CampoMedida } from '../lib/saude'
+import ConfirmDialog from './ConfirmDialog'
 import styles from './FormularioAvaliacao.module.css'
 
 const MEDIDAS_VAZIAS = Object.fromEntries(CAMPOS_MEDIDA.map(({ campo }) => [campo, ''])) as Record<
@@ -42,6 +43,8 @@ export default function FormularioAvaliacao({
   const [observacao, setObservacao] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const [salvo, setSalvo] = useState(false)
+  const [confirmandoCancelar, setConfirmandoCancelar] = useState(false)
 
   const existente = avaliacoes.find((a) => a.data === data) ?? null
 
@@ -58,6 +61,21 @@ export default function FormularioAvaliacao({
         : MEDIDAS_VAZIAS
     )
     setObservacao(daData?.observacao ?? '')
+  }
+
+  // Só pergunta antes de descartar se a pessoa já digitou alguma coisa.
+  function temDadosDigitados(): boolean {
+    return (
+      altura.trim() !== '' ||
+      observacao.trim() !== '' ||
+      Object.values(medidas).some((valor) => valor.trim() !== '')
+    )
+  }
+
+  function fechar() {
+    limpar()
+    setAberto(false)
+    setConfirmandoCancelar(false)
   }
 
   function limpar() {
@@ -77,6 +95,7 @@ export default function FormularioAvaliacao({
       await apiPost(caminho, { data, alturaCm: altura, ...medidas, observacao })
       limpar()
       setAberto(false)
+      setSalvo(true)
       aoSalvar()
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível salvar a avaliação.')
@@ -87,17 +106,25 @@ export default function FormularioAvaliacao({
 
   if (!aberto) {
     return (
-      <button
-        type="button"
-        className={styles.botaoAbrir}
-        onClick={() => {
-          trocarData(dataHojeISO())
-          setAberto(true)
-        }}
-      >
-        <Plus size={16} />
-        Registrar avaliação
-      </button>
+      <>
+        {salvo && (
+          <p className={styles.sucesso} role="status">
+            Avaliação salva ✓
+          </p>
+        )}
+        <button
+          type="button"
+          className={styles.botaoAbrir}
+          onClick={() => {
+            trocarData(dataHojeISO())
+            setSalvo(false)
+            setAberto(true)
+          }}
+        >
+          <Plus size={16} />
+          Registrar avaliação
+        </button>
+      </>
     )
   }
 
@@ -165,10 +192,7 @@ export default function FormularioAvaliacao({
         <button
           type="button"
           className={styles.botaoSecundario}
-          onClick={() => {
-            limpar()
-            setAberto(false)
-          }}
+          onClick={() => (temDadosDigitados() ? setConfirmandoCancelar(true) : fechar())}
         >
           Cancelar
         </button>
@@ -176,6 +200,16 @@ export default function FormularioAvaliacao({
           {salvando ? 'Salvando...' : existente ? 'Atualizar avaliação' : 'Salvar avaliação'}
         </button>
       </div>
+
+      <ConfirmDialog
+        aberto={confirmandoCancelar}
+        titulo="Descartar a avaliação?"
+        mensagem="O que você digitou ainda não foi salvo e será perdido."
+        confirmarLabel="Descartar"
+        cancelarLabel="Continuar editando"
+        onConfirmar={fechar}
+        onCancelar={() => setConfirmandoCancelar(false)}
+      />
     </form>
   )
 }

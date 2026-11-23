@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { PencilLine, Trash2 } from 'lucide-react'
 import { apiGet, apiPost, apiDelete } from '../lib/api'
 import { getUsuario } from '../lib/auth'
 import PostInteracoes, { type TipoReacao } from './PostInteracoes'
@@ -82,6 +82,7 @@ export default function Feed() {
   const [turmaId, setTurmaId] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [erroForm, setErroForm] = useState('')
+  const [escrevendo, setEscrevendo] = useState(false)
 
   const [projetosAdmin, setProjetosAdmin] = useState<Opcao[]>([])
   const [turmasDoProjetoAdmin, setTurmasDoProjetoAdmin] = useState<Opcao[]>([])
@@ -116,7 +117,7 @@ export default function Feed() {
         setPosts(dados)
         setErroFeed('')
       })
-      .catch(() => setErroFeed('Não foi possível carregar o feed.'))
+      .catch(() => setErroFeed('Não foi possível carregar o mural.'))
   }
 
   useEffect(() => {
@@ -191,6 +192,7 @@ export default function Feed() {
 
       setConteudo('')
       trocarAlcance('GERAL')
+      setEscrevendo(false)
       buscarFeed()
     } catch {
       setErroForm('Não foi possível publicar. Tente novamente.')
@@ -229,11 +231,24 @@ export default function Feed() {
 
   return (
     <div className={styles.pagina}>
-      <h1 className={styles.titulo}>Feed</h1>
+      <div className={styles.topo}>
+        <h1 className={styles.titulo}>Mural</h1>
+        {!escrevendo && (
+          <button type="button" className={styles.botaoEscrever} onClick={() => setEscrevendo(true)}>
+            <PencilLine size={18} />
+            Escrever no mural
+          </button>
+        )}
+      </div>
 
+      {escrevendo && (
       <div className={styles.cardForm}>
         <form onSubmit={publicar}>
+          <label htmlFor="conteudo-post" className={styles.rotuloTexto}>
+            Sua publicação
+          </label>
           <textarea
+            id="conteudo-post"
             className={styles.textarea}
             placeholder="Escreva uma publicação..."
             rows={4}
@@ -320,18 +335,39 @@ export default function Feed() {
 
           {erroForm && <span className={styles.erro}>{erroForm}</span>}
 
-          <button className={styles.botao} disabled={enviando}>
-            {enviando ? 'Publicando...' : 'Publicar'}
-          </button>
+          <div className={styles.acoesForm}>
+            <button className={styles.botao} disabled={enviando}>
+              {enviando ? 'Publicando...' : 'Publicar'}
+            </button>
+            <button
+              type="button"
+              className={styles.botaoCancelar}
+              disabled={enviando}
+              onClick={() => {
+                setEscrevendo(false)
+                setErroForm('')
+              }}
+            >
+              Cancelar
+            </button>
+          </div>
         </form>
       </div>
+      )}
 
-      {erroFeed && <p className={styles.mensagemErro}>{erroFeed}</p>}
+      {erroFeed && (
+        <div role="alert">
+          <p className={styles.mensagemErro}>{erroFeed}</p>
+          <button type="button" className={styles.botaoCancelar} onClick={buscarFeed}>
+            Tentar de novo
+          </button>
+        </div>
+      )}
 
       {!erroFeed && posts === null && <p className={styles.mensagem}>Carregando...</p>}
 
       {!erroFeed && posts !== null && posts.length === 0 && (
-        <p className={styles.mensagem}>Nenhum post ainda.</p>
+        <p className={styles.mensagem}>Nenhuma publicação ainda.</p>
       )}
 
       {!erroFeed && posts !== null && posts.length > 0 && (

@@ -38,6 +38,8 @@ export function useItensMenu(papel: 'ASSOCIADO' | 'PROFESSOR' | null): ItemMenu[
     extras.push({ label: 'Meus filhos', href: '/meus-filhos', icone: Baby })
   }
 
-  // Extras entram antes do "Perfil", que fica sempre por último.
-  return [...base.slice(0, -1), ...extras, ...base.slice(-1)]
+  // Extras entram antes do "Perfil", que fica sempre por último, e só
+  // enquanto couberem 5 itens (o Início oferece atalhos para o resto).
+  const vagas = Math.max(0, 5 - base.length)
+  return [...base.slice(0, -1), ...extras.slice(0, vagas), ...base.slice(-1)]
 }

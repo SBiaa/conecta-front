@@ -82,12 +82,12 @@
 
 .presente {
   background-color: var(--success-soft);
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .ausente {
   background-color: var(--warning-soft);
-  color: var(--warning);
+  color: var(--warning-text);
 }
 
 .pagamento {
@@ -98,12 +98,12 @@
 
 .paga {
   font-weight: 700;
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .pendente {
   font-weight: 700;
-  color: var(--warning);
+  color: var(--warning-text);
 }
 
 .mensagem {

@@ -581,3 +581,203 @@
   color: var(--text-secondary);
   background-color: #eef1f1;
 }
+
+/* ---- Mensalidades: aviso de atrasados, faixa de resumo e uma linha por pagamento ---- */
+
+.avisoAtrasados {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-s);
+  border-left: 4px solid var(--warning);
+  background-color: var(--warning-soft);
+  color: var(--warning-text, #8a5a00);
+  text-decoration: none;
+  font-size: 0.95rem;
+  min-height: 44px;
+}
+
+.avisoAtrasados:hover {
+  filter: brightness(0.97);
+  text-decoration: underline;
+}
+
+.campoBusca {
+  flex: 2;
+  min-width: 200px;
+}
+
+.faixaResumo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.numeroResumo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.7rem 0.9rem;
+  background-color: #f9f9f9;
+  border-radius: var(--radius-m);
+  min-width: 0;
+}
+
+.numeroValor {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+  overflow-wrap: anywhere;
+}
+
+.numeroDetalhe {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.valorAtencao {
+  color: var(--warning-text, #8a5a00);
+}
+
+.detalhesMes {
+  margin-bottom: 1rem;
+}
+
+.detalhesMes > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary);
+  padding: 0.5rem 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.detalhesMes .resumoFormas {
+  margin-bottom: 0.75rem;
+}
+
+.estadoErro {
+  background-color: var(--danger-soft);
+  border-radius: var(--radius-s);
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--danger);
+}
+
+.cabecalhoLinhas {
+  display: none;
+}
+
+.linhaPagamento {
+  background-color: #f9f9f9;
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--radius-m);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'nome valor'
+    'turma status'
+    'acoes acoes';
+  gap: 0.35rem 0.75rem;
+  align-items: center;
+}
+
+.colNome {
+  grid-area: nome;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.colTurma {
+  grid-area: turma;
+}
+
+.linhaPagamento .valorPagamento {
+  grid-area: valor;
+  text-align: right;
+}
+
+.colStatus {
+  grid-area: status;
+  text-align: right;
+}
+
+.linhaPagamento .acoesItem {
+  grid-area: acoes;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.botaoRegistrarTexto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  background-color: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoRegistrarTexto:hover {
+  background-color: #cfe4e2;
+}
+
+@media (min-width: 768px) {
+  .cabecalhoLinhas {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) 110px 110px 210px;
+    gap: 0.75rem;
+    padding: 0 1.1rem 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+  }
+
+  .cabecalhoLinhas span:nth-child(3) {
+    text-align: right;
+  }
+
+  .cabecalhoLinhas span:nth-child(5) {
+    text-align: right;
+  }
+
+  .linhaPagamento {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) 110px 110px 210px;
+    grid-template-areas: 'nome turma valor status acoes';
+    gap: 0.75rem;
+    padding: 0.6rem 1.1rem;
+  }
+
+  .colStatus {
+    text-align: left;
+  }
+
+  .linhaPagamento .acoesItem {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .faixaResumo {
+    grid-template-columns: 1fr;
+  }
+}

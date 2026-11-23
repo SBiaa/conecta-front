@@ -1,24 +1,38 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CirclePlus, Pencil } from 'lucide-react'
-import { ApiError, apiGet, apiPatch, apiPost } from '../../lib/api'
+import Link from 'next/link'
+import { CirclePlus, Pencil, TriangleAlert } from 'lucide-react'
+import { apiGet, apiPost } from '../../lib/api'
 import {
   formatarMoeda,
   formatarData,
   formatarMes,
   mesAtualISO,
-  dataHojeISO,
+  ultimoDiaDoMesISO,
 } from '../../lib/formato'
+import {
+  LABELS_FORMA_PAGAMENTO,
+  descricaoTurmas,
+  mensagemDeErro,
+  type FormaPagamento,
+  type StatusPagamento,
+} from '../../lib/admin-pagamentos'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import ModalBase from '../../components/ModalBase'
+import ModalRegistrarPagamento, {
+  type PagamentoParaRegistrar,
+} from '../../components/ModalRegistrarPagamento'
+import ModalCorrigirPagamento, {
+  type PagamentoParaCorrigir,
+} from '../../components/ModalCorrigirPagamento'
+import { useToast } from '../../components/Toast'
 import styles from './financeiro.module.css'
 
 type Projeto = {
   id: string
   nome: string
 }
-
-type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO' | 'ABONADO'
 
 type TipoPagamento = 'MENSALIDADE' | 'INSCRICAO'
 
@@ -32,7 +46,7 @@ type Pagamento = {
   id: string
   tipo: TipoPagamento
   valor: string
-  status: 'PAGA' | 'PENDENTE' | 'CANCELADA'
+  status: StatusPagamento
   mesReferencia: string
   vencimento: string
   dataPagamento: string | null
@@ -49,51 +63,15 @@ type Pagamento = {
 
 type Atrasado = {
   id: string
-  tipo: TipoPagamento
   valor: string
-  vencimento: string
-  mesReferencia: string
-  matricula: {
-    usuario: { nome: string }
-    turmas: {
-      nome: string
-      projeto: { nome: string }
-    }[]
-  }
-}
-
-type PagamentoParaRegistrar = {
-  id: string
-  valor: string
-  matricula: { usuario: { nome: string } }
-}
-
-type PagamentoParaEditar = {
-  id: string
-  valor: string
-  formaPagamento: FormaPagamento | null
-  mesReferencia: string
-  vencimento: string
-  nomeUsuario: string
-  status: Pagamento['status']
-}
-
-const LABELS_FORMA_PAGAMENTO: Record<FormaPagamento, string> = {
-  DINHEIRO: 'Dinheiro',
-  PIX: 'Pix',
-  CARTAO: 'Cartão',
-  ABONADO: 'Abonado',
-}
-
-function descricaoTurmas(turmas: { nome: string; projeto: { nome: string } }[]) {
-  const projeto = turmas[0]?.projeto.nome ?? ''
-  const nomesTurmas = turmas.map((turma) => turma.nome).join(', ')
-  return `${projeto} — ${nomesTurmas}`
 }
 
 export default function FinanceiroPage() {
+  const { avisar, toast } = useToast()
+
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [modalGerarAberto, setModalGerarAberto] = useState(false)
+  const [gerarAlterado, setGerarAlterado] = useState(false)
   const [projetoId, setProjetoId] = useState('')
   const [mes, setMes] = useState('')
   const [vencimento, setVencimento] = useState('')
@@ -109,25 +87,10 @@ export default function FinanceiroPage() {
   const [nomeFiltro, setNomeFiltro] = useState('')
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [carregandoPagamentos, setCarregandoPagamentos] = useState(true)
+  const [erroPagamentos, setErroPagamentos] = useState('')
 
-  const [pagamentoSelecionado, setPagamentoSelecionado] = useState<PagamentoParaRegistrar | null>(
-    null
-  )
-  const [formaPagamentoModal, setFormaPagamentoModal] = useState<FormaPagamento>('DINHEIRO')
-  const [dataPagamentoModal, setDataPagamentoModal] = useState('')
-  const [valorModal, setValorModal] = useState('')
-  const [enviandoRegistro, setEnviandoRegistro] = useState(false)
-  const [erroModalRegistro, setErroModalRegistro] = useState('')
-
-  const [pagamentoEditando, setPagamentoEditando] = useState<PagamentoParaEditar | null>(null)
-  const [valorEdicao, setValorEdicao] = useState('')
-  const [formaPagamentoEdicao, setFormaPagamentoEdicao] = useState<FormaPagamento | ''>('')
-  const [mesReferenciaEdicao, setMesReferenciaEdicao] = useState('')
-  const [vencimentoEdicao, setVencimentoEdicao] = useState('')
-  const [dataPagamentoEdicao, setDataPagamentoEdicao] = useState('')
-  const [confirmandoDesfazer, setConfirmandoDesfazer] = useState(false)
-  const [enviandoEdicaoPagamento, setEnviandoEdicaoPagamento] = useState(false)
-  const [erroEdicaoPagamento, setErroEdicaoPagamento] = useState('')
+  const [pagamentoSelecionado, setPagamentoSelecionado] = useState<PagamentoParaRegistrar | null>(null)
+  const [pagamentoEditando, setPagamentoEditando] = useState<PagamentoParaCorrigir | null>(null)
 
   const [atrasados, setAtrasados] = useState<Atrasado[]>([])
   const [carregandoAtrasados, setCarregandoAtrasados] = useState(true)
@@ -137,22 +100,31 @@ export default function FinanceiroPage() {
   const [confirmandoGeracao, setConfirmandoGeracao] = useState(false)
 
   useEffect(() => {
-    apiGet<Projeto[]>('/projetos').then(setProjetos)
+    apiGet<Projeto[]>('/projetos')
+      .then(setProjetos)
+      .catch(() => setProjetos([]))
   }, [])
 
   function buscarPagamentos() {
     setCarregandoPagamentos(true)
+    setErroPagamentos('')
     const params = new URLSearchParams({ mes: mesFiltro })
     if (statusFiltro) params.set('status', statusFiltro)
     if (projetoIdFiltro) params.set('projetoId', projetoIdFiltro)
 
     return apiGet<Pagamento[]>(`/pagamentos?${params.toString()}`)
       .then(setPagamentos)
+      .catch((e) => {
+        setPagamentos([])
+        setErroPagamentos(mensagemDeErro(e, 'Não foi possível carregar os pagamentos.'))
+      })
       .finally(() => setCarregandoPagamentos(false))
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     buscarPagamentos()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mesFiltro, statusFiltro, projetoIdFiltro])
 
   function buscarResumo() {
@@ -163,60 +135,33 @@ export default function FinanceiroPage() {
 
   useEffect(() => {
     buscarResumo()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mesFiltro])
 
   function buscarAtrasados() {
     setCarregandoAtrasados(true)
     return apiGet<Atrasado[]>('/pagamentos/atrasados')
       .then(setAtrasados)
+      .catch(() => setAtrasados([]))
       .finally(() => setCarregandoAtrasados(false))
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     buscarAtrasados()
   }, [])
 
-  function abrirModalRegistro(pagamento: PagamentoParaRegistrar) {
-    setPagamentoSelecionado(pagamento)
-    setFormaPagamentoModal('DINHEIRO')
-    setDataPagamentoModal(dataHojeISO())
-    setValorModal(pagamento.valor)
-    setErroModalRegistro('')
+  function recarregarTudo() {
+    return Promise.all([buscarPagamentos(), buscarAtrasados(), buscarResumo()])
   }
 
-  function fecharModalRegistro() {
-    setPagamentoSelecionado(null)
-  }
-
-  function abrirModalGerar() {
-    setErroValidacao('')
-    setSucesso('')
-    setErro('')
-    setModalGerarAberto(true)
-  }
-
-  function fecharModalGerar() {
-    setModalGerarAberto(false)
-  }
-
-  async function confirmarRegistro() {
-    if (!pagamentoSelecionado) return
-
-    setEnviandoRegistro(true)
-    setErroModalRegistro('')
-    try {
-      await apiPatch(`/pagamentos/${pagamentoSelecionado.id}/pagar`, {
-        dataPagamento: dataPagamentoModal,
-        formaPagamento: formaPagamentoModal,
-        valor: Number(valorModal),
-      })
-      await Promise.all([buscarPagamentos(), buscarAtrasados(), buscarResumo()])
-      fecharModalRegistro()
-    } catch {
-      setErroModalRegistro('Não foi possível registrar o pagamento')
-    } finally {
-      setEnviandoRegistro(false)
-    }
+  function abrirModalRegistro(pagamento: Pagamento) {
+    setPagamentoSelecionado({
+      id: pagamento.id,
+      valor: pagamento.valor,
+      nome: pagamento.matricula.usuario.nome,
+      descricao: `${formatarMes(pagamento.mesReferencia)} — ${descricaoTurmas(pagamento.matricula.turmas)}`,
+    })
   }
 
   function abrirModalEdicao(pagamento: Pagamento) {
@@ -226,71 +171,28 @@ export default function FinanceiroPage() {
       formaPagamento: pagamento.formaPagamento,
       mesReferencia: pagamento.mesReferencia,
       vencimento: pagamento.vencimento,
-      nomeUsuario: pagamento.matricula.usuario.nome,
+      dataPagamento: pagamento.dataPagamento,
       status: pagamento.status,
+      nome: pagamento.matricula.usuario.nome,
     })
-    setValorEdicao(pagamento.valor)
-    setFormaPagamentoEdicao(pagamento.formaPagamento ?? '')
-    setMesReferenciaEdicao(pagamento.mesReferencia)
-    setVencimentoEdicao(pagamento.vencimento.slice(0, 10))
-    setDataPagamentoEdicao(pagamento.dataPagamento ? pagamento.dataPagamento.slice(0, 10) : '')
-    setConfirmandoDesfazer(false)
-    setErroEdicaoPagamento('')
   }
 
-  async function desfazerPagamento() {
-    if (!pagamentoEditando) return
-
-    setEnviandoEdicaoPagamento(true)
-    setErroEdicaoPagamento('')
-    try {
-      await apiPatch(`/pagamentos/${pagamentoEditando.id}/desfazer`, {})
-      await Promise.all([buscarPagamentos(), buscarAtrasados(), buscarResumo()])
-      fecharModalEdicao()
-    } catch {
-      setErroEdicaoPagamento('Não foi possível desfazer o pagamento')
-    } finally {
-      setEnviandoEdicaoPagamento(false)
-    }
+  function abrirModalGerar() {
+    // Já abre no mês e no projeto que a pessoa está olhando.
+    setProjetoId(projetoIdFiltro)
+    setMes(mesFiltro)
+    setVencimento(mesFiltro ? ultimoDiaDoMesISO(mesFiltro) : '')
+    setGerarAlterado(false)
+    setErroValidacao('')
+    setSucesso('')
+    setErro('')
+    setModalGerarAberto(true)
   }
 
-  function fecharModalEdicao() {
-    setPagamentoEditando(null)
-  }
-
-  async function confirmarEdicaoPagamento() {
-    if (!pagamentoEditando) return
-
-    if (valorEdicao === '' || Number(valorEdicao) < 0) {
-      setErroEdicaoPagamento('Informe um valor válido')
-      return
-    }
-
-    const estaPaga = pagamentoEditando.status === 'PAGA'
-    if (estaPaga && !dataPagamentoEdicao) {
-      setErroEdicaoPagamento('Informe a data do pagamento')
-      return
-    }
-
-    setEnviandoEdicaoPagamento(true)
-    setErroEdicaoPagamento('')
-    try {
-      await apiPatch(`/pagamentos/${pagamentoEditando.id}`, {
-        valor: Number(valorEdicao),
-        formaPagamento: formaPagamentoEdicao || undefined,
-        mesReferencia: mesReferenciaEdicao,
-        vencimento: vencimentoEdicao,
-        ...(estaPaga ? { dataPagamento: dataPagamentoEdicao } : {}),
-      })
-      await Promise.all([buscarPagamentos(), buscarAtrasados(), buscarResumo()])
-      fecharModalEdicao()
-    } catch (erro) {
-      setErroEdicaoPagamento(
-        erro instanceof ApiError && erro.status < 500 ? erro.message : 'Não foi possível salvar a correção'
-      )
-    } finally {
-      setEnviandoEdicaoPagamento(false)
-    }
+  function trocarMesGerar(novo: string) {
+    setMes(novo)
+    setGerarAlterado(true)
+    if (novo) setVencimento(ultimoDiaDoMesISO(novo))
   }
 
   function onSubmit(evento: React.FormEvent) {
@@ -332,9 +234,12 @@ export default function FinanceiroPage() {
         } — corrija o plano dessas matrículas e gere novamente.`
       }
       setSucesso(mensagem)
-      await buscarPagamentos()
-    } catch {
-      setErro('Não foi possível gerar as mensalidades')
+      avisar(`${criados.length} mensalidade${criados.length === 1 ? '' : 's'} gerada${criados.length === 1 ? '' : 's'}`)
+      // Se gerou para outro mês, leva a lista para lá (a mudança já recarrega).
+      if (mes !== mesFiltro) setMesFiltro(mes)
+      else await recarregarTudo()
+    } catch (e) {
+      setErro(mensagemDeErro(e, 'Não foi possível gerar as mensalidades'))
     } finally {
       setGerando(false)
       setConfirmandoGeracao(false)
@@ -373,30 +278,100 @@ export default function FinanceiroPage() {
         </button>
       </div>
 
-      <div className={styles.grid}>
-        <div className={`${styles.card} ${styles.cardSecundario} ${styles.blocoResumo}`}>
-          <h2 className={styles.subtituloSecundario}>Resumo do mês</h2>
+      {!carregandoAtrasados && atrasados.length > 0 && (
+        <Link href="/financeiro/atrasados" className={styles.avisoAtrasados}>
+          <TriangleAlert size={18} aria-hidden="true" />
+          <span>
+            <strong>
+              {atrasados.length} {atrasados.length === 1 ? 'pagamento atrasado' : 'pagamentos atrasados'}
+            </strong>{' '}
+            · ver e cobrar
+          </span>
+        </Link>
+      )}
 
-          {!carregandoPagamentos && pagamentosFiltrados.length > 0 && (
-            <>
-              <div className={styles.resumo}>
-                <div className={styles.cardResumo}>
-                  <span className={styles.cardLabel}>Total recebido</span>
-                  <span className={styles.cardValor}>{formatarMoeda(totalRecebido)}</span>
-                </div>
-                <div className={styles.cardResumo}>
-                  <span className={styles.cardLabel}>Total pendente</span>
-                  <span className={styles.cardValor}>{formatarMoeda(totalPendente)}</span>
-                </div>
-                <div className={styles.cardResumo}>
-                  <span className={styles.cardLabel}>Total geral</span>
-                  <span className={styles.cardValor}>{formatarMoeda(totalGeral)}</span>
-                </div>
+      <div className={`${styles.card} ${styles.cardDestaque}`}>
+        <h2 className={styles.subtitulo}>Pagamentos de {formatarMes(mesFiltro)}</h2>
+
+        <div className={styles.filtros}>
+          <div className={styles.campo}>
+            <label htmlFor="mesFiltro">Mês</label>
+            <input
+              type="month"
+              id="mesFiltro"
+              value={mesFiltro}
+              onChange={(evento) => evento.target.value && setMesFiltro(evento.target.value)}
+            />
+          </div>
+
+          <div className={styles.campo}>
+            <label htmlFor="projetoIdFiltro">Projeto</label>
+            <select
+              id="projetoIdFiltro"
+              value={projetoIdFiltro}
+              onChange={(evento) => setProjetoIdFiltro(evento.target.value)}
+            >
+              <option value="">Todos</option>
+              {projetos.map((projeto) => (
+                <option key={projeto.id} value={projeto.id}>
+                  {projeto.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.campo}>
+            <label htmlFor="statusFiltro">Status</label>
+            <select
+              id="statusFiltro"
+              value={statusFiltro}
+              onChange={(evento) => setStatusFiltro(evento.target.value)}
+            >
+              <option value="">Todos</option>
+              <option value="PENDENTE">Pendente</option>
+              <option value="PAGA">Paga</option>
+              <option value="CANCELADA">Cancelada</option>
+            </select>
+          </div>
+
+          <div className={`${styles.campo} ${styles.campoBusca}`}>
+            <label htmlFor="nomeFiltro">Buscar neste mês</label>
+            <input
+              type="search"
+              id="nomeFiltro"
+              placeholder="Nome da aluna (só neste mês)"
+              value={nomeFiltro}
+              onChange={(evento) => setNomeFiltro(evento.target.value)}
+            />
+          </div>
+        </div>
+
+        {!carregandoPagamentos && !erroPagamentos && pagamentosFiltrados.length > 0 && (
+          <>
+            <div className={styles.faixaResumo}>
+              <div className={styles.numeroResumo}>
+                <span className={styles.cardLabel}>Recebido</span>
+                <span className={`${styles.numeroValor} ${styles.valorPositivo}`}>
+                  {formatarMoeda(totalRecebido)}
+                </span>
+                <span className={styles.numeroDetalhe}>{pagas.length} pagas</span>
               </div>
+              <div className={styles.numeroResumo}>
+                <span className={styles.cardLabel}>Pendente</span>
+                <span className={`${styles.numeroValor} ${styles.valorAtencao}`}>
+                  {formatarMoeda(totalPendente)}
+                </span>
+                <span className={styles.numeroDetalhe}>{pendentes.length} pendentes</span>
+              </div>
+              <div className={styles.numeroResumo}>
+                <span className={styles.cardLabel}>Total do mês</span>
+                <span className={styles.numeroValor}>{formatarMoeda(totalGeral)}</span>
+                <span className={styles.numeroDetalhe}>{pagamentosFiltrados.length} cobranças</span>
+              </div>
+            </div>
 
-              <p className={styles.contagem}>
-                {pagas.length} pagas, {pendentes.length} pendentes
-              </p>
+            <details className={styles.detalhesMes}>
+              <summary>Recebido por forma de pagamento e caixa do mês</summary>
 
               <div className={styles.resumoFormas}>
                 <span className={styles.cardLabel}>Recebido por forma de pagamento</span>
@@ -418,138 +393,91 @@ export default function FinanceiroPage() {
                   </ul>
                 )}
               </div>
-            </>
-          )}
 
-          {resumo && (
-            <div className={styles.resumoFormas}>
-              <span className={styles.cardLabel}>Caixa do mês (tudo que entrou e saiu)</span>
-              <ul className={styles.listaFormas}>
-                <li className={styles.linhaForma}>
-                  <span>Mensalidades recebidas</span>
-                  <span>{formatarMoeda(resumo.entradas.mensalidades)}</span>
-                </li>
-                <li className={styles.linhaForma}>
-                  <span>Inscrições recebidas</span>
-                  <span>{formatarMoeda(resumo.entradas.inscricoes)}</span>
-                </li>
-                <li className={styles.linhaForma}>
-                  <span>Vendas</span>
-                  <span>{formatarMoeda(resumo.entradas.vendas)}</span>
-                </li>
-                <li className={styles.linhaForma}>
-                  <span>Gastos</span>
-                  <span className={styles.valorNegativo}>
-                    − {formatarMoeda(resumo.saidas.total)}
-                  </span>
-                </li>
-                <li className={`${styles.linhaForma} ${styles.linhaSaldo}`}>
-                  <span>Saldo</span>
-                  <span className={resumo.saldo < 0 ? styles.valorNegativo : styles.valorPositivo}>
-                    {formatarMoeda(resumo.saldo)}
-                  </span>
-                </li>
-              </ul>
-            </div>
-          )}
-        </div>
+              {resumo && (
+                <div className={styles.resumoFormas}>
+                  <span className={styles.cardLabel}>Caixa do mês (tudo que entrou e saiu)</span>
+                  <ul className={styles.listaFormas}>
+                    <li className={styles.linhaForma}>
+                      <span>Mensalidades recebidas</span>
+                      <span>{formatarMoeda(resumo.entradas.mensalidades)}</span>
+                    </li>
+                    <li className={styles.linhaForma}>
+                      <span>Inscrições recebidas</span>
+                      <span>{formatarMoeda(resumo.entradas.inscricoes)}</span>
+                    </li>
+                    <li className={styles.linhaForma}>
+                      <span>Vendas</span>
+                      <span>{formatarMoeda(resumo.entradas.vendas)}</span>
+                    </li>
+                    <li className={styles.linhaForma}>
+                      <span>Gastos</span>
+                      <span className={styles.valorNegativo}>− {formatarMoeda(resumo.saidas.total)}</span>
+                    </li>
+                    <li className={`${styles.linhaForma} ${styles.linhaSaldo}`}>
+                      <span>Saldo</span>
+                      <span className={resumo.saldo < 0 ? styles.valorNegativo : styles.valorPositivo}>
+                        {formatarMoeda(resumo.saldo)}
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </details>
+          </>
+        )}
 
-        <div className={`${styles.card} ${styles.cardDestaque} ${styles.blocoLista}`}>
-          <h2 className={styles.subtitulo}>Pagamentos do mês</h2>
+        {carregandoPagamentos && <p className={styles.mensagem}>Carregando...</p>}
 
-          <div className={styles.filtros}>
-            <div className={styles.campo}>
-              <label htmlFor="nomeFiltro">Buscar por nome</label>
-              <input
-                type="text"
-                id="nomeFiltro"
-                placeholder="Nome da aluna..."
-                value={nomeFiltro}
-                onChange={(evento) => setNomeFiltro(evento.target.value)}
-              />
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="mesFiltro">Mês</label>
-              <input
-                type="month"
-                id="mesFiltro"
-                value={mesFiltro}
-                onChange={(evento) => setMesFiltro(evento.target.value)}
-              />
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="projetoIdFiltro">Projeto</label>
-              <select
-                id="projetoIdFiltro"
-                value={projetoIdFiltro}
-                onChange={(evento) => setProjetoIdFiltro(evento.target.value)}
-              >
-                <option value="">Todos</option>
-                {projetos.map((projeto) => (
-                  <option key={projeto.id} value={projeto.id}>
-                    {projeto.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="statusFiltro">Status</label>
-              <select
-                id="statusFiltro"
-                value={statusFiltro}
-                onChange={(evento) => setStatusFiltro(evento.target.value)}
-              >
-                <option value="">Todos</option>
-                <option value="PENDENTE">Pendente</option>
-                <option value="PAGA">Paga</option>
-                <option value="CANCELADA">Cancelada</option>
-              </select>
-            </div>
+        {!carregandoPagamentos && erroPagamentos && (
+          <div className={styles.estadoErro} role="alert">
+            <p>{erroPagamentos}</p>
+            <button type="button" className={styles.botaoSecundario} onClick={() => buscarPagamentos()}>
+              Tentar de novo
+            </button>
           </div>
+        )}
 
-          {carregandoPagamentos && <p className={styles.mensagem}>Carregando...</p>}
+        {!carregandoPagamentos && !erroPagamentos && pagamentosFiltrados.length === 0 && (
+          <p className={styles.mensagem}>Nenhum pagamento neste filtro</p>
+        )}
 
-          {!carregandoPagamentos && pagamentosFiltrados.length === 0 && (
-            <p className={styles.mensagem}>Nenhum pagamento neste filtro</p>
-          )}
-
-          {!carregandoPagamentos && pagamentosFiltrados.length > 0 && (
+        {!carregandoPagamentos && !erroPagamentos && pagamentosFiltrados.length > 0 && (
+          <>
+            <div className={styles.cabecalhoLinhas} aria-hidden="true">
+              <span>Aluna</span>
+              <span>Turma</span>
+              <span>Valor</span>
+              <span>Status</span>
+              <span>Ações</span>
+            </div>
             <ul className={styles.lista}>
               {pagamentosFiltrados.map((pagamento) => (
-                <li key={pagamento.id} className={styles.item}>
-                  <div className={styles.infoPagamento}>
+                <li key={pagamento.id} className={styles.linhaPagamento}>
+                  <div className={styles.colNome}>
                     <span className={styles.nomeUsuario}>
                       {pagamento.matricula.usuario.nome}
-                      {pagamento.tipo === 'INSCRICAO' && (
-                        <span className={styles.badgeTipo}>Inscrição</span>
-                      )}
+                      {pagamento.tipo === 'INSCRICAO' && <span className={styles.badgeTipo}>Inscrição</span>}
                     </span>
                     <span className={styles.detalhe}>
-                      {descricaoTurmas(pagamento.matricula.turmas)}
+                      {[
+                        pagamento.formaPagamento && LABELS_FORMA_PAGAMENTO[pagamento.formaPagamento],
+                        pagamento.status === 'PAGA' && pagamento.dataPagamento
+                          ? `Pago em ${formatarData(pagamento.dataPagamento)}`
+                          : pagamento.status === 'PENDENTE'
+                            ? `Vence em ${formatarData(pagamento.vencimento)}`
+                            : null,
+                        pagamento.editadoEm ? `Corrigido em ${formatarData(pagamento.editadoEm)}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </span>
-                    <span className={styles.detalhe}>
-                      {formatarMoeda(Number(pagamento.valor))}
-                    </span>
-                    {pagamento.formaPagamento && (
-                      <span className={styles.detalhe}>
-                        {LABELS_FORMA_PAGAMENTO[pagamento.formaPagamento]}
-                      </span>
-                    )}
-                    {pagamento.status === 'PAGA' && pagamento.dataPagamento && (
-                      <span className={styles.detalhe}>
-                        Pago em {formatarData(pagamento.dataPagamento)}
-                      </span>
-                    )}
-                    {pagamento.editadoEm && (
-                      <span className={styles.detalhe}>
-                        Corrigido em {formatarData(pagamento.editadoEm)}
-                      </span>
-                    )}
                   </div>
-                  <div className={styles.acoesItem}>
+                  <span className={`${styles.detalhe} ${styles.colTurma}`}>
+                    {descricaoTurmas(pagamento.matricula.turmas)}
+                  </span>
+                  <span className={styles.valorPagamento}>{formatarMoeda(Number(pagamento.valor))}</span>
+                  <span className={styles.colStatus}>
                     {pagamento.status === 'PAGA' && (
                       <span className={`${styles.status} ${styles.statusPaga}`}>Paga</span>
                     )}
@@ -562,319 +490,121 @@ export default function FinanceiroPage() {
                       </span>
                     )}
                     {pagamento.status === 'PENDENTE' && (
-                      <>
-                        <span className={`${styles.status} ${styles.statusPendente}`}>
-                          Pendente
-                        </span>
-                        <button
-                          className={styles.botaoRegistrar}
-                          onClick={() => abrirModalRegistro(pagamento)}
-                          aria-label="Registrar pagamento"
-                          title="Registrar pagamento"
-                        >
-                          <CirclePlus size={20} />
-                        </button>
-                      </>
+                      <span className={`${styles.status} ${styles.statusPendente}`}>Pendente</span>
+                    )}
+                  </span>
+                  <div className={styles.acoesItem}>
+                    {pagamento.status === 'PENDENTE' && (
+                      <button
+                        type="button"
+                        className={styles.botaoRegistrarTexto}
+                        onClick={() => abrirModalRegistro(pagamento)}
+                        aria-label={`Registrar pagamento de ${pagamento.matricula.usuario.nome}`}
+                      >
+                        <CirclePlus size={18} aria-hidden="true" />
+                        Registrar
+                      </button>
                     )}
                     <button
+                      type="button"
                       className={styles.botaoRegistrar}
                       onClick={() => abrirModalEdicao(pagamento)}
-                      aria-label="Corrigir pagamento"
+                      aria-label={`Corrigir pagamento de ${pagamento.matricula.usuario.nome}`}
                       title="Corrigir pagamento"
                     >
-                      <Pencil size={18} />
+                      <Pencil size={18} aria-hidden="true" />
                     </button>
                   </div>
                 </li>
               ))}
             </ul>
-          )}
-        </div>
-
-        <div className={`${styles.card} ${styles.cardSecundario} ${styles.blocoAtrasados}`}>
-          <h2 className={styles.subtituloSecundario}>Atrasados</h2>
-
-          {carregandoAtrasados && <p className={styles.mensagem}>Carregando...</p>}
-
-          {!carregandoAtrasados && atrasados.length === 0 && (
-            <p className={styles.mensagem}>Nenhum pagamento atrasado</p>
-          )}
-
-          {!carregandoAtrasados && atrasados.length > 0 && (
-            <ul className={styles.lista}>
-              {atrasados.map((atrasado) => (
-                <li key={atrasado.id} className={styles.item}>
-                  <div className={styles.infoPagamento}>
-                    <span className={styles.nomeUsuario}>{atrasado.matricula.usuario.nome}</span>
-                    <span className={styles.detalhe}>
-                      {descricaoTurmas(atrasado.matricula.turmas)}
-                    </span>
-                    <span className={styles.detalhe}>{atrasado.mesReferencia}</span>
-                    <span className={styles.detalhe}>
-                      {formatarMoeda(Number(atrasado.valor))}
-                    </span>
-                    <span className={styles.vencimentoAtrasado}>
-                      Venceu em {formatarData(atrasado.vencimento)}
-                    </span>
-                  </div>
-                  <div className={styles.acoesItem}>
-                    <button
-                      className={styles.botaoRegistrar}
-                      onClick={() => abrirModalRegistro(atrasado)}
-                      aria-label="Registrar pagamento"
-                      title="Registrar pagamento"
-                    >
-                      <CirclePlus size={20} />
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {modalGerarAberto && (
-        <div className={styles.overlay}>
-          <div className={styles.modal}>
-            <h2 className={styles.modalTitulo}>Gerar mensalidades</h2>
-
-            <form onSubmit={onSubmit}>
-              <div className={styles.campo}>
-                <label htmlFor="projetoId">Projeto</label>
-                <select
-                  id="projetoId"
-                  value={projetoId}
-                  onChange={(evento) => setProjetoId(evento.target.value)}
-                >
-                  <option value="">Selecione...</option>
-                  {projetos.map((projeto) => (
-                    <option key={projeto.id} value={projeto.id}>
-                      {projeto.nome}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.campo}>
-                <label htmlFor="mes">Mês</label>
-                <input
-                  type="month"
-                  id="mes"
-                  value={mes}
-                  onChange={(evento) => setMes(evento.target.value)}
-                />
-              </div>
-
-              <div className={styles.campo}>
-                <label htmlFor="vencimento">Vencimento</label>
-                <input
-                  type="date"
-                  id="vencimento"
-                  value={vencimento}
-                  onChange={(evento) => setVencimento(evento.target.value)}
-                />
-              </div>
-
-              {erroValidacao && <span className={styles.erro}>{erroValidacao}</span>}
-              {sucesso && <p className={styles.sucesso}>{sucesso}</p>}
-              {erro && <p className={styles.mensagemErro}>{erro}</p>}
-
-              <div className={styles.acoesModal}>
-                <button
-                  type="button"
-                  className={styles.botaoCancelar}
-                  onClick={fecharModalGerar}
-                  disabled={gerando}
-                >
-                  Fechar
-                </button>
-                <button className={styles.botaoConfirmar} disabled={gerando}>
-                  {gerando ? 'Gerando...' : 'Gerar mensalidades'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {pagamentoSelecionado && (
-        <div className={styles.overlay}>
-          <div className={styles.modal}>
-            <h2 className={styles.modalTitulo}>
-              Registrar pagamento — {pagamentoSelecionado.matricula.usuario.nome}
-            </h2>
-
+        <ModalBase
+          titulo="Gerar mensalidades"
+          onFechar={() => setModalGerarAberto(false)}
+          sujo={gerarAlterado && !sucesso}
+          escAtivo={!confirmandoGeracao}
+        >
+          <form onSubmit={onSubmit}>
             <div className={styles.campo}>
-              <label htmlFor="formaPagamentoModal">Forma de pagamento</label>
+              <label htmlFor="projetoId">Projeto</label>
               <select
-                id="formaPagamentoModal"
-                value={formaPagamentoModal}
+                id="projetoId"
+                value={projetoId}
                 onChange={(evento) => {
-                  const forma = evento.target.value as FormaPagamento
-                  setFormaPagamentoModal(forma)
-                  if (forma === 'ABONADO') setValorModal('0')
+                  setProjetoId(evento.target.value)
+                  setGerarAlterado(true)
                 }}
               >
-                <option value="DINHEIRO">Dinheiro</option>
-                <option value="PIX">Pix</option>
-                <option value="CARTAO">Cartão</option>
-                <option value="ABONADO">Abonado</option>
+                <option value="">Selecione...</option>
+                {projetos.map((projeto) => (
+                  <option key={projeto.id} value={projeto.id}>
+                    {projeto.nome}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div className={styles.campo}>
-              <label htmlFor="dataPagamentoModal">Data do pagamento</label>
+              <label htmlFor="mes">Mês</label>
+              <input type="month" id="mes" value={mes} onChange={(evento) => trocarMesGerar(evento.target.value)} />
+            </div>
+
+            <div className={styles.campo}>
+              <label htmlFor="vencimento">Vencimento</label>
               <input
                 type="date"
-                id="dataPagamentoModal"
-                value={dataPagamentoModal}
-                onChange={(evento) => setDataPagamentoModal(evento.target.value)}
-              />
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="valorModal">Valor</label>
-              <input
-                type="number"
-                id="valorModal"
-                value={formaPagamentoModal === 'ABONADO' ? '0' : valorModal}
-                disabled={formaPagamentoModal === 'ABONADO'}
-                onChange={(evento) => setValorModal(evento.target.value)}
-              />
-            </div>
-
-            {erroModalRegistro && <p className={styles.erroModal}>{erroModalRegistro}</p>}
-
-            <div className={styles.acoesModal}>
-              <button
-                className={styles.botaoCancelar}
-                onClick={fecharModalRegistro}
-                disabled={enviandoRegistro}
-              >
-                Cancelar
-              </button>
-              <button
-                className={styles.botaoConfirmar}
-                onClick={confirmarRegistro}
-                disabled={enviandoRegistro}
-              >
-                Confirmar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {pagamentoEditando && (
-        <div className={styles.overlay}>
-          <div className={styles.modal}>
-            <h2 className={styles.modalTitulo}>
-              Corrigir pagamento — {pagamentoEditando.nomeUsuario}
-            </h2>
-
-            <div className={styles.campo}>
-              <label htmlFor="valorEdicaoPagamento">Valor</label>
-              <input
-                type="number"
-                id="valorEdicaoPagamento"
-                step="0.01"
-                min="0"
-                value={formaPagamentoEdicao === 'ABONADO' ? '0' : valorEdicao}
-                disabled={formaPagamentoEdicao === 'ABONADO'}
-                onChange={(evento) => setValorEdicao(evento.target.value)}
-              />
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="formaPagamentoEdicao">Forma de pagamento</label>
-              <select
-                id="formaPagamentoEdicao"
-                value={formaPagamentoEdicao}
+                id="vencimento"
+                value={vencimento}
                 onChange={(evento) => {
-                  const forma = evento.target.value as FormaPagamento | ''
-                  setFormaPagamentoEdicao(forma)
-                  if (forma === 'ABONADO') setValorEdicao('0')
+                  setVencimento(evento.target.value)
+                  setGerarAlterado(true)
                 }}
-              >
-                <option value="">— não informada —</option>
-                <option value="DINHEIRO">Dinheiro</option>
-                <option value="PIX">Pix</option>
-                <option value="CARTAO">Cartão</option>
-                <option value="ABONADO">Abonado</option>
-              </select>
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="mesReferenciaEdicao">Mês</label>
-              <input
-                type="month"
-                id="mesReferenciaEdicao"
-                value={mesReferenciaEdicao}
-                onChange={(evento) => setMesReferenciaEdicao(evento.target.value)}
               />
             </div>
 
-            <div className={styles.campo}>
-              <label htmlFor="vencimentoEdicao">Vencimento</label>
-              <input
-                type="date"
-                id="vencimentoEdicao"
-                value={vencimentoEdicao}
-                onChange={(evento) => setVencimentoEdicao(evento.target.value)}
-              />
-            </div>
-
-            {pagamentoEditando.status === 'PAGA' && (
-              <div className={styles.campo}>
-                <label htmlFor="dataPagamentoEdicao">Data do pagamento</label>
-                <input
-                  type="date"
-                  id="dataPagamentoEdicao"
-                  value={dataPagamentoEdicao}
-                  onChange={(evento) => setDataPagamentoEdicao(evento.target.value)}
-                />
-              </div>
-            )}
-
-            {erroEdicaoPagamento && <p className={styles.erroModal}>{erroEdicaoPagamento}</p>}
+            {erroValidacao && <span className={styles.erro}>{erroValidacao}</span>}
+            {sucesso && <p className={styles.sucesso}>{sucesso}</p>}
+            {erro && <p className={styles.mensagemErro}>{erro}</p>}
 
             <div className={styles.acoesModal}>
               <button
+                type="button"
                 className={styles.botaoCancelar}
-                onClick={fecharModalEdicao}
-                disabled={enviandoEdicaoPagamento}
+                onClick={() => setModalGerarAberto(false)}
+                disabled={gerando}
               >
-                Cancelar
+                Fechar
               </button>
-              <button
-                className={styles.botaoConfirmar}
-                onClick={confirmarEdicaoPagamento}
-                disabled={enviandoEdicaoPagamento}
-              >
-                {enviandoEdicaoPagamento ? 'Salvando...' : 'Salvar correção'}
+              <button className={styles.botaoConfirmar} disabled={gerando}>
+                {gerando ? 'Gerando...' : 'Gerar mensalidades'}
               </button>
             </div>
-
-            {pagamentoEditando.status === 'PAGA' && (
-              <div className={styles.blocoDesfazer}>
-                <p className={styles.textoDesfazer}>
-                  {confirmandoDesfazer
-                    ? 'Tem certeza? Esta cobrança volta a ficar pendente, sem data nem forma de pagamento.'
-                    : 'Registrou o pagamento no mês errado? Desfaça aqui e depois registre no mês certo.'}
-                </p>
-                <button
-                  className={styles.botaoDesfazer}
-                  onClick={confirmandoDesfazer ? desfazerPagamento : () => setConfirmandoDesfazer(true)}
-                  disabled={enviandoEdicaoPagamento}
-                >
-                  {confirmandoDesfazer ? 'Sim, desfazer pagamento' : 'Desfazer pagamento'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+          </form>
+        </ModalBase>
       )}
+
+      <ModalRegistrarPagamento
+        pagamento={pagamentoSelecionado}
+        onFechar={() => setPagamentoSelecionado(null)}
+        onRegistrado={async () => {
+          avisar('Pagamento registrado')
+          await recarregarTudo()
+        }}
+      />
+
+      <ModalCorrigirPagamento
+        pagamento={pagamentoEditando}
+        onFechar={() => setPagamentoEditando(null)}
+        onSalvo={async (acao) => {
+          avisar(acao === 'desfeito' ? 'Pagamento desfeito' : 'Correção salva')
+          await recarregarTudo()
+        }}
+      />
 
       <ConfirmDialog
         aberto={confirmandoGeracao}
@@ -887,6 +617,8 @@ export default function FinanceiroPage() {
         onConfirmar={gerarMensalidades}
         onCancelar={() => setConfirmandoGeracao(false)}
       />
+
+      {toast}
     </div>
   )
 }

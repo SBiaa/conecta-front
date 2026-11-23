@@ -3,6 +3,10 @@ import { getToken, getUsuario, logout } from './auth'
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL!;
 
+export const MSG_SEM_CONEXAO = 'Sem conexão. Verifique a internet e tente de novo.'
+
+export const MSG_ERRO_GENERICO = 'Algo deu errado. Tente de novo em instantes.'
+
 function authHeaders(): Record<string, string> {
   const token = getToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
@@ -73,11 +77,11 @@ export async function apiGet<T>(path: string): Promise<T> {
       headers: { ...authHeaders() },
     })
   } catch {
-    throw new Error(`Falha ao conectar com a API em ${path}`)
+    throw new Error(MSG_SEM_CONEXAO)
   }
 
   if (!response.ok) {
-    throw await erroDaResposta(response, `Erro na requisição GET ${path}: ${response.status}`)
+    throw await erroDaResposta(response, MSG_ERRO_GENERICO)
   }
 
   return response.json()
@@ -92,11 +96,11 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
       body: JSON.stringify(body),
     })
   } catch {
-    throw new Error(`Falha ao conectar com a API em ${path}`)
+    throw new Error(MSG_SEM_CONEXAO)
   }
 
   if (!response.ok) {
-    throw await erroDaResposta(response, `Erro na requisição POST ${path}: ${response.status}`)
+    throw await erroDaResposta(response, MSG_ERRO_GENERICO)
   }
 
   return response.json()
@@ -110,11 +114,11 @@ export async function apiDelete<T>(path: string): Promise<T> {
       headers: { ...authHeaders() },
     })
   } catch {
-    throw new Error(`Falha ao conectar com a API em ${path}`)
+    throw new Error(MSG_SEM_CONEXAO)
   }
 
   if (!response.ok) {
-    throw await erroDaResposta(response, `Erro na requisição DELETE ${path}: ${response.status}`)
+    throw await erroDaResposta(response, MSG_ERRO_GENERICO)
   }
 
   return response.json()
@@ -129,11 +133,11 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
       body: JSON.stringify(body),
     })
   } catch {
-    throw new Error(`Falha ao conectar com a API em ${path}`)
+    throw new Error(MSG_SEM_CONEXAO)
   }
 
   if (!response.ok) {
-    throw await erroDaResposta(response, `Erro na requisição PUT ${path}: ${response.status}`)
+    throw await erroDaResposta(response, MSG_ERRO_GENERICO)
   }
 
   return response.json()
@@ -148,11 +152,11 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
       body: JSON.stringify(body),
     })
   } catch {
-    throw new Error(`Falha ao conectar com a API em ${path}`)
+    throw new Error(MSG_SEM_CONEXAO)
   }
 
   if (!response.ok) {
-    throw await erroDaResposta(response, `Erro na requisição PATCH ${path}: ${response.status}`)
+    throw await erroDaResposta(response, MSG_ERRO_GENERICO)
   }
 
   return response.json()

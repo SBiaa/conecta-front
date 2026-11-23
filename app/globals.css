@@ -32,6 +32,9 @@
   --warning-soft: #fbf1de;
   --danger: #c23b36;
   --danger-soft: #fbe9e7;
+  /* variantes de texto: --warning/--success puros não passam 4.5:1 sobre fundo claro */
+  --warning-text: #8a5a00;
+  --success-text: #1f6b43;
 
   /* -- texto e superfícies -- */
   --text-primary: #0b1620;
@@ -84,4 +87,12 @@ h1, h2, h3 {
 
 html[data-menu="mini"] {
   --menu-largura: 68px;
+}
+
+/* Campos de texto com 16px: abaixo disso o iOS dá zoom ao focar e a
+   leitura fica pequena para quem tem a vista cansada. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+textarea,
+select {
+  font-size: 1rem;
 }

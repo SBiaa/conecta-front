@@ -5,6 +5,7 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { apiGet, apiPost, apiPatch, apiDelete } from '../../../lib/api'
 import { formatarMoeda } from '../../../lib/formato'
 import ConfirmDialog from '../../../components/ConfirmDialog'
+import ModalBase from '../../../components/ModalBase'
 import styles from '../financeiro.module.css'
 
 type Produto = {
@@ -164,11 +165,11 @@ export default function ProdutosPage() {
       </div>
 
       {modalAberto && (
-        <div className={styles.overlay}>
-          <div className={styles.modal}>
-            <h2 className={styles.modalTitulo}>
-              {produtoEditando ? 'Editar produto' : 'Novo produto'}
-            </h2>
+        <ModalBase
+          titulo={produtoEditando ? 'Editar produto' : 'Novo produto'}
+          onFechar={fecharModal}
+          escAtivo={produtoParaApagar === null}
+        >
 
             <div className={styles.campo}>
               <label htmlFor="nomeProduto">Nome</label>
@@ -213,8 +214,7 @@ export default function ProdutosPage() {
                 {enviando ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
-          </div>
-        </div>
+        </ModalBase>
       )}
 
       <ConfirmDialog

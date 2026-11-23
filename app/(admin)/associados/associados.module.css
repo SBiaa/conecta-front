@@ -9,7 +9,6 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  max-width: 720px;
 }
 
 .titulo {
@@ -19,6 +18,9 @@
 }
 
 .botaoNovo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   background-color: var(--primary);
   color: #ffffff;
   border: none;
@@ -35,30 +37,63 @@
   background-color: var(--primary-dark);
 }
 
-.busca {
-  margin-bottom: 1.5rem;
-  max-width: 720px;
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
-.busca input {
+.busca {
+  flex: 1;
+  min-width: 220px;
+  max-width: 520px;
+}
+
+.filtroStatus {
+  min-width: 160px;
+}
+
+.rotulo {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+.busca input,
+.filtroStatus select {
   width: 100%;
+  min-height: 44px;
   padding: 0.6rem 0.8rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-s);
   font-size: 1rem;
   outline: none;
   transition: border 0.2s;
+  background-color: #ffffff;
 }
 
-.busca input:focus {
+.busca input:focus,
+.filtroStatus select:focus {
   border-color: var(--primary);
 }
+
+.contagem {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.6rem;
+}
+
+/* ---- Celular: cartões ---- */
 
 .lista {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-width: 720px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .item {
@@ -71,6 +106,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   padding: 1rem 1.25rem;
   color: inherit;
   text-decoration: none;
@@ -80,6 +116,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  min-width: 0;
 }
 
 .nome {
@@ -89,6 +126,7 @@
 }
 
 .detalhe {
+  display: block;
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
@@ -98,10 +136,11 @@
   font-weight: 600;
   padding: 0.25rem 0.6rem;
   border-radius: var(--radius-pill);
+  white-space: nowrap;
 }
 
 .statusAtivo {
-  color: var(--success);
+  color: var(--success-text, #1f6b43);
   background-color: #e8f5e9;
 }
 
@@ -113,4 +152,152 @@
 .mensagem {
   color: var(--text-secondary);
   font-size: 1rem;
+}
+
+.estadoErro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-s);
+  background-color: var(--danger-soft);
+  color: var(--danger);
+}
+
+.botaoTentar {
+  min-height: 44px;
+  padding: 0.5rem 1.1rem;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-s);
+  background-color: #ffffff;
+  color: var(--danger);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.botaoTentar:hover {
+  background-color: var(--danger-soft);
+}
+
+/* ---- Computador: tabela ---- */
+
+.tabelaWrap {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .tabelaWrap {
+    display: block;
+    background-color: #ffffff;
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-card);
+    overflow-x: auto;
+  }
+
+  .lista {
+    display: none;
+  }
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela th,
+.tabela td {
+  text-align: left;
+  padding: 0.7rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.tabela th {
+  padding: 0.25rem 0.6rem;
+  background-color: #f6f9f8;
+}
+
+.tabela tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.botaoOrdem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 44px;
+  padding: 0 0.5rem;
+  border: none;
+  background: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.botaoOrdem:hover {
+  color: var(--primary);
+}
+
+.linhaTabela {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.linhaTabela:hover {
+  background-color: var(--primary-soft);
+}
+
+.nomeLink {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.nomeLink:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/* ---- Paginação ---- */
+
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.botaoPagina {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-s);
+  background-color: #ffffff;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.botaoPagina:hover:not(:disabled) {
+  background-color: var(--primary-soft);
+}
+
+.botaoPagina:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.paginaTexto {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }

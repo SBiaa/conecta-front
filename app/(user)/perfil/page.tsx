@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { CalendarCheck, Scale, TrendingDown, TrendingUp } from 'lucide-react'
+import { CalendarCheck } from 'lucide-react'
 import { apiGet } from '../../lib/api'
-import { formatarNumero } from '../../lib/formato'
 import { logout } from '../../lib/auth'
-import { faixaImc, type Relatorio, rotuloSituacao } from '../../lib/saude'
+import { type Relatorio, rotuloSituacao } from '../../lib/saude'
 import FotoPerfil from '../../components/FotoPerfil'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import styles from './perfil.module.css'
 
 type Usuario = {
@@ -51,18 +51,9 @@ function montarEndereco(u: Usuario): string | null {
   return partes.length > 0 ? partes.join(', ') : null
 }
 
-// Frase do peso no mês. Ganhar peso é tão normal quanto perder — as duas
-// direções são ditas do mesmo jeito, sem adjetivo em cima de nenhuma.
-function frasePeso(variacao: number): string {
-  const quilos = Math.abs(variacao)
-  const unidade = quilos === 1 ? 'quilo' : 'quilos'
-  return variacao < 0
-    ? `Você já perdeu ${formatarNumero(quilos)} ${unidade} este mês`
-    : `Você ganhou ${formatarNumero(quilos)} ${unidade} este mês`
-}
-
-/** Resumo do mês da associada, logo abaixo do nome. Some inteiro se não houver
- *  nada pra mostrar — card vazio só ocupa espaço. */
+/** Resumo do mês da associada, logo abaixo do nome. Só presença: peso e IMC
+ *  ficam em Meu Progresso, onde têm contexto e não aparecem de surpresa. Some
+ *  inteiro se não houver nada pra mostrar — card vazio só ocupa espaço. */
 function ResumoDoMes() {
   const [relatorio, setRelatorio] = useState<Relatorio | null>(null)
 
@@ -74,56 +65,24 @@ function ResumoDoMes() {
 
   if (!relatorio) return null
 
-  const temFrequencia = relatorio.frequencia.totalAulas > 0
-  const temPeso = relatorio.peso.variacao !== null && relatorio.peso.variacao !== 0
-  const temImc = relatorio.imc !== null
-
-  if (!temFrequencia && !temPeso && !temImc) return null
+  if (relatorio.frequencia.totalAulas === 0) return null
 
   return (
     <div className={styles.resumo}>
       <p className={styles.resumoTitulo}>Seu mês até aqui</p>
 
       <ul className={styles.resumoLista}>
-        {temFrequencia && (
-          <li className={styles.resumoItem}>
-            <CalendarCheck size={18} className={styles.resumoIcone} />
-            <span>
-              <strong>{relatorio.frequencia.percentual}%</strong> de presença ·{' '}
-              {rotuloSituacao(relatorio.frequencia.situacao).toLowerCase()}
-              <span className={styles.resumoNota}>
-                {relatorio.frequencia.presencas} de {relatorio.frequencia.totalAulas}{' '}
-                {relatorio.frequencia.totalAulas === 1 ? 'aula' : 'aulas'}
-              </span>
+        <li className={styles.resumoItem}>
+          <CalendarCheck size={18} className={styles.resumoIcone} />
+          <span>
+            <strong>{relatorio.frequencia.percentual}%</strong> de presença ·{' '}
+            {rotuloSituacao(relatorio.frequencia.situacao).toLowerCase()}
+            <span className={styles.resumoNota}>
+              {relatorio.frequencia.presencas} de {relatorio.frequencia.totalAulas}{' '}
+              {relatorio.frequencia.totalAulas === 1 ? 'aula' : 'aulas'}
             </span>
-          </li>
-        )}
-
-        {temPeso && (
-          <li className={styles.resumoItem}>
-            {relatorio.peso.variacao! < 0 ? (
-              <TrendingDown size={18} className={styles.resumoIcone} />
-            ) : (
-              <TrendingUp size={18} className={styles.resumoIcone} />
-            )}
-            <span>
-              {frasePeso(relatorio.peso.variacao!)}
-              <span className={styles.resumoNota}>
-                está em {formatarNumero(relatorio.peso.ultimo!)} kg
-              </span>
-            </span>
-          </li>
-        )}
-
-        {temImc && (
-          <li className={styles.resumoItem}>
-            <Scale size={18} className={styles.resumoIcone} />
-            <span>
-              IMC <strong>{formatarNumero(relatorio.imc!)}</strong>
-              <span className={styles.resumoNota}>{faixaImc(relatorio.imc)}</span>
-            </span>
-          </li>
-        )}
+          </span>
+        </li>
       </ul>
 
       <Link href="/meu-progresso" className={styles.resumoLink}>
@@ -137,6 +96,7 @@ export default function PerfilPage() {
   const router = useRouter()
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  const [confirmandoSaida, setConfirmandoSaida] = useState(false)
 
   useEffect(() => {
     apiGet<Usuario>('/me')
@@ -211,9 +171,20 @@ export default function PerfilPage() {
         </dl>
       </div>
 
-      <button className={styles.sair} onClick={sair}>
+      <button className={styles.sair} onClick={() => setConfirmandoSaida(true)}>
         Sair
       </button>
+
+      <ConfirmDialog
+        aberto={confirmandoSaida}
+        titulo="Sair do Conecta?"
+        mensagem="Você vai precisar entrar de novo com seu CPF e sua senha."
+        confirmarLabel="Sair"
+        cancelarLabel="Continuar aqui"
+        perigoso={false}
+        onConfirmar={sair}
+        onCancelar={() => setConfirmandoSaida(false)}
+      />
     </div>
   )
 }

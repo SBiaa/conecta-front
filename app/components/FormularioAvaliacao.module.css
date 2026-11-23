@@ -47,7 +47,7 @@
 }
 
 .rotulo {
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -105,4 +105,11 @@
   font-size: 0.85rem;
   color: var(--danger);
   margin: 0;
+}
+
+.sucesso {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--success-text);
 }

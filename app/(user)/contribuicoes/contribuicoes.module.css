@@ -33,9 +33,9 @@
 }
 
 .pixLabel {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  color: var(--success);
+  color: var(--success-text);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -52,11 +52,12 @@
   gap: 0.4rem;
   border: none;
   border-radius: var(--radius-pill);
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
+  padding: 0 1.1rem;
+  min-height: 44px;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #ffffff;
-  background-color: var(--success);
+  background-color: var(--success-text);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -78,12 +79,12 @@
 
 .resumoEmDia {
   background-color: #e8f5e9;
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .resumoPendente {
   background-color: #fff3e0;
-  color: var(--warning);
+  color: var(--warning-text);
 }
 
 /* Lista ------------------------------------------------------------------ */
@@ -156,12 +157,12 @@
 }
 
 .situacaoPaga {
-  color: var(--success);
+  color: var(--success-text);
   background-color: #e8f5e9;
 }
 
 .situacaoPendente {
-  color: var(--warning);
+  color: var(--warning-text);
   background-color: #fff3e0;
 }
 
@@ -186,4 +187,50 @@
 .mensagemErro {
   font-size: 1rem;
   color: var(--danger);
+}
+
+.pixPasso {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.resumoDetalhe {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.vencimento,
+.vencimentoAtrasado {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.vencimento {
+  color: var(--warning-text);
+}
+
+.vencimentoAtrasado {
+  color: var(--danger);
+}
+
+.situacaoCancelada {
+  color: var(--text-secondary);
+  background-color: #eef1f0;
+}
+
+.botaoTentar {
+  min-height: 44px;
+  padding: 0 1.1rem;
+  background-color: #ffffff;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-pill);
+  color: var(--primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
 }

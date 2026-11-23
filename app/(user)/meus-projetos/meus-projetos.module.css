@@ -58,7 +58,7 @@
 }
 
 .badgeApto {
-  color: var(--success);
+  color: var(--success-text);
   background-color: #e8f5e9;
 }
 
@@ -68,7 +68,7 @@
 }
 
 .badgeAguardando {
-  color: var(--warning);
+  color: var(--warning-text);
   background-color: #fff3e0;
 }
 

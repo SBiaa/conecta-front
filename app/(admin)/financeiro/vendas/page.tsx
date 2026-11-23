@@ -5,6 +5,7 @@ import { Trash2 } from 'lucide-react'
 import { apiGet, apiPost, apiDelete } from '../../../lib/api'
 import { formatarMoeda, formatarData, mesAtualISO, dataHojeISO } from '../../../lib/formato'
 import ConfirmDialog from '../../../components/ConfirmDialog'
+import ModalBase from '../../../components/ModalBase'
 import styles from '../financeiro.module.css'
 
 type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO'
@@ -242,9 +243,7 @@ export default function VendasPage() {
       </div>
 
       {modalAberto && (
-        <div className={styles.overlay}>
-          <div className={styles.modal}>
-            <h2 className={styles.modalTitulo}>Registrar venda</h2>
+        <ModalBase titulo="Registrar venda" onFechar={fecharModal} escAtivo={vendaParaApagar === null}>
 
             <div className={styles.campo}>
               <label htmlFor="produtoId">Produto</label>
@@ -374,8 +373,7 @@ export default function VendasPage() {
                 {enviando ? 'Salvando...' : 'Registrar'}
               </button>
             </div>
-          </div>
-        </div>
+        </ModalBase>
       )}
 
       <ConfirmDialog

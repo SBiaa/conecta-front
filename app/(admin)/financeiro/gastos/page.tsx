@@ -5,6 +5,7 @@ import { Trash2 } from 'lucide-react'
 import { apiGet, apiPost, apiDelete } from '../../../lib/api'
 import { formatarMoeda, formatarData, mesAtualISO, dataHojeISO } from '../../../lib/formato'
 import ConfirmDialog from '../../../components/ConfirmDialog'
+import ModalBase from '../../../components/ModalBase'
 import styles from '../financeiro.module.css'
 
 type Categoria = {
@@ -252,9 +253,7 @@ export default function GastosPage() {
       </div>
 
       {modalAberto && (
-        <div className={styles.overlay}>
-          <div className={styles.modal}>
-            <h2 className={styles.modalTitulo}>Lançar gasto</h2>
+        <ModalBase titulo="Lançar gasto" onFechar={() => setModalAberto(false)}>
 
             <div className={styles.campo}>
               <label htmlFor="descricao">Descrição</label>
@@ -321,14 +320,14 @@ export default function GastosPage() {
                 {enviando ? 'Salvando...' : 'Lançar'}
               </button>
             </div>
-          </div>
-        </div>
+        </ModalBase>
       )}
 
       {modalCategorias && (
-        <div className={styles.overlay}>
-          <div className={styles.modal}>
-            <h2 className={styles.modalTitulo}>Categorias de gasto</h2>
+        <ModalBase titulo="Categorias de gasto" onFechar={() => {
+            setModalCategorias(false)
+            setErroCategoria('')
+          }} escAtivo={categoriaParaApagar === null}>
 
             <div className={styles.campo}>
               <label htmlFor="novaCategoria">Nova categoria</label>
@@ -375,8 +374,7 @@ export default function GastosPage() {
                 Fechar
               </button>
             </div>
-          </div>
-        </div>
+        </ModalBase>
       )}
 
       <ConfirmDialog

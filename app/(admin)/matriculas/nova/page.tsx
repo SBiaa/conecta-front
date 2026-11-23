@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { apiGet, apiPatch, apiPost } from '../../../lib/api'
+import { ApiError, apiGet, apiPatch, apiPost } from '../../../lib/api'
 import { montarMensagemAcesso, montarLinkWhatsapp, type AcessoGerado } from '../../../lib/acesso'
 import SeletorTurmasSemana, {
   chaveDiaSelecao,
@@ -67,6 +68,8 @@ type AssociadaCompleta = {
   bairro: string | null
   cidade: string | null
   uf: string | null
+  // Usado só pra saber se é a primeira matrícula (e portanto o primeiro acesso).
+  matriculas?: { id: string }[]
 }
 
 type Projeto = {
@@ -154,6 +157,9 @@ export default function NovaMatriculaPage() {
   const [acesso, setAcesso] = useState<AcessoGerado | null>(null)
   const [copiado, setCopiado] = useState(false)
   const [erroAcesso, setErroAcesso] = useState('')
+  const [gerandoAcesso, setGerandoAcesso] = useState(false)
+  const [telefoneInformado, setTelefoneInformado] = useState<string | null>(null)
+  const [jaTinhaAcesso, setJaTinhaAcesso] = useState(false)
   const [inscricao, setInscricao] = useState<EstadoInscricao>(INSCRICAO_INICIAL)
   // Planos do projeto escolhido (cada projeto tem os seus — Financeiro > Valores).
   const [planos, setPlanos] = useState<PlanoValor[]>([])
@@ -352,6 +358,12 @@ export default function NovaMatriculaPage() {
     }
 
     setErroAssociada('')
+
+    // Dependente (criança) não tem login — quem acessa é o responsável.
+    // Quem já tem matrícula já recebeu o acesso antes: não mexemos na senha
+    // dela sem ninguém pedir (isso deixaria a senha antiga inválida).
+    const primeiraMatricula = (associadaSelecionada.matriculas?.length ?? 1) === 0
+
     try {
       await apiPatch(`/usuarios/${associadaSelecionada.id}`, {
         telefone: dados.telefone,
@@ -367,7 +379,16 @@ export default function NovaMatriculaPage() {
         cidade: dados.cidade,
         uf: dados.uf,
       })
+    } catch (e) {
+      setErro(
+        `Não foi possível salvar os dados da aluna, então a matrícula não foi criada. ${
+          e instanceof ApiError && e.status < 500 ? e.message : 'Confira os dados e tente de novo.'
+        }`
+      )
+      return
+    }
 
+    try {
       await apiPost('/matriculas', {
         usuarioId: associadaSelecionada.id,
         turmas: agruparSelecoesPorTurma(dados.diaSelecoes),
@@ -375,31 +396,48 @@ export default function NovaMatriculaPage() {
         exameMedico: dados.exameMedico,
         inscricao: inscricaoParaPayload(inscricao),
       })
+    } catch (e) {
+      setErro(
+        `Os dados da aluna foram salvos, mas a matrícula não foi criada. ${
+          e instanceof ApiError && e.status < 500 ? e.message : 'Confira turmas e plano e tente de novo.'
+        }`
+      )
+      return
+    }
 
-      setSucesso(true)
+    setSucesso(true)
+    setTelefoneInformado(dados.telefone || associadaSelecionada.telefone)
+    if (associadaSelecionada.responsavel) return
 
-      // Dependente (criança) não tem login — quem acessa é o responsável —,
-      // então não há senha a gerar nem acesso a enviar.
-      if (associadaSelecionada.responsavel) return
+    if (primeiraMatricula) {
+      await gerarAcesso(dados.telefone || associadaSelecionada.telefone)
+    } else {
+      setJaTinhaAcesso(true)
+    }
+  }
 
-      // Não há como recuperar a senha atual (fica só o hash), então geramos
-      // uma nova senha real para poder mandar no acesso.
-      try {
-        const respostaSenha = await apiPatch<{ senha: string }>(
-          `/usuarios/${associadaSelecionada.id}/senha`,
-          {}
-        )
-        setAcesso({
-          nome: associadaSelecionada.nome,
-          cpf: associadaSelecionada.cpf ?? '',
-          senha: respostaSenha.senha,
-          telefone: dados.telefone || associadaSelecionada.telefone,
-        })
-      } catch {
-        setErroAcesso('Matrícula feita, mas não foi possível gerar a senha de acesso')
-      }
+  // Não há como recuperar a senha atual (fica só o hash), então gerar o acesso
+  // cria uma senha nova de verdade — por isso só roda sozinho na primeira vez.
+  async function gerarAcesso(telefone: string | null) {
+    if (!associadaSelecionada) return
+    setErroAcesso('')
+    setGerandoAcesso(true)
+    try {
+      const respostaSenha = await apiPatch<{ senha: string }>(
+        `/usuarios/${associadaSelecionada.id}/senha`,
+        {}
+      )
+      setAcesso({
+        nome: associadaSelecionada.nome,
+        cpf: associadaSelecionada.cpf ?? '',
+        senha: respostaSenha.senha,
+        telefone,
+      })
+      setJaTinhaAcesso(false)
     } catch {
-      setErro('Não foi possível matricular a aluna')
+      setErroAcesso('Matrícula feita, mas não foi possível gerar a senha de acesso')
+    } finally {
+      setGerandoAcesso(false)
     }
   }
 
@@ -435,6 +473,15 @@ export default function NovaMatriculaPage() {
             {buscando && <span className={styles.erro}>Buscando...</span>}
             {erroAssociada && <span className={styles.erro}>{erroAssociada}</span>}
 
+            {!buscando && buscaTexto.trim() !== '' && resultadosBusca.length === 0 && (
+              <p className={styles.semResultado}>
+                Nenhuma associada encontrada.{' '}
+                <Link href="/associados/novo" className={styles.linkCadastrar}>
+                  Não encontrou? Cadastrar
+                </Link>
+              </p>
+            )}
+
             {resultadosBusca.length > 0 && (
               <ul className={styles.resultados}>
                 {resultadosBusca.map((resumo) => (
@@ -456,7 +503,7 @@ export default function NovaMatriculaPage() {
           </div>
         )}
 
-        {associadaSelecionada && !acesso && (
+        {associadaSelecionada && !acesso && !sucesso && (
           <>
             <div className={styles.associadaSelecionada}>
               <span className={styles.associadaNome}>{associadaSelecionada.nome}</span>
@@ -676,7 +723,33 @@ export default function NovaMatriculaPage() {
           </div>
         )}
 
-        {!acesso && sucesso && <p className={styles.sucesso}>Aluna matriculada!</p>}
+        {!acesso && sucesso && (
+          <div className={styles.cartaoSucesso} role="status">
+            <p className={styles.sucesso}>Aluna matriculada!</p>
+            {jaTinhaAcesso && (
+              <p className={styles.mensagem}>
+                {associadaSelecionada?.nome} já tinha acesso ao aplicativo, então a senha dela não foi
+                alterada. Só gere um novo acesso se ela tiver perdido a senha — a senha antiga deixa de
+                valer.
+              </p>
+            )}
+            <div className={styles.avisoSenhaAcoes}>
+              {jaTinhaAcesso && (
+                <button
+                  type="button"
+                  className={styles.avisoSenhaCopiar}
+                  onClick={() => gerarAcesso(telefoneInformado)}
+                  disabled={gerandoAcesso}
+                >
+                  {gerandoAcesso ? 'Gerando...' : 'Gerar e enviar novo acesso'}
+                </button>
+              )}
+              <button type="button" className={styles.avisoSenhaDispensar} onClick={irParaPerfil}>
+                Ir para o perfil da aluna
+              </button>
+            </div>
+          </div>
+        )}
         {erroAcesso && <p className={styles.mensagemErro}>{erroAcesso}</p>}
         {erro && <p className={styles.mensagemErro}>{erro}</p>}
       </div>

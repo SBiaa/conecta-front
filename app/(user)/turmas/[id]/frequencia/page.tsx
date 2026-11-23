@@ -46,6 +46,10 @@ export default function FrequenciaPage() {
 
   return (
     <div className={styles.pagina}>
+      <Link href="/turmas" className={styles.voltarTurmas}>
+        ← Minhas Turmas
+      </Link>
+
       <div className={styles.cabecalho}>
         <h1 className={styles.titulo}>
           {frequencia ? `Frequência — ${frequencia.turma.nome}` : 'Frequência'}

@@ -255,3 +255,65 @@
 .avisoSenhaDispensar:hover {
   background-color: #fff7e6;
 }
+
+.cartaoSucesso {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-m);
+  background-color: var(--success-soft);
+  border: 1px solid var(--success);
+}
+
+.cartaoSucessoTitulo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  color: var(--success-text, #1f6b43);
+  margin: 0 0 0.25rem;
+}
+
+.cartaoSucessoTexto {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.9rem;
+}
+
+.cartaoSucessoAcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.botaoPrimarioLink,
+.botaoSecundarioLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius-s);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.botaoPrimarioLink {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.botaoPrimarioLink:hover {
+  background-color: var(--primary-dark);
+}
+
+.botaoSecundarioLink {
+  background-color: #ffffff;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.botaoSecundarioLink:hover {
+  background-color: var(--primary-soft);
+}

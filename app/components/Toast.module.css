@@ -1,0 +1,57 @@
+.area {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 5.5rem;
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem;
+  pointer-events: none;
+  z-index: 60;
+}
+
+@media (min-width: 768px) {
+  .area {
+    bottom: 1.5rem;
+  }
+}
+
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 480px;
+  padding: 0.75rem 1.1rem;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-pop);
+  font-size: 0.95rem;
+  font-weight: 600;
+  animation: entrar 0.2s var(--ease-standard);
+}
+
+.sucesso {
+  background-color: #1f6b43;
+  color: #ffffff;
+}
+
+.erro {
+  background-color: #a52f2b;
+  color: #ffffff;
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

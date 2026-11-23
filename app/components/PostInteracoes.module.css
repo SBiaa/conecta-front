@@ -9,15 +9,19 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .reacao {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.35rem 0.6rem;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.35rem 0.7rem;
   background: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-pill);
   font-size: 0.9rem;
   line-height: 1;
@@ -47,7 +51,7 @@
 }
 
 .contagem {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 700;
 }
 
@@ -56,11 +60,12 @@
   align-items: center;
   gap: 0.35rem;
   margin-left: auto;
-  padding: 0.35rem 0.7rem;
+  min-height: 44px;
+  padding: 0.35rem 0.9rem;
   background: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-pill);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   line-height: 1;
   color: var(--text-secondary);
   cursor: pointer;
@@ -77,13 +82,13 @@
 }
 
 .resumo {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
   margin: 0.5rem 0 0;
 }
 
 .erro {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--danger);
   margin: 0.5rem 0 0;
 }
@@ -134,7 +139,7 @@
 }
 
 .comentarioQuando {
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
 }
 
@@ -143,8 +148,10 @@
   align-items: center;
   justify-content: center;
   margin-left: auto;
-  width: 26px;
-  height: 26px;
+  width: 44px;
+  height: 44px;
+  margin-top: -0.5rem;
+  margin-bottom: -0.5rem;
   background: none;
   border: none;
   border-radius: 6px;
@@ -174,10 +181,11 @@
 .campo {
   flex: 1;
   min-width: 0;
+  min-height: 44px;
   padding: 0.55rem 0.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-s);
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-family: inherit;
   outline: none;
   transition: border 0.2s;
@@ -189,12 +197,13 @@
 
 .botaoEnviar {
   flex-shrink: 0;
+  min-height: 44px;
   padding: 0.55rem 1rem;
   background-color: var(--primary);
   color: white;
   border: none;
   border-radius: var(--radius-s);
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s;

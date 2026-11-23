@@ -334,3 +334,22 @@
 .avisoSenhaDispensar:hover {
   background-color: #fff7e6;
 }
+
+.semResultado {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.linkCadastrar {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.cartaoSucesso {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}

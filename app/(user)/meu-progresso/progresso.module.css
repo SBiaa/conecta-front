@@ -57,7 +57,7 @@
   align-items: flex-start;
   gap: 0.4rem;
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   line-height: 1.4;
   color: var(--text-secondary);
 }
@@ -93,7 +93,7 @@
 }
 
 .selo {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   padding: 0.28rem 0.75rem;
   border-radius: var(--radius-pill);
@@ -101,18 +101,19 @@
 }
 
 .seloOk {
-  color: var(--success);
+  color: var(--success-text);
   background-color: #e8f5e9;
 }
 
 .seloAtencao {
-  color: var(--warning);
+  color: var(--warning-text);
   background-color: #fff3e0;
 }
 
-.seloCritico {
-  color: var(--danger);
-  background-color: #ffebee;
+.seloCritico,
+.seloBaixa {
+  color: var(--warning-text);
+  background-color: var(--warning-soft);
 }
 
 .seloSemDados {
@@ -192,7 +193,7 @@
 }
 
 .rotuloResumo {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -206,12 +207,12 @@
 }
 
 .notaResumo {
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
 .rotuloSecao {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -229,7 +230,7 @@
 }
 
 .chip {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--primary);
   background-color: var(--primary-soft);
@@ -268,7 +269,7 @@
 }
 
 .registradoPor {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
@@ -280,7 +281,7 @@
 }
 
 .chipPequeno {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-secondary);
   background-color: var(--background);
@@ -333,7 +334,7 @@
 }
 
 .rotuloIndicador {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -354,14 +355,14 @@
 }
 
 .notaIndicador {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
 /* Selo do IMC: cinza de proposito. O numero ja e a informacao; pintar de
    vermelho seria a tela dando um veredito sobre o corpo dela. */
 .seloNeutro {
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 700;
   padding: 0.28rem 0.7rem;
   border-radius: var(--radius-pill);
@@ -377,7 +378,13 @@
 }
 
 .rodapeMedida {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   margin: 0.75rem 0 0;
+}
+
+.incentivo {
+  margin: 0.4rem 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--warning-text);
 }

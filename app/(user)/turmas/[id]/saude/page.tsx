@@ -84,6 +84,10 @@ export default function SaudeTurmaPage() {
 
   return (
     <div className={styles.pagina}>
+      <Link href="/turmas" className={styles.voltarTurmas}>
+        ← Minhas Turmas
+      </Link>
+
       <div className={styles.cabecalho}>
         <h1 className={styles.titulo}>
           {saude ? `Como a turma está — ${saude.turma.nome}` : 'Como a turma está'}

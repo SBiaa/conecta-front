@@ -14,7 +14,7 @@
 }
 
 .atualRotulo {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--primary-dark);
   text-transform: uppercase;
@@ -64,7 +64,7 @@
 }
 
 .opcao span {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 

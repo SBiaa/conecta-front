@@ -22,8 +22,22 @@ import RelatorioSaude from '../../../components/RelatorioSaude'
 import PainelNivelNatacao from '../../../components/PainelNivelNatacao'
 import VincularResponsavel from '../../../components/VincularResponsavel'
 import Avatar from '../../../components/Avatar'
+import ConfirmDialog from '../../../components/ConfirmDialog'
+import ModalBase from '../../../components/ModalBase'
+import ModalRegistrarPagamento, {
+  type PagamentoParaRegistrar,
+} from '../../../components/ModalRegistrarPagamento'
+import ModalCorrigirPagamento, {
+  type PagamentoParaCorrigir,
+} from '../../../components/ModalCorrigirPagamento'
+import { useToast } from '../../../components/Toast'
+import {
+  LABELS_FORMA_PAGAMENTO as LABELS_FORMA,
+  type FormaPagamento,
+} from '../../../lib/admin-pagamentos'
 import { buscarValoresDoProjeto, rotuloPlano, type PlanoValor } from '../../../lib/valores'
 import type { Avaliacao, RegistroSaude, RelatorioDaAluna } from '../../../lib/saude'
+import { estaAtrasado } from '../../../lib/pagamentos'
 import styles from './perfil.module.css'
 
 const FLORES = [
@@ -36,8 +50,6 @@ function gerarSenhaSugerida() {
   const digitos = String(Math.floor(Math.random() * 100)).padStart(2, '0')
   return `${flor}${digitos}`
 }
-
-type FormaPagamento = 'DINHEIRO' | 'PIX' | 'CARTAO' | 'ABONADO'
 
 type Matricula = {
   id: string
@@ -94,20 +106,6 @@ type Pagamento = {
   }
 }
 
-type PagamentoParaRegistrar = {
-  id: string
-  valor: string
-}
-
-type PagamentoParaEditar = {
-  id: string
-  valor: string
-  formaPagamento: FormaPagamento | null
-  mesReferencia: string
-  vencimento: string
-  status: Pagamento['status']
-}
-
 type TurmaOpcao = {
   id: string
   nome: string
@@ -136,13 +134,6 @@ const LABELS_EXAME: Record<string, string> = {
   AGUARDANDO: 'Aguardando',
 }
 
-const LABELS_FORMA: Record<FormaPagamento, string> = {
-  DINHEIRO: 'Dinheiro',
-  PIX: 'Pix',
-  CARTAO: 'Cartão',
-  ABONADO: 'Abonado',
-}
-
 function formatarMes(mes: string) {
   const [ano, mesNumero] = mes.split('-')
   return `${NOMES_MESES[Number(mesNumero) - 1]} ${ano}`
@@ -158,14 +149,6 @@ function formatarData(data: string | null) {
 
 function formatarMoeda(valor: string) {
   return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
-function dataHojeISO() {
-  const agora = new Date()
-  const ano = agora.getFullYear()
-  const mes = String(agora.getMonth() + 1).padStart(2, '0')
-  const dia = String(agora.getDate()).padStart(2, '0')
-  return `${ano}-${mes}-${dia}`
 }
 
 function montarEndereco(a: Associado): string | null {
@@ -187,6 +170,7 @@ function montarEndereco(a: Associado): string | null {
 export default function PerfilAssociadoPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const { avisar, toast } = useToast()
   // Altura e versão do bloco de saúde: a versão remonta o relatório depois que
   // uma avaliação nova é salva.
   const [alturaAluna, setAlturaAluna] = useState<number | null>(null)
@@ -207,21 +191,8 @@ export default function PerfilAssociadoPage() {
   const [carregandoPagamentos, setCarregandoPagamentos] = useState(true)
 
   const [pagamentoSelecionado, setPagamentoSelecionado] = useState<PagamentoParaRegistrar | null>(null)
-  const [formaPagamentoModal, setFormaPagamentoModal] = useState<FormaPagamento>('DINHEIRO')
-  const [dataPagamentoModal, setDataPagamentoModal] = useState('')
-  const [valorModal, setValorModal] = useState('')
-  const [enviando, setEnviando] = useState(false)
-  const [erroModal, setErroModal] = useState('')
-
-  const [pagamentoEditando, setPagamentoEditando] = useState<PagamentoParaEditar | null>(null)
-  const [valorEdicao, setValorEdicao] = useState('')
-  const [formaPagamentoEdicao, setFormaPagamentoEdicao] = useState<FormaPagamento | ''>('')
-  const [mesReferenciaEdicao, setMesReferenciaEdicao] = useState('')
-  const [vencimentoEdicao, setVencimentoEdicao] = useState('')
-  const [dataPagamentoEdicao, setDataPagamentoEdicao] = useState('')
-  const [confirmandoDesfazer, setConfirmandoDesfazer] = useState(false)
-  const [enviandoEdicaoPagamento, setEnviandoEdicaoPagamento] = useState(false)
-  const [erroEdicaoPagamento, setErroEdicaoPagamento] = useState('')
+  const [pagamentoEditando, setPagamentoEditando] = useState<PagamentoParaCorrigir | null>(null)
+  const [escolhendoPagamento, setEscolhendoPagamento] = useState(false)
 
   const [modalSenhaAberto, setModalSenhaAberto] = useState(false)
   const [novaSenhaInput, setNovaSenhaInput] = useState('')
@@ -309,34 +280,13 @@ export default function PerfilAssociadoPage() {
     buscarPagamentos()
   }, [id])
 
-  function abrirModal(pagamento: PagamentoParaRegistrar) {
-    setPagamentoSelecionado(pagamento)
-    setFormaPagamentoModal('DINHEIRO')
-    setDataPagamentoModal(dataHojeISO())
-    setValorModal(pagamento.valor)
-    setErroModal('')
-  }
-
-  function fecharModal() {
-    setPagamentoSelecionado(null)
-  }
-
-  async function confirmarRegistro() {
-    if (!pagamentoSelecionado) return
-    setEnviando(true)
-    setErroModal('')
-    try {
-      await apiPatch(`/pagamentos/${pagamentoSelecionado.id}/pagar`, {
-        dataPagamento: dataPagamentoModal,
-        formaPagamento: formaPagamentoModal,
-        valor: Number(valorModal),
-      })
-      await buscarPagamentos()
-      fecharModal()
-    } catch {
-      setErroModal('Não foi possível registrar o pagamento')
-    } finally {
-      setEnviando(false)
+  function paraRegistrar(pagamento: Pagamento): PagamentoParaRegistrar {
+    return {
+      id: pagamento.id,
+      valor: pagamento.valor,
+      descricao: `${formatarMes(pagamento.mesReferencia)} — ${pagamento.matricula.turmas
+        .map((turma) => turma.nome)
+        .join(', ')}`,
     }
   }
 
@@ -347,70 +297,17 @@ export default function PerfilAssociadoPage() {
       formaPagamento: pagamento.formaPagamento,
       mesReferencia: pagamento.mesReferencia,
       vencimento: pagamento.vencimento,
+      dataPagamento: pagamento.dataPagamento,
       status: pagamento.status,
     })
-    setValorEdicao(pagamento.valor)
-    setFormaPagamentoEdicao(pagamento.formaPagamento ?? '')
-    setMesReferenciaEdicao(pagamento.mesReferencia)
-    setVencimentoEdicao(pagamento.vencimento.slice(0, 10))
-    setDataPagamentoEdicao(pagamento.dataPagamento ? pagamento.dataPagamento.slice(0, 10) : '')
-    setConfirmandoDesfazer(false)
-    setErroEdicaoPagamento('')
   }
 
-  async function desfazerPagamento() {
-    if (!pagamentoEditando) return
-
-    setEnviandoEdicaoPagamento(true)
-    setErroEdicaoPagamento('')
-    try {
-      await apiPatch(`/pagamentos/${pagamentoEditando.id}/desfazer`, {})
-      await buscarPagamentos()
-      fecharModalEdicaoPagamento()
-    } catch {
-      setErroEdicaoPagamento('Não foi possível desfazer o pagamento')
-    } finally {
-      setEnviandoEdicaoPagamento(false)
-    }
-  }
-
-  function fecharModalEdicaoPagamento() {
-    setPagamentoEditando(null)
-  }
-
-  async function confirmarEdicaoPagamento() {
-    if (!pagamentoEditando) return
-
-    if (valorEdicao === '' || Number(valorEdicao) < 0) {
-      setErroEdicaoPagamento('Informe um valor válido')
-      return
-    }
-
-    const estaPaga = pagamentoEditando.status === 'PAGA'
-    if (estaPaga && !dataPagamentoEdicao) {
-      setErroEdicaoPagamento('Informe a data do pagamento')
-      return
-    }
-
-    setEnviandoEdicaoPagamento(true)
-    setErroEdicaoPagamento('')
-    try {
-      await apiPatch(`/pagamentos/${pagamentoEditando.id}`, {
-        valor: Number(valorEdicao),
-        formaPagamento: formaPagamentoEdicao || undefined,
-        mesReferencia: mesReferenciaEdicao,
-        vencimento: vencimentoEdicao,
-        ...(estaPaga ? { dataPagamento: dataPagamentoEdicao } : {}),
-      })
-      await buscarPagamentos()
-      fecharModalEdicaoPagamento()
-    } catch (erro) {
-      setErroEdicaoPagamento(
-        erro instanceof ApiError && erro.status < 500 ? erro.message : 'Não foi possível salvar a correção'
-      )
-    } finally {
-      setEnviandoEdicaoPagamento(false)
-    }
+  // Botão "Registrar pagamento" do cabeçalho: com uma só cobrança em aberto já abre o
+  // registro; com várias, a pessoa escolhe qual.
+  function registrarDoCabecalho() {
+    const emAberto = pagamentos.filter((pagamento) => pagamento.status === 'PENDENTE')
+    if (emAberto.length === 1) setPagamentoSelecionado(paraRegistrar(emAberto[0]))
+    else if (emAberto.length > 1) setEscolhendoPagamento(true)
   }
 
   function abrirModalSenha() {
@@ -544,6 +441,7 @@ export default function PerfilAssociadoPage() {
         vencimento: vencimentoGerar,
       })
       await buscarPagamentos()
+      avisar('Mensalidade gerada')
       setModalGerarAberto(false)
     } catch (erro) {
       setErroGerar(
@@ -622,6 +520,7 @@ export default function PerfilAssociadoPage() {
         ...(rematriculando ? { inscricao: inscricaoParaPayload(inscricaoModal) } : {}),
       })
       await buscarAssociado()
+      avisar('Matrícula salva')
       fecharModalEdicao()
     } catch {
       setErroModalEdicao('Não foi possível salvar a matrícula')
@@ -649,6 +548,7 @@ export default function PerfilAssociadoPage() {
       await apiDelete(`/matriculas/${matriculaParaExcluir.id}${forcar ? '?forcar=true' : ''}`)
       // A exclusão forçada leva as cobranças junto, então o extrato também precisa recarregar.
       await Promise.all([buscarAssociado(), buscarPagamentos()])
+      avisar('Matrícula excluída')
       fecharModalExclusao()
     } catch (erro) {
       // 409 = a matrícula tem histórico vinculado. Não é um erro sem saída: a
@@ -784,6 +684,7 @@ export default function PerfilAssociadoPage() {
         uf: ufEdit || undefined,
       })
       await buscarAssociado()
+      avisar('Dados salvos')
       fecharModalDados()
     } catch {
       setErroDados('Não foi possível salvar os dados. Verifique se o CPF ou email já estão em uso.')
@@ -802,13 +703,56 @@ export default function PerfilAssociadoPage() {
 
   const endereco = montarEndereco(associado)
 
+  // Em aberto = cobranças pendentes (canceladas não são dívida).
+  const pendentesAluna = pagamentos.filter((pagamento) => pagamento.status === 'PENDENTE')
+  const totalEmAberto = pendentesAluna.reduce((soma, pagamento) => soma + Number(pagamento.valor), 0)
+  const inicioHoje = new Date().setHours(0, 0, 0, 0)
+  const atrasadasAluna = pendentesAluna.filter(
+    (pagamento) => new Date(pagamento.vencimento).getTime() < inicioHoje
+  ).length
+
   return (
     <div className={styles.pagina}>
       <div className={styles.cabecalho}>
         <Avatar nome={associado.nome} fotoUrl={associado.fotoUrl} tamanho={64} />
-        <h1 className={styles.titulo}>{associado.nome}</h1>
+        <div className={styles.cabecalhoInfo}>
+          <h1 className={styles.titulo}>{associado.nome}</h1>
+          <div className={styles.cabecalhoMeta}>
+            <span className={`${styles.badge} ${associado.status === 'ATIVO' ? styles.badgeAtiva : styles.badgeInativa}`}>
+              {associado.status === 'ATIVO' ? 'Ativo' : 'Inativo'}
+            </span>
+            {carregandoPagamentos ? (
+              <span className={styles.emDia}>Calculando...</span>
+            ) : totalEmAberto > 0 ? (
+              <span className={styles.emAberto}>
+                Em aberto: {formatarMoeda(String(totalEmAberto))}
+                {atrasadasAluna > 0 &&
+                  ` · ${atrasadasAluna} ${atrasadasAluna === 1 ? 'atrasada' : 'atrasadas'}`}
+              </span>
+            ) : (
+              <span className={styles.emDia}>Em dia</span>
+            )}
+          </div>
+        </div>
+        <div className={styles.cabecalhoAcoes}>
+          <button
+            type="button"
+            className={styles.botaoPrimario}
+            onClick={registrarDoCabecalho}
+            disabled={carregandoPagamentos || pendentesAluna.length === 0}
+            title={pendentesAluna.length === 0 ? 'Não há cobranças pendentes' : undefined}
+          >
+            <CirclePlus size={18} aria-hidden="true" />
+            Registrar pagamento
+          </button>
+          <Link href={`/matriculas/nova?associadoId=${id}`} className={styles.botaoSecundarioLink}>
+            Nova matrícula
+          </Link>
+        </div>
       </div>
 
+      <div className={styles.colunas}>
+      <div className={styles.colunaEsq}>
       {/* Bloco 1 — Dados pessoais */}
       <div className={styles.card}>
         <div className={styles.cabecalhoSecao}>
@@ -1067,6 +1011,9 @@ export default function PerfilAssociadoPage() {
         )}
       </div>
 
+      </div>
+
+      <div className={styles.colunaDir}>
       {/* Bloco 3 — Extrato de pagamentos */}
       <div className={styles.card}>
         <div className={styles.cabecalhoSecao}>
@@ -1115,6 +1062,8 @@ export default function PerfilAssociadoPage() {
                         ? styles.statusPaga
                         : pagamento.status === 'CANCELADA'
                         ? styles.statusCancelada
+                        : estaAtrasado(pagamento)
+                        ? styles.statusAtrasada
                         : styles.statusPendente
                     }`}
                     title={
@@ -1127,12 +1076,14 @@ export default function PerfilAssociadoPage() {
                       ? 'Paga'
                       : pagamento.status === 'CANCELADA'
                       ? 'Cancelada'
+                      : estaAtrasado(pagamento)
+                      ? 'Atrasada'
                       : 'Pendente'}
                   </span>
                   {pagamento.status === 'PENDENTE' && (
                     <button
                       className={styles.botaoRegistrar}
-                      onClick={() => abrirModal({ id: pagamento.id, valor: pagamento.valor })}
+                      onClick={() => setPagamentoSelecionado(paraRegistrar(pagamento))}
                       title="Registrar pagamento"
                       aria-label={`Registrar pagamento de ${formatarMes(pagamento.mesReferencia)}`}
                     >
@@ -1197,11 +1148,12 @@ export default function PerfilAssociadoPage() {
         />
       </div>
 
+      </div>
+      </div>
+
       {/* Modal editar dados pessoais */}
       {modalDadosAberto && (
-        <div className={styles.overlay} onClick={fecharModalDados}>
-          <div className={`${styles.modal} ${styles.modalLargo}`} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitulo}>Editar dados pessoais</h3>
+        <ModalBase titulo="Editar dados pessoais" onFechar={fecharModalDados} larga>
 
             <div className={styles.campo}>
               <label htmlFor="nomeEdit">Nome</label>
@@ -1356,15 +1308,12 @@ export default function PerfilAssociadoPage() {
                 {enviandoDados ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
-          </div>
-        </div>
+        </ModalBase>
       )}
 
       {/* Modal alterar senha */}
       {modalSenhaAberto && (
-        <div className={styles.overlay} onClick={fecharModalSenha}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitulo}>Alterar senha</h3>
+        <ModalBase titulo="Alterar senha" onFechar={fecharModalSenha}>
 
             <div className={styles.campo}>
               <label htmlFor="novaSenha">Nova senha</label>
@@ -1402,15 +1351,12 @@ export default function PerfilAssociadoPage() {
                 {enviandoSenha ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
-          </div>
-        </div>
+        </ModalBase>
       )}
 
       {/* Modal editar matrícula */}
       {matriculaParaEditar && (
-        <div className={styles.overlay} onClick={fecharModalEdicao}>
-          <div className={`${styles.modal} ${styles.modalLargo}`} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitulo}>Editar matrícula</h3>
+        <ModalBase titulo="Editar matrícula" onFechar={fecharModalEdicao} larga>
 
             <div className={styles.campo}>
               <label htmlFor="exameModal">Exame médico</label>
@@ -1497,99 +1443,57 @@ export default function PerfilAssociadoPage() {
                 {enviandoEdicao ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
-          </div>
-        </div>
+        </ModalBase>
       )}
 
-      {/* Modal excluir matrícula */}
-      {matriculaParaExcluir && (
-        <div className={styles.overlay} onClick={fecharModalExclusao}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitulo}>Excluir matrícula</h3>
+      {/* Excluir matrícula */}
+      <ConfirmDialog
+        aberto={matriculaParaExcluir !== null}
+        titulo="Excluir matrícula"
+        mensagem={
+          vinculosParaApagar
+            ? `${vinculosParaApagar} Se você excluir mesmo assim, esse histórico é apagado junto: as presenças somem da frequência e as cobranças somem do financeiro. Essa ação não pode ser desfeita.`
+            : `Tem certeza que deseja excluir a matrícula em ${
+                matriculaParaExcluir?.turmas.map((turma) => turma.nome).join(', ') || 'turma não informada'
+              }? Essa ação não pode ser desfeita.`
+        }
+        confirmarLabel={vinculosParaApagar ? 'Excluir mesmo assim' : 'Excluir'}
+        carregando={excluindoMatricula}
+        erro={erroExclusao || null}
+        onConfirmar={() => confirmarExclusao(Boolean(vinculosParaApagar))}
+        onCancelar={fecharModalExclusao}
+      />
 
-            {vinculosParaApagar ? (
-              <p className={styles.mensagem}>
-                {vinculosParaApagar} Se você excluir mesmo assim, esse histórico
-                é apagado junto: as presenças somem da frequência e as cobranças
-                somem do financeiro. Essa ação não pode ser desfeita.
-              </p>
-            ) : (
-              <p className={styles.mensagem}>
-                Tem certeza que deseja excluir a matrícula em{' '}
-                {matriculaParaExcluir.turmas.map((turma) => turma.nome).join(', ') || 'turma não informada'}?
-                Essa ação não pode ser desfeita.
-              </p>
-            )}
-
-            {erroExclusao && <p className={styles.erroModal}>{erroExclusao}</p>}
-
-            <div className={styles.acoesModal}>
-              <button className={styles.botaoCancelar} onClick={fecharModalExclusao}>
-                Cancelar
-              </button>
-              <button
-                className={styles.botaoConfirmar}
-                onClick={() => confirmarExclusao(Boolean(vinculosParaApagar))}
-                disabled={excluindoMatricula}
-              >
-                {excluindoMatricula
-                  ? 'Excluindo...'
-                  : vinculosParaApagar
-                    ? 'Excluir mesmo assim'
-                    : 'Excluir'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal excluir associado */}
-      {modalExcluirAberto && (
-        <div className={styles.overlay} onClick={fecharModalExcluir}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitulo}>Excluir associado</h3>
-
-            {vinculosAssociadoParaApagar ? (
-              <p className={styles.mensagem}>
-                {vinculosAssociadoParaApagar}
-                {!bloqueioPermanenteAssociado &&
-                  ' Se você excluir mesmo assim, esse histórico é apagado junto e não pode ser recuperado.'}
-              </p>
-            ) : (
-              <p className={styles.mensagem}>
-                Tem certeza que deseja excluir {associado.nome}? Essa ação não pode ser desfeita.
-              </p>
-            )}
-
-            {erroExclusaoAssociado && <p className={styles.erroModal}>{erroExclusaoAssociado}</p>}
-
-            <div className={styles.acoesModal}>
-              <button className={styles.botaoCancelar} onClick={fecharModalExcluir}>
-                Cancelar
-              </button>
-              {!bloqueioPermanenteAssociado && (
-                <button
-                  className={styles.botaoConfirmar}
-                  onClick={() => confirmarExclusaoAssociado(Boolean(vinculosAssociadoParaApagar))}
-                  disabled={excluindoAssociado}
-                >
-                  {excluindoAssociado
-                    ? 'Excluindo...'
-                    : vinculosAssociadoParaApagar
-                      ? 'Excluir mesmo assim'
-                      : 'Excluir'}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Excluir associado */}
+      <ConfirmDialog
+        aberto={modalExcluirAberto}
+        titulo="Excluir associado"
+        mensagem={
+          vinculosAssociadoParaApagar
+            ? `${vinculosAssociadoParaApagar}${
+                bloqueioPermanenteAssociado
+                  ? ''
+                  : ' Se você excluir mesmo assim, esse histórico é apagado junto e não pode ser recuperado.'
+              }`
+            : `Tem certeza que deseja excluir ${associado.nome}? Essa ação não pode ser desfeita.`
+        }
+        confirmarLabel={
+          bloqueioPermanenteAssociado ? 'Entendi' : vinculosAssociadoParaApagar ? 'Excluir mesmo assim' : 'Excluir'
+        }
+        perigoso={!bloqueioPermanenteAssociado}
+        carregando={excluindoAssociado}
+        erro={erroExclusaoAssociado || null}
+        onConfirmar={() =>
+          bloqueioPermanenteAssociado
+            ? fecharModalExcluir()
+            : confirmarExclusaoAssociado(Boolean(vinculosAssociadoParaApagar))
+        }
+        onCancelar={fecharModalExcluir}
+      />
 
       {/* Modal gerar mensalidade avulsa */}
       {modalGerarAberto && (
-        <div className={styles.overlay} onClick={() => setModalGerarAberto(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitulo}>Gerar mensalidade</h3>
+        <ModalBase titulo="Gerar mensalidade" onFechar={() => setModalGerarAberto(false)}>
 
             <div className={styles.campo}>
               <label htmlFor="matriculaGerar">Matrícula</label>
@@ -1654,177 +1558,58 @@ export default function PerfilAssociadoPage() {
                 {gerandoMensalidade ? 'Gerando...' : 'Gerar'}
               </button>
             </div>
-          </div>
-        </div>
+        </ModalBase>
       )}
 
-      {/* Modal registrar pagamento */}
-      {pagamentoSelecionado && (
-        <div className={styles.overlay} onClick={fecharModal}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitulo}>Registrar pagamento</h3>
-
-            <div className={styles.campo}>
-              <label htmlFor="formaPagamento">Forma de pagamento</label>
-              <select
-                id="formaPagamento"
-                value={formaPagamentoModal}
-                onChange={(e) => {
-                  const forma = e.target.value as FormaPagamento
-                  setFormaPagamentoModal(forma)
-                  if (forma === 'ABONADO') setValorModal('0')
-                }}
-              >
-                <option value="DINHEIRO">Dinheiro</option>
-                <option value="PIX">Pix</option>
-                <option value="CARTAO">Cartão</option>
-                <option value="ABONADO">Abonado</option>
-              </select>
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="dataPagamento">Data do pagamento</label>
-              <input
-                type="date"
-                id="dataPagamento"
-                value={dataPagamentoModal}
-                onChange={(e) => setDataPagamentoModal(e.target.value)}
-              />
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="valorPago">Valor</label>
-              <input
-                type="number"
-                id="valorPago"
-                value={formaPagamentoModal === 'ABONADO' ? '0' : valorModal}
-                disabled={formaPagamentoModal === 'ABONADO'}
-                onChange={(e) => setValorModal(e.target.value)}
-              />
-            </div>
-
-            {erroModal && <p className={styles.erroModal}>{erroModal}</p>}
-
-            <div className={styles.acoesModal}>
-              <button className={styles.botaoCancelar} onClick={fecharModal}>
-                Cancelar
-              </button>
-              <button className={styles.botaoConfirmar} onClick={confirmarRegistro} disabled={enviando}>
-                {enviando ? 'Salvando...' : 'Confirmar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal corrigir pagamento */}
-      {pagamentoEditando && (
-        <div className={styles.overlay} onClick={fecharModalEdicaoPagamento}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitulo}>Corrigir pagamento</h3>
-
-            <div className={styles.campo}>
-              <label htmlFor="valorEdicaoPagamento">Valor</label>
-              <input
-                type="number"
-                id="valorEdicaoPagamento"
-                step="0.01"
-                min="0"
-                value={formaPagamentoEdicao === 'ABONADO' ? '0' : valorEdicao}
-                disabled={formaPagamentoEdicao === 'ABONADO'}
-                onChange={(e) => setValorEdicao(e.target.value)}
-              />
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="formaPagamentoEdicao">Forma de pagamento</label>
-              <select
-                id="formaPagamentoEdicao"
-                value={formaPagamentoEdicao}
-                onChange={(e) => {
-                  const forma = e.target.value as FormaPagamento | ''
-                  setFormaPagamentoEdicao(forma)
-                  if (forma === 'ABONADO') setValorEdicao('0')
-                }}
-              >
-                <option value="">— não informada —</option>
-                <option value="DINHEIRO">Dinheiro</option>
-                <option value="PIX">Pix</option>
-                <option value="CARTAO">Cartão</option>
-                <option value="ABONADO">Abonado</option>
-              </select>
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="mesReferenciaEdicao">Mês</label>
-              <input
-                type="month"
-                id="mesReferenciaEdicao"
-                value={mesReferenciaEdicao}
-                onChange={(e) => setMesReferenciaEdicao(e.target.value)}
-              />
-            </div>
-
-            <div className={styles.campo}>
-              <label htmlFor="vencimentoEdicao">Vencimento</label>
-              <input
-                type="date"
-                id="vencimentoEdicao"
-                value={vencimentoEdicao}
-                onChange={(e) => setVencimentoEdicao(e.target.value)}
-              />
-            </div>
-
-            {pagamentoEditando.status === 'PAGA' && (
-              <div className={styles.campo}>
-                <label htmlFor="dataPagamentoEdicao">Data do pagamento</label>
-                <input
-                  type="date"
-                  id="dataPagamentoEdicao"
-                  value={dataPagamentoEdicao}
-                  onChange={(e) => setDataPagamentoEdicao(e.target.value)}
-                />
-              </div>
-            )}
-
-            {erroEdicaoPagamento && <p className={styles.erroModal}>{erroEdicaoPagamento}</p>}
-
-            <div className={styles.acoesModal}>
-              <button
-                className={styles.botaoCancelar}
-                onClick={fecharModalEdicaoPagamento}
-                disabled={enviandoEdicaoPagamento}
-              >
-                Cancelar
-              </button>
-              <button
-                className={styles.botaoConfirmar}
-                onClick={confirmarEdicaoPagamento}
-                disabled={enviandoEdicaoPagamento}
-              >
-                {enviandoEdicaoPagamento ? 'Salvando...' : 'Salvar correção'}
-              </button>
-            </div>
-
-            {pagamentoEditando.status === 'PAGA' && (
-              <div className={styles.blocoDesfazer}>
-                <p className={styles.textoDesfazer}>
-                  {confirmandoDesfazer
-                    ? 'Tem certeza? Esta cobrança volta a ficar pendente, sem data nem forma de pagamento.'
-                    : 'Registrou o pagamento no mês errado? Desfaça aqui e depois registre no mês certo.'}
-                </p>
+      {/* Escolher qual cobrança registrar (quando há mais de uma em aberto) */}
+      {escolhendoPagamento && (
+        <ModalBase titulo="Registrar pagamento" onFechar={() => setEscolhendoPagamento(false)} sujo={false}>
+          <p className={styles.explicacaoModal}>Há mais de uma cobrança em aberto. Escolha qual registrar:</p>
+          <ul className={styles.listaEscolha}>
+            {pendentesAluna.map((pagamento) => (
+              <li key={pagamento.id} className={styles.itemEscolha}>
+                <div>
+                  <strong>{formatarMes(pagamento.mesReferencia)}</strong>
+                  <span className={styles.detalhe}>
+                    {pagamento.matricula.turmas.map((turma) => turma.nome).join(', ')} · vence em{' '}
+                    {formatarData(pagamento.vencimento)}
+                  </span>
+                </div>
                 <button
-                  className={styles.botaoDesfazer}
-                  onClick={confirmandoDesfazer ? desfazerPagamento : () => setConfirmandoDesfazer(true)}
-                  disabled={enviandoEdicaoPagamento}
+                  type="button"
+                  className={styles.botaoPrimario}
+                  onClick={() => {
+                    setEscolhendoPagamento(false)
+                    setPagamentoSelecionado(paraRegistrar(pagamento))
+                  }}
                 >
-                  {confirmandoDesfazer ? 'Sim, desfazer pagamento' : 'Desfazer pagamento'}
+                  {formatarMoeda(pagamento.valor)} · Registrar
                 </button>
-              </div>
-            )}
-          </div>
-        </div>
+              </li>
+            ))}
+          </ul>
+        </ModalBase>
       )}
+
+      <ModalRegistrarPagamento
+        pagamento={pagamentoSelecionado}
+        onFechar={() => setPagamentoSelecionado(null)}
+        onRegistrado={async () => {
+          avisar('Pagamento registrado')
+          await buscarPagamentos()
+        }}
+      />
+
+      <ModalCorrigirPagamento
+        pagamento={pagamentoEditando}
+        onFechar={() => setPagamentoEditando(null)}
+        onSalvo={async (acao) => {
+          avisar(acao === 'desfeito' ? 'Pagamento desfeito' : 'Correção salva')
+          await buscarPagamentos()
+        }}
+      />
+
+      {toast}
     </div>
   )
 }

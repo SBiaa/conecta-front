@@ -242,6 +242,7 @@ export default function PostInteracoes({
           <form className={styles.form} onSubmit={comentar}>
             <input
               className={styles.campo}
+              aria-label="Escreva um comentário"
               placeholder="Escreva um comentário..."
               maxLength={LIMITE_COMENTARIO}
               value={texto}

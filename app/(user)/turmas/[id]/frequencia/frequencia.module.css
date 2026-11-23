@@ -79,12 +79,12 @@
 }
 
 .percentualOk {
-  color: var(--success);
+  color: var(--success-text);
   background-color: #e8f5e9;
 }
 
 .percentualAtencao {
-  color: var(--warning);
+  color: var(--warning-text);
   background-color: #fff3e0;
 }
 
@@ -127,4 +127,14 @@
 .mensagemErro {
   font-size: 1rem;
   color: var(--danger);
+}
+
+.voltarTurmas {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
 }

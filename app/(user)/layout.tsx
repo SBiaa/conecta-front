@@ -29,7 +29,11 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   }, [router])
 
   if (!papel) {
-    return null
+    return (
+      <div className={styles.carregando} role="status">
+        Carregando...
+      </div>
+    )
   }
 
   return (
