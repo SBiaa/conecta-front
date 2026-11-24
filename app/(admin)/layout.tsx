@@ -7,7 +7,7 @@ import MenuAdmin from '../components/MenuAdmin'
 import styles from './layout.module.css'
 
 // Telas de tabela/lista larga ocupam o espaço todo; as demais ficam na coluna de 960px.
-const ROTAS_LARGAS = new RegExp('^/(associados|financeiro|frequencia)(/|$)')
+const ROTAS_LARGAS = new RegExp('^/(associados|financeiro|frequencia|projetos/[^/]+/turmas)(/|$)')
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()

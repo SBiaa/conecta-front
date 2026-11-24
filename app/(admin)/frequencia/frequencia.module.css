@@ -1,23 +1,63 @@
+/* Visão geral de Frequência: aulas de hoje no topo, todas as turmas por
+   projeto embaixo e, ao lado, as alunas que estão faltando muito. */
+
 .pagina {
   min-height: 100vh;
-  padding: 2rem;
+  padding: 1.75rem 2.5rem 2.5rem;
   background-color: var(--background);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   gap: 1rem;
-  margin-bottom: 1.5rem;
-  max-width: 720px;
 }
 
 .titulo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
+}
+
+.data {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.busca {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  width: 320px;
+  max-width: 100%;
+  padding: 0 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background-color: #ffffff;
+  color: var(--text-secondary);
+}
+
+.busca:focus-within {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.busca input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: inherit;
+  color: var(--text-primary);
 }
 
 .mensagem {
@@ -25,54 +65,300 @@
   font-size: 1rem;
 }
 
-.grupo {
-  max-width: 720px;
-  margin-bottom: 1.5rem;
+.corpo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-start;
 }
 
-.subtitulo {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin: 0 0 0.6rem;
+.colunaPrincipal {
+  flex: 1 1 600px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.lista {
+.secao {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
 }
 
-.item {
+.secaoTopo {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: baseline;
   gap: 0.75rem;
-  background-color: #ffffff;
-  padding: 1rem 1.25rem;
-  border-radius: var(--radius-m);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
-  text-decoration: none;
-  transition: box-shadow 0.2s, background-color 0.2s;
 }
 
-.item:hover {
-  background-color: var(--primary-soft);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.nome {
-  font-size: 1rem;
+.subtitulo {
+  font-size: 1.3rem;
   font-weight: 600;
-  color: var(--text-primary);
+  margin: 0;
+}
+
+.subtituloMenor {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.secaoDetalhe {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-secondary);
 }
 
 .detalhe {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
+}
+
+.nomeTurma {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+/* -- aulas de hoje -- */
+
+.gradeHoje {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.cartaoHoje {
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent-hidro);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: 0 1px 2px rgba(11, 22, 32, .04), 0 6px 18px rgba(11, 22, 32, .05);
+}
+
+.cartaoHojeTopo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hora {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.35rem;
+}
+
+.status {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.statusFeita {
+  background-color: var(--success-soft);
+  color: var(--success-text);
+}
+
+.statusPendente {
+  background-color: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.resumoHoje {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.botaoPrimario,
+.botaoSecundario {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 0.875rem;
+  text-decoration: none;
+  margin-top: auto;
+}
+
+.botaoPrimario {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.botaoPrimario:hover {
+  background-color: var(--primary-dark);
+}
+
+.botaoSecundario {
+  background-color: #ffffff;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+}
+
+.botaoSecundario:hover {
+  background-color: var(--primary-soft);
+}
+
+/* -- todas as turmas -- */
+
+.gradeProjetos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.cartaoProjeto {
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.cartaoProjetoTopo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background-color: #f7faf9;
+}
+
+.bolinha {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  flex: 0 0 10px;
+}
+
+.nomeProjeto {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.listaTurmas {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+}
+
+.linhaTurma,
+.linhaAtencao {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 1rem;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.linhaTurma:hover,
+.linhaAtencao:hover {
+  background-color: var(--primary-soft);
+}
+
+.linhaTexto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.presenca {
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.percentual {
+  font-weight: 800;
+  font-size: 0.875rem;
+}
+
+.barra {
+  display: block;
+  width: 72px;
+  height: 5px;
+  border-radius: 9px;
+  background-color: #eef2f1;
+  overflow: hidden;
+}
+
+.barraCheia {
+  display: block;
+  height: 5px;
+}
+
+.faixa_ok { color: var(--success-text); }
+.faixa_atencao { color: var(--warning-text); }
+.faixa_critico { color: var(--danger); }
+.faixa_semDados { color: var(--text-secondary); }
+
+.fundo_ok { background-color: var(--success); }
+.fundo_atencao { background-color: var(--warning); }
+.fundo_critico { background-color: var(--danger); }
+.fundo_semDados { background-color: transparent; }
+
+/* -- precisam de atenção -- */
+
+.atencao {
+  flex: 0 1 320px;
+  min-width: 280px;
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 1px 2px rgba(11, 22, 32, .04), 0 8px 24px rgba(11, 22, 32, .06);
+}
+
+.listaAtencao {
+  list-style: none;
+  margin: 0 -0.6rem;
+  padding: 0;
+}
+
+.linhaAtencao {
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+}
+
+.pilulaCritica {
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--danger-soft);
+  color: var(--danger);
+}
+
+@media (max-width: 767px) {
+  .pagina {
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  .titulo {
+    font-size: 1.6rem;
+  }
+
+  .atencao {
+    flex-basis: 100%;
+  }
 }
