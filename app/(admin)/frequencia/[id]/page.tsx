@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Check, ChevronLeft, ChevronRight, CircleCheck, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, CircleCheck, Eraser } from 'lucide-react'
+import { descreverQuando } from '../../../lib/frequencia-resumo'
 import { apiGet, apiPost } from '../../../lib/api'
 import styles from './frequencia.module.css'
 
@@ -39,6 +40,15 @@ type AlunaChamada = {
 }
 
 const DIAS_SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
+const DIA_POR_INDICE = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO']
+const QTD_RESUMO = 5
+
+type InfoTurma = {
+  dias: string[]
+  horario: string | null
+  projeto: { id: number; nome: string } | null
+  professor: { id: string; nome: string } | null
+}
 
 function paraISO(ano: number, mes: number, dia: number): string {
   return `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
@@ -61,6 +71,8 @@ export default function FrequenciaTurmaAdminPage() {
 
   const [frequencia, setFrequencia] = useState<Frequencia | null>(null)
   const [erro, setErro] = useState('')
+  const [infoTurma, setInfoTurma] = useState<InfoTurma | null>(null)
+  const [verTodasNoResumo, setVerTodasNoResumo] = useState(false)
 
   const hoje = useMemo(() => new Date(), [])
   const [mesAtual, setMesAtual] = useState({ ano: hoje.getFullYear(), mes: hoje.getMonth() })
@@ -79,6 +91,10 @@ export default function FrequenciaTurmaAdminPage() {
       .then(setFrequencia)
       .catch(() => setErro('Não foi possível carregar a frequência.'))
   }
+
+  useEffect(() => {
+    apiGet<InfoTurma>(`/turmas/${id}`).then(setInfoTurma).catch(() => {})
+  }, [id])
 
   useEffect(() => {
     carregarFrequencia()
@@ -163,6 +179,13 @@ export default function FrequenciaTurmaAdminPage() {
     setSujo(true)
   }
 
+  function limparMarcacoes() {
+    setAlunasDia((atual) => atual.map((aluna) => ({ ...aluna, presente: null })))
+    setSucessoDia(false)
+    setErroDia('')
+    setSujo(true)
+  }
+
   async function salvarDia() {
     if (!diaSelecionado) return
     const semMarcacao = alunasDia.filter((aluna) => aluna.presente === null).length
@@ -217,130 +240,67 @@ export default function FrequenciaTurmaAdminPage() {
   const totalMarcadas = alunasDia.filter((aluna) => aluna.presente !== null).length
   const diaTemRegistro = diaSelecionado ? datasComRegistro.has(diaSelecionado) : false
   const ehHoje = diaSelecionado === hojeISO
+  const presentesMarcadas = alunasDia.filter((aluna) => aluna.presente === true).length
+
+  // Dia de aula da turma que já passou (ou é hoje) e ainda não tem chamada.
+  const diasDeAula = new Set(infoTurma?.dias ?? [])
+  function ehDiaDeAulaSemChamada(iso: string, dia: number): boolean {
+    if (datasComRegistro.has(iso) || iso > hojeISO) return false
+    return diasDeAula.has(DIA_POR_INDICE[new Date(mesAtual.ano, mesAtual.mes, dia).getDay()])
+  }
+
+  const resumoOrdenado = frequencia
+    ? [...frequencia.alunas].sort(
+        (a, b) => (a.percentualPresenca ?? 101) - (b.percentualPresenca ?? 101) || a.nome.localeCompare(b.nome)
+      )
+    : []
+  const resumoVisivel = verTodasNoResumo ? resumoOrdenado : resumoOrdenado.slice(0, QTD_RESUMO)
+  const comRegistro = resumoOrdenado.filter((a) => a.percentualPresenca !== null)
+  const mediaTurma = comRegistro.length
+    ? Math.round(comRegistro.reduce((soma, a) => soma + (a.percentualPresenca ?? 0), 0) / comRegistro.length)
+    : null
+
+  const subtitulo = [
+    infoTurma ? descreverQuando(infoTurma.dias, infoTurma.horario) : '',
+    infoTurma?.professor ? `Profª ${infoTurma.professor.nome}` : '',
+    frequencia ? `${frequencia.alunas.length} alunas` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+  const linkTurma = infoTurma?.projeto
+    ? `/projetos/${infoTurma.projeto.id}/turmas?turma=${id}`
+    : `/turmas/${id}/alunas`
 
   return (
     <div className={styles.pagina}>
-      <div className={styles.header}>
-        <h1 className={styles.titulo}>
-          {frequencia ? `Frequência — ${frequencia.turma.nome}` : 'Frequência'}
-        </h1>
-        <Link href={`/turmas/${id}/alunas`} className={styles.botaoVoltar}>
+      <header className={styles.header}>
+        <div className={styles.headerTexto}>
+          <span className={styles.trilha}>
+            <Link href="/frequencia">Frequência</Link>
+            {infoTurma?.projeto ? ` / ${infoTurma.projeto.nome}` : ''}
+          </span>
+          <h1 className={styles.titulo}>{frequencia ? frequencia.turma.nome : 'Frequência'}</h1>
+          {subtitulo && <span className={styles.subtituloTurma}>{subtitulo}</span>}
+        </div>
+        <Link href={linkTurma} className={styles.botaoVoltar}>
           Ver turma
         </Link>
-      </div>
+      </header>
 
       {erro && <p className={styles.mensagemErro}>{erro}</p>}
       {!erro && !frequencia && <p className={styles.mensagem}>Carregando...</p>}
 
       {!erro && frequencia && (
         <div className={styles.corpo}>
-          {/* Lançamento: fica no topo, com o dia de hoje já selecionado */}
-          {diaSelecionado && (
-            <section className={styles.painelDia} aria-label="Lançar chamada">
-              <div className={styles.cabecalhoDia}>
-                <h2 className={styles.tituloDia}>
-                  Chamada de {formatarDataDDMM(diaSelecionado)}
-                  {ehHoje ? ' (hoje)' : ''}
-                </h2>
-                <span
-                  className={`${styles.etiquetaDia} ${
-                    diaTemRegistro ? styles.etiquetaComRegistro : styles.etiquetaSemRegistro
-                  }`}
-                >
-                  {diaTemRegistro ? 'Chamada registrada' : 'Sem registro'}
-                </span>
-              </div>
-
-              {carregandoDia && <p className={styles.mensagem}>Carregando...</p>}
-              {!carregandoDia && erroDia && alunasDia.length === 0 && (
-                <p className={styles.mensagemErro}>{erroDia}</p>
-              )}
-
-              {!carregandoDia && alunasDia.length === 0 && !erroDia && (
-                <p className={styles.mensagem}>Nenhuma aluna ativa nesta turma.</p>
-              )}
-
-              {!carregandoDia && alunasDia.length > 0 && (
-                <>
-                  <div className={styles.acoesEmMassa}>
-                    <button type="button" className={styles.botaoMassa} onClick={() => marcarTodas(true)}>
-                      <Check size={16} aria-hidden="true" /> Todas presentes
-                    </button>
-                    <button type="button" className={styles.botaoMassa} onClick={() => marcarTodas(false)}>
-                      <X size={16} aria-hidden="true" /> Todas ausentes
-                    </button>
-                    <span className={styles.contagemMarcadas}>
-                      {totalMarcadas} de {alunasDia.length} marcadas
-                    </span>
-                  </div>
-
-                  <ul className={styles.lista}>
-                    {alunasDia.map((aluna) => (
-                      <li key={aluna.matriculaId} className={styles.item}>
-                        <div>
-                          <span className={styles.nome}>{aluna.nome}</span>
-                          {aluna.presente === null && <span className={styles.detalhe}>Sem marcação</span>}
-                        </div>
-                        <div className={styles.opcoes} role="group" aria-label={`Presença de ${aluna.nome}`}>
-                          <button
-                            type="button"
-                            aria-pressed={aluna.presente === true}
-                            className={`${styles.opcao} ${aluna.presente === true ? styles.opcaoPresente : ''}`}
-                            onClick={() => marcar(aluna.matriculaId, true)}
-                          >
-                            <Check size={15} aria-hidden="true" /> Presente
-                          </button>
-                          <button
-                            type="button"
-                            aria-pressed={aluna.presente === false}
-                            className={`${styles.opcao} ${aluna.presente === false ? styles.opcaoAusente : ''}`}
-                            onClick={() => marcar(aluna.matriculaId, false)}
-                          >
-                            <X size={15} aria-hidden="true" /> Ausente
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {erroDia && <p className={styles.mensagemErro}>{erroDia}</p>}
-
-                  <div className={styles.rodapeDia}>
-                    <button className={styles.botaoSalvar} onClick={salvarDia} disabled={salvando}>
-                      {salvando ? 'Salvando...' : 'Salvar chamada'}
-                    </button>
-                    {sujo && !salvando && <span className={styles.aviso}>Alterações não salvas</span>}
-                    {sucessoDia && (
-                      <span className={styles.sucesso}>
-                        <CircleCheck size={16} aria-hidden="true" /> Chamada salva
-                      </span>
-                    )}
-                  </div>
-                </>
-              )}
-            </section>
-          )}
-
-          <section className={styles.colunaLateral}>
-            <h2 className={styles.tituloSecao}>Calendário</h2>
-
-            <div className={styles.calendario}>
+          <div className={styles.colunaLateral}>
+            <section className={styles.cartao} aria-label="Calendário">
               <div className={styles.calendarioHeader}>
-                <button
-                  type="button"
-                  onClick={() => mudarMes(-1)}
-                  className={styles.botaoMes}
-                  aria-label="Mês anterior"
-                >
+                <button type="button" onClick={() => mudarMes(-1)} className={styles.botaoMes} aria-label="Mês anterior">
                   <ChevronLeft size={18} />
                 </button>
                 <span className={styles.nomeMes}>{nomeMes}</span>
-                <button
-                  type="button"
-                  onClick={() => mudarMes(1)}
-                  className={styles.botaoMes}
-                  aria-label="Próximo mês"
-                >
+                <button type="button" onClick={() => mudarMes(1)} className={styles.botaoMes} aria-label="Próximo mês">
                   <ChevronRight size={18} />
                 </button>
               </div>
@@ -356,6 +316,7 @@ export default function FrequenciaTurmaAdminPage() {
                   if (dia === null) return <span key={index} className={styles.celulaVazia} />
                   const iso = paraISO(mesAtual.ano, mesAtual.mes, dia)
                   const temRegistro = datasComRegistro.has(iso)
+                  const pendente = ehDiaDeAulaSemChamada(iso, dia)
                   const selecionado = iso === diaSelecionado
                   return (
                     <button
@@ -364,43 +325,173 @@ export default function FrequenciaTurmaAdminPage() {
                       onClick={() => escolherDia(iso)}
                       aria-pressed={selecionado}
                       className={`${styles.celula} ${temRegistro ? styles.celulaComRegistro : ''} ${
-                        selecionado ? styles.celulaSelecionada : ''
-                      } ${iso === hojeISO ? styles.celulaHoje : ''}`}
+                        pendente ? styles.celulaPendente : ''
+                      } ${selecionado ? styles.celulaSelecionada : ''} ${iso === hojeISO ? styles.celulaHoje : ''}`}
                     >
                       {dia}
                     </button>
                   )
                 })}
               </div>
-            </div>
 
-            <h2 className={styles.tituloSecao}>Resumo da turma</h2>
-            {frequencia.alunas.length === 0 ? (
-              <p className={styles.mensagem}>Nenhuma aluna ativa nesta turma.</p>
-            ) : (
-              <ul className={styles.lista}>
-                {frequencia.alunas.map((aluna) => (
-                  <li key={aluna.matriculaId} className={styles.item}>
-                    <div>
-                      <span className={styles.nome}>{aluna.nome}</span>
-                      <span className={styles.detalhe}>
-                        {aluna.totalRegistros === 0
-                          ? 'Sem chamadas registradas'
-                          : `${aluna.faltas} ${aluna.faltas === 1 ? 'falta' : 'faltas'} em ${aluna.totalRegistros}`}
-                      </span>
-                    </div>
-                    <span
-                      className={`${styles.percentual} ${styles[classePercentual(aluna.percentualPresenca)]}`}
-                    >
-                      {aluna.percentualPresenca === null ? '—' : `${aluna.percentualPresenca}%`}
+              <div className={styles.legenda}>
+                <span>
+                  <span className={`${styles.amostra} ${styles.amostraRegistro}`} />
+                  Chamada registrada
+                </span>
+                {infoTurma?.dias?.length ? (
+                  <span>
+                    <span className={`${styles.amostra} ${styles.amostraPendente}`} />
+                    Dia de aula sem chamada
+                  </span>
+                ) : null}
+                <span>
+                  <span className={`${styles.amostra} ${styles.amostraSelecionado}`} />
+                  Dia selecionado
+                </span>
+              </div>
+            </section>
+
+            <section className={styles.cartao} aria-label="Resumo da turma">
+              <div className={styles.resumoTopo}>
+                <h2 className={styles.tituloCartao}>Resumo da turma</h2>
+                {mediaTurma !== null && (
+                  <span className={`${styles.media} ${styles[classePercentual(mediaTurma)]}`}>média {mediaTurma}%</span>
+                )}
+              </div>
+              {frequencia.alunas.length === 0 ? (
+                <p className={styles.mensagem}>Nenhuma aluna ativa nesta turma.</p>
+              ) : (
+                <>
+                  <span className={styles.detalhe}>Menor presença primeiro</span>
+                  <ul className={styles.listaResumo}>
+                    {resumoVisivel.map((aluna) => (
+                      <li key={aluna.matriculaId} className={styles.itemResumo}>
+                        <div className={styles.itemResumoTexto}>
+                          <span className={styles.nomeResumo}>{aluna.nome}</span>
+                          <span className={styles.detalhe}>
+                            {aluna.totalRegistros === 0
+                              ? 'Sem chamadas registradas'
+                              : aluna.faltas === 0
+                                ? `Nenhuma falta em ${aluna.totalRegistros}`
+                                : `${aluna.faltas} ${aluna.faltas === 1 ? 'falta' : 'faltas'} em ${aluna.totalRegistros}`}
+                          </span>
+                        </div>
+                        <span className={`${styles.percentual} ${styles[classePercentual(aluna.percentualPresenca)]}`}>
+                          {aluna.percentualPresenca === null ? '—' : `${aluna.percentualPresenca}%`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {resumoOrdenado.length > QTD_RESUMO && (
+                    <button type="button" className={styles.botaoLink} onClick={() => setVerTodasNoResumo((v) => !v)}>
+                      {verTodasNoResumo ? 'Mostrar só as que mais faltam' : `Ver todas as ${resumoOrdenado.length} alunas`}
+                    </button>
+                  )}
+                </>
+              )}
+            </section>
+          </div>
+
+          {diaSelecionado && (
+            <section className={`${styles.cartao} ${styles.painelDia}`} aria-label="Lançar chamada">
+              <div className={styles.cabecalhoDia}>
+                <div className={styles.cabecalhoDiaTitulo}>
+                  <h2 className={styles.tituloDia}>
+                    Chamada de {formatarDataDDMM(diaSelecionado)}
+                    {ehHoje ? ' (hoje)' : ''}
+                  </h2>
+                  <span
+                    className={`${styles.etiquetaDia} ${
+                      diaTemRegistro ? styles.etiquetaComRegistro : styles.etiquetaSemRegistro
+                    }`}
+                  >
+                    {diaTemRegistro ? 'Chamada registrada' : 'Sem registro'}
+                  </span>
+                </div>
+                {!carregandoDia && alunasDia.length > 0 && (
+                  <div className={styles.acoesEmMassa}>
+                    <button type="button" className={styles.botaoMassa} onClick={() => marcarTodas(true)}>
+                      <Check size={16} aria-hidden="true" /> Todas presentes
+                    </button>
+                    <button type="button" className={styles.botaoMassa} onClick={limparMarcacoes}>
+                      <Eraser size={16} aria-hidden="true" /> Limpar
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {carregandoDia && <p className={styles.mensagemPainel}>Carregando...</p>}
+              {!carregandoDia && erroDia && alunasDia.length === 0 && (
+                <p className={`${styles.mensagemPainel} ${styles.mensagemErro}`}>{erroDia}</p>
+              )}
+              {!carregandoDia && alunasDia.length === 0 && !erroDia && (
+                <p className={styles.mensagemPainel}>Nenhuma aluna ativa nesta turma.</p>
+              )}
+
+              {!carregandoDia && alunasDia.length > 0 && (
+                <>
+                  <ul className={styles.listaChamada}>
+                    {alunasDia.map((aluna) => (
+                      <li
+                        key={aluna.matriculaId}
+                        className={`${styles.itemChamada} ${
+                          aluna.presente === true ? styles.itemPresente : aluna.presente === false ? styles.itemAusente : ''
+                        }`}
+                      >
+                        <span className={styles.nomeChamada}>{aluna.nome}</span>
+                        <div className={styles.opcoes} role="group" aria-label={`Presença de ${aluna.nome}`}>
+                          <button
+                            type="button"
+                            aria-pressed={aluna.presente === true}
+                            aria-label="Presente"
+                            title="Presente"
+                            className={`${styles.opcao} ${styles.opcaoP} ${aluna.presente === true ? styles.opcaoPresente : ''}`}
+                            onClick={() => marcar(aluna.matriculaId, true)}
+                          >
+                            P
+                          </button>
+                          <button
+                            type="button"
+                            aria-pressed={aluna.presente === false}
+                            aria-label="Ausente"
+                            title="Ausente"
+                            className={`${styles.opcao} ${styles.opcaoF} ${aluna.presente === false ? styles.opcaoAusente : ''}`}
+                            onClick={() => marcar(aluna.matriculaId, false)}
+                          >
+                            F
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className={styles.rodapeDia}>
+                    <button className={styles.botaoSalvar} onClick={salvarDia} disabled={salvando}>
+                      {salvando ? 'Salvando...' : 'Salvar chamada'}
+                    </button>
+                    <span className={styles.contagemMarcadas}>
+                      {totalMarcadas === 0
+                        ? 'Nenhuma aluna marcada ainda'
+                        : `${totalMarcadas} de ${alunasDia.length} marcadas · ${presentesMarcadas} ${
+                            presentesMarcadas === 1 ? 'presente' : 'presentes'
+                          }`}
                     </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                    {sujo && !salvando && <span className={styles.aviso}>Alterações não salvas</span>}
+                    {sucessoDia && (
+                      <span className={styles.sucesso}>
+                        <CircleCheck size={16} aria-hidden="true" /> Chamada salva
+                      </span>
+                    )}
+                    {erroDia && <span className={styles.mensagemErro}>{erroDia}</span>}
+                  </div>
+                </>
+              )}
+            </section>
+          )}
         </div>
       )}
     </div>
   )
 }
+
