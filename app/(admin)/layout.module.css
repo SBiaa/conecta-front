@@ -19,3 +19,9 @@
     max-width: 960px;
   }
 }
+
+@media (min-width: 768px) {
+  .conteudo.larga {
+    max-width: 1320px;
+  }
+}

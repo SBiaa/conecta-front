@@ -50,13 +50,13 @@
 }
 
 .rotulo {
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .rotuloPequeno {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-primary);
 }

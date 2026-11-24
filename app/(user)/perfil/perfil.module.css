@@ -39,7 +39,7 @@
 }
 
 .campo dt {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -92,7 +92,7 @@
 
 .resumoTitulo {
   margin: 0 0 0.75rem;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--primary);
   text-transform: uppercase;
@@ -125,7 +125,7 @@
 
 .resumoNota {
   display: block;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 

@@ -11,6 +11,8 @@ import {
   CAMPOS_BALANCA,
   CAMPOS_MEDIDA,
   faixaImc,
+  fraseFrequencia,
+  frasePeso,
   LABELS_LOCAL_DOR,
   type Relatorio,
   ROTULOS_DISPOSICAO,
@@ -38,7 +40,7 @@ function formatarDDMM(iso: string): string {
 function classeSituacao(situacao: string | null): string {
   if (situacao === 'OTIMA' || situacao === 'BOA') return styles.seloOk
   if (situacao === 'ATENCAO') return styles.seloAtencao
-  if (situacao === 'BAIXA') return styles.seloCritico
+  if (situacao === 'BAIXA') return styles.seloBaixa
   return styles.seloSemDados
 }
 
@@ -74,6 +76,7 @@ function CartaoComposicao({ relatorio }: { relatorio: Relatorio }) {
       <GraficoLinha
         serie={relatorio.composicao.percentualGordura.serie}
         unidade="%"
+        titulo="Gordura corporal (%) neste mês"
         faixaMinima={2}
       />
     </section>
@@ -159,7 +162,7 @@ export default function MeuProgressoPage() {
       </div>
 
       <p className={styles.aviso}>
-        <Lock size={13} />
+        <Lock size={16} />
         Sua professora registra sua saúde do dia (peso, disposição, dor) durante a aula, na balança
         da turma. Fica visível pra você, pra ela e pra coordenação — pra poderem adaptar os
         exercícios.
@@ -177,6 +180,10 @@ export default function MeuProgressoPage() {
                 {rotuloSituacao(relatorio.frequencia.situacao)}
               </span>
             </div>
+
+            {fraseFrequencia(relatorio.frequencia.situacao) && relatorio.frequencia.totalAulas > 0 && (
+              <p className={styles.incentivo}>{fraseFrequencia(relatorio.frequencia.situacao)}</p>
+            )}
 
             {relatorio.frequencia.totalAulas === 0 ? (
               <p className={styles.vazio}>Nenhuma chamada registrada neste mês.</p>
@@ -292,7 +299,7 @@ export default function MeuProgressoPage() {
 
                   {relatorio.peso.variacao !== null && relatorio.peso.variacao !== 0 && (
                     <p className={styles.detalhe}>
-                      {comSinal(relatorio.peso.variacao)} kg desde o começo do mês
+                      {frasePeso(relatorio.peso.variacao)}
                     </p>
                   )}
 
@@ -303,7 +310,12 @@ export default function MeuProgressoPage() {
                     </p>
                   )}
 
-                  <GraficoLinha serie={relatorio.peso.serie} unidade="kg" faixaMinima={2} />
+                  <GraficoLinha
+                    serie={relatorio.peso.serie}
+                    unidade="kg"
+                    titulo="Peso neste mês"
+                    faixaMinima={2}
+                  />
                 </section>
               )}
 

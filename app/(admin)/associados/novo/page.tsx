@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { CircleCheck } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -51,6 +53,7 @@ export default function NovoAssociadoPage() {
 
   const [cepNaoEncontrado, setCepNaoEncontrado] = useState(false)
   const [sucesso, setSucesso] = useState(false)
+  const [cadastrado, setCadastrado] = useState<{ id: string; nome: string } | null>(null)
   const [erro, setErro] = useState('')
   const [acesso, setAcesso] = useState<AcessoGerado | null>(null)
   const [copiado, setCopiado] = useState(false)
@@ -134,6 +137,7 @@ export default function NovoAssociadoPage() {
   async function onSubmit(dados: AssociadoForm) {
     setErro('')
     setSucesso(false)
+    setCadastrado(null)
     setAcesso(null)
 
     if (!responsavelId && !dados.cpf?.trim()) {
@@ -156,7 +160,7 @@ export default function NovoAssociadoPage() {
     }
 
     try {
-      const usuarioCriado = await apiPost<{ senhaInicial?: string }>('/usuarios', {
+      const usuarioCriado = await apiPost<{ id?: string | number; senhaInicial?: string }>('/usuarios', {
         nome: dados.nome,
         cpf: dados.cpf ?? '',
         telefone: dados.telefone,
@@ -172,6 +176,7 @@ export default function NovoAssociadoPage() {
         uf: dados.uf,
       })
       setSucesso(true)
+      if (usuarioCriado.id) setCadastrado({ id: String(usuarioCriado.id), nome: dados.nome })
       if (usuarioCriado.senhaInicial) {
         setAcesso({
           nome: dados.nome,
@@ -198,6 +203,7 @@ export default function NovoAssociadoPage() {
   function dispensarAvisoAcesso() {
     setAcesso(null)
     setSucesso(false)
+    setCadastrado(null)
     setCopiado(false)
   }
 
@@ -358,7 +364,27 @@ export default function NovoAssociadoPage() {
           </div>
         )}
 
-        {!acesso && sucesso && <p className={styles.sucesso}>Associado cadastrado!</p>}
+        {sucesso && cadastrado && (
+          <div className={styles.cartaoSucesso} role="status">
+            <p className={styles.cartaoSucessoTitulo}>
+              <CircleCheck size={20} aria-hidden="true" /> {cadastrado.nome} foi cadastrada
+            </p>
+            <p className={styles.cartaoSucessoTexto}>O próximo passo é matricular em uma turma.</p>
+            <div className={styles.cartaoSucessoAcoes}>
+              <Link
+                href={`/matriculas/nova?associadoId=${cadastrado.id}`}
+                className={styles.botaoPrimarioLink}
+              >
+                Matricular agora
+              </Link>
+              <Link href={`/associados/${cadastrado.id}`} className={styles.botaoSecundarioLink}>
+                Abrir perfil
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {!acesso && sucesso && !cadastrado && <p className={styles.sucesso}>Associado cadastrado!</p>}
         {erro && <p className={styles.mensagemErro}>{erro}</p>}
       </div>
     </div>

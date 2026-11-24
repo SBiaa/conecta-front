@@ -16,6 +16,7 @@
 .cabecalho {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
@@ -259,6 +260,11 @@
 }
 
 .statusPendente {
+  color: var(--warning-text, #8a5a00);
+  background-color: var(--warning-soft);
+}
+
+.statusAtrasada {
   color: var(--danger);
   background-color: #ffebee;
 }
@@ -716,4 +722,142 @@
 .statusCancelada {
   color: var(--text-secondary);
   background-color: #eef1f1;
+}
+
+/* Cabeçalho: status, total em aberto e ações principais */
+
+.cabecalhoInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.cabecalhoMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.emAberto {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-pill);
+  color: var(--warning-text, #8a5a00);
+  background-color: var(--warning-soft);
+}
+
+.emDia {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-pill);
+  color: var(--success-text, #1f6b43);
+  background-color: var(--success-soft);
+}
+
+.cabecalhoAcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.botaoPrimario,
+.botaoSecundarioLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius-s);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoPrimario {
+  background-color: var(--primary);
+  color: #ffffff;
+  border: none;
+}
+
+.botaoPrimario:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+}
+
+.botaoPrimario:disabled {
+  background-color: var(--disabled-bg);
+  cursor: not-allowed;
+}
+
+.botaoSecundarioLink {
+  background-color: #ffffff;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.botaoSecundarioLink:hover {
+  background-color: var(--primary-soft);
+}
+
+/* Duas colunas no computador: dados + matrículas | extrato + saúde */
+
+.colunas {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.colunaEsq,
+.colunaDir {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .colunas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.explicacaoModal {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: -0.5rem 0 1rem;
+}
+
+.listaEscolha {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.itemEscolha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 0.9rem;
+  background-color: #f9f9f9;
+  border-radius: var(--radius-s);
+}
+
+.itemEscolha > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }

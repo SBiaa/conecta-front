@@ -106,8 +106,23 @@ export function faixaImc(imc: number | null): string | null {
   if (imc === null) return null
   if (imc < 18.5) return 'Abaixo da faixa de referência'
   if (imc < 25) return 'Dentro da faixa de referência'
-  if (imc < 30) return 'Acima da faixa de referência'
-  return 'Bem acima da faixa de referência'
+  if (imc < 30) return 'Um pouco acima da faixa de referência'
+  return 'Acima da faixa de referência'
+}
+
+// Frase de incentivo para a frequência: convida a voltar, sem cobrar.
+export function fraseFrequencia(situacao: SituacaoFrequencia): string | null {
+  if (situacao === 'BAIXA') return 'Sentimos sua falta nas aulas. Venha quando puder — a turma gosta de ter você por perto.'
+  if (situacao === 'ATENCAO') return 'Cada aula conta. Dá para ir somando aos poucos.'
+  return null
+}
+
+// Frase do peso no mês. Ganhar peso é tão normal quanto perder: as duas
+// direções são ditas do mesmo jeito, sem adjetivo e sem comemorar nenhuma.
+export function frasePeso(variacao: number): string {
+  if (variacao === 0) return 'Seu peso ficou igual este mês'
+  const quilos = Math.abs(variacao).toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+  return `Seu peso variou ${variacao < 0 ? '−' : '+'}${quilos} kg este mês`
 }
 
 export type FrequenciaTurma = {

@@ -29,17 +29,24 @@
   align-items: center;
   gap: 0.2rem;
   padding: 0.3rem 0.1rem;
+  min-height: 48px;
+  justify-content: center;
   text-align: center;
   line-height: 1.15;
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   border-radius: var(--radius-s);
   transition: color 0.2s, background-color 0.2s;
 }
 
 .linkAtivo {
-  color: var(--primary);
+  color: var(--primary-dark);
+  background-color: var(--primary-soft);
+}
+
+.linkAtivo .label {
+  font-weight: 800;
 }
 
 .label {

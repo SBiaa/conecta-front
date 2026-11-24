@@ -24,8 +24,8 @@
   margin-bottom: 2rem;
 }
 
-.situacaoEmDia    { border-left-color: var(--success); }
-.situacaoPendente { border-left-color: var(--warning); }
+.situacaoEmDia    { border-left-color: var(--success-text); }
+.situacaoPendente { border-left-color: var(--warning-text); }
 .situacaoAtrasada { border-left-color: var(--danger); }
 
 .situacaoTexto {
@@ -35,16 +35,17 @@
   margin: 0;
 }
 
-.situacaoEmDia    .situacaoTexto { color: var(--success); }
-.situacaoPendente .situacaoTexto { color: var(--warning); }
+.situacaoEmDia    .situacaoTexto { color: var(--success-text); }
+.situacaoPendente .situacaoTexto { color: var(--warning-text); }
 .situacaoAtrasada .situacaoTexto { color: var(--danger); }
 
 .situacaoBotao {
   display: inline-block;
   margin-top: 0.9rem;
-  padding: 0.5rem 1.1rem;
+  padding: 0.7rem 1.3rem;
+  min-height: 44px;
   border-radius: var(--radius-pill);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 700;
   text-decoration: none;
   color: #ffffff;
@@ -61,7 +62,7 @@
   background-color: #fff3e0;
   border: 1px solid var(--border);
   border-left-width: 5px;
-  border-left-color: var(--warning);
+  border-left-color: var(--warning-text);
   border-radius: 14px;
   padding: 1rem 1.25rem;
   margin-bottom: 2rem;
@@ -70,7 +71,7 @@
 .avisoExameTexto {
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--warning);
+  color: var(--warning-text);
   margin: 0;
 }
 
@@ -114,17 +115,20 @@
 
 .hojeFeita {
   flex-shrink: 0;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  color: var(--success);
+  color: var(--success-text);
   white-space: nowrap;
 }
 
 .hojeBotao {
   flex-shrink: 0;
-  padding: 0.5rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1.1rem;
   border-radius: var(--radius-pill);
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   font-weight: 700;
   text-decoration: none;
   color: #ffffff;
@@ -193,7 +197,7 @@
 }
 
 .feedQuando {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   white-space: nowrap;
 }
@@ -212,7 +216,9 @@
 }
 
 .verTudo {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--primary);
@@ -222,7 +228,7 @@
 /* Seção de atalhos ------------------------------------------------------- */
 
 .tituloSecao {
-  font-size: 0.72rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -274,4 +280,24 @@
     gap: 0.875rem;
     font-size: 1rem;
   }
+}
+
+.hojeErro {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--danger);
+  margin: 0 0 0.5rem;
+}
+
+.botaoTentar {
+  margin-top: 0.6rem;
+  min-height: 44px;
+  padding: 0 1.1rem;
+  background-color: #ffffff;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-pill);
+  color: var(--primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
 }

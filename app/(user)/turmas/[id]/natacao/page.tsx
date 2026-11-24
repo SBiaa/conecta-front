@@ -35,6 +35,10 @@ export default function NiveisNatacaoPage() {
 
   return (
     <div className={styles.pagina}>
+      <Link href="/turmas" className={styles.voltarTurmas}>
+        ← Minhas Turmas
+      </Link>
+
       <div className={styles.cabecalho}>
         <h1 className={styles.titulo}>{dados ? `Níveis — ${dados.turma.nome}` : 'Níveis'}</h1>
         <Link href={`/turmas/${id}/chamada`} className={styles.link}>

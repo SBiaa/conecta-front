@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Home, Rss, Users, GraduationCap, FolderKanban, Wallet, User, CalendarCheck,
-  ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Menu, X, LayoutGrid, Tag, Bus,
+  ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Menu, X, LayoutGrid, UserPlus, Bus,
   type LucideIcon,
 } from 'lucide-react'
 import { apiGet } from '../lib/api'
@@ -25,16 +25,21 @@ const PRINCIPAL: Item[] = [
 
 const GESTAO: Item[] = [
   { label: 'Associados', href: '/associados', icone: Users },
+  { label: 'Nova matrícula', href: '/matriculas/nova', icone: UserPlus },
   { label: 'Professoras', href: '/professores', icone: GraduationCap },
   { label: 'Financeiro', href: '/financeiro', icone: Wallet },
-  { label: 'Valores', href: '/financeiro/valores', icone: Tag },
   { label: 'Viagens', href: '/viagens', icone: Bus },
 ]
 
 const PERFIL: Item = { label: 'Perfil', href: '/perfil-admin', icone: User }
 
 // O que aparece na barra de baixo do celular. O resto fica no botão "Menu".
-const CELULAR: Item[] = [PRINCIPAL[0], PRINCIPAL[1], GESTAO[0], GESTAO[2]]
+const CELULAR: Item[] = [
+  PRINCIPAL[0],
+  PRINCIPAL[1],
+  GESTAO.find((item) => item.href === '/associados')!,
+  GESTAO.find((item) => item.href === '/financeiro')!,
+]
 
 // O que a pessoa abriu/fechou fica salvo neste navegador. Se o navegador
 // bloquear (modo anônimo), o menu só volta ao padrão — nada quebra.
@@ -101,8 +106,6 @@ export default function MenuAdmin() {
 
   const aberto = (chave: string) => !prefs.fechados.includes(chave)
   const ativo = (href: string) => {
-    // "Valores" mora dentro de /financeiro, mas tem item próprio no menu: só ele acende.
-    if (href === '/financeiro' && pathname.startsWith('/financeiro/valores')) return false
     return pathname === href || pathname.startsWith(`${href}/`)
   }
 

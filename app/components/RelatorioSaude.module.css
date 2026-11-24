@@ -55,7 +55,7 @@
 }
 
 .rotulo {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -69,13 +69,13 @@
 }
 
 .nota {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
 .selo {
   align-self: flex-start;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   font-weight: 700;
   padding: 0.18rem 0.55rem;
   border-radius: var(--radius-pill);
@@ -83,18 +83,19 @@
 }
 
 .seloOk {
-  color: var(--success);
+  color: var(--success-text);
   background-color: #e8f5e9;
 }
 
 .seloAtencao {
-  color: var(--warning);
+  color: var(--warning-text);
   background-color: #fff3e0;
 }
 
-.seloCritico {
-  color: var(--danger);
-  background-color: #ffebee;
+.seloCritico,
+.seloBaixa {
+  color: var(--warning-text);
+  background-color: var(--warning-soft);
 }
 
 .seloSemDados {
@@ -103,7 +104,7 @@
 }
 
 .rotuloSecao {
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -121,7 +122,7 @@
 }
 
 .chip {
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--primary);
   background-color: var(--primary-soft);
@@ -158,7 +159,7 @@
 }
 
 .chipPequeno {
-  font-size: 0.73rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-secondary);
   background-color: var(--background);

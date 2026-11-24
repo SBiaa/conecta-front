@@ -34,7 +34,7 @@
 }
 
 .subtitulo {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: var(--text-secondary);
   margin-bottom: 1.75rem;
 }
@@ -47,7 +47,7 @@
 }
 
 .campo label {
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 0.4rem;
@@ -61,7 +61,7 @@
   font-family: var(--font-body);
   outline: none;
   transition: border 0.2s;
-  min-height: 44px;
+  min-height: 48px;
 }
 
 .campo input:focus {
@@ -73,7 +73,7 @@
   background-color: var(--danger-soft);
   border-radius: var(--radius-s);
   padding: 0.55rem 0.75rem;
-  font-size: 0.85rem;
+  font-size: 1rem;
   margin: 0.25rem 0 0;
 }
 
@@ -103,4 +103,30 @@
 .botao:disabled {
   opacity: 0.7;
   cursor: default;
+}
+
+.senhaLinha {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.mostrarSenha {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  color: var(--primary-dark);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ajuda {
+  margin: 1rem 0 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
 }

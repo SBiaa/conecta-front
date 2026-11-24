@@ -1,12 +1,24 @@
 .pagina {
   min-height: 100vh;
   padding: 1.5rem;
+  /* espaço para a barra de salvar fixa não cobrir a última aluna */
+  padding-bottom: 9rem;
   background-color: var(--background);
+}
+
+.voltar {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
 }
 
 .cabecalho {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   max-width: 540px;
@@ -21,32 +33,88 @@
 }
 
 .linkFrequencia {
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--primary);
   white-space: nowrap;
 }
 
+.dataRotulo {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 0.3rem;
+}
+
 .dataInput {
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 10px;
   padding: 0.6rem 0.9rem;
-  font-size: 0.95rem;
+  min-height: 48px;
+  font-size: 16px;
   margin-bottom: 1.25rem;
   background-color: #ffffff;
+}
+
+/* Situação do registro do dia ------------------------------------------------ */
+
+.situacaoRegistro {
+  max-width: 540px;
+  margin: 0 0 0.9rem;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-m);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.registroFeito {
+  background-color: var(--success-soft);
+  color: var(--success-text);
+}
+
+.registroPendente {
+  background-color: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.aviso {
+  max-width: 540px;
+  margin: 0 0 0.9rem;
+  font-size: 0.9rem;
+  color: var(--warning-text);
 }
 
 .marcarTodas {
   display: block;
   margin: 0 0 0.75rem;
-  background: none;
-  border: none;
+  background-color: #ffffff;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-m);
   color: var(--primary);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  padding: 0;
+  min-height: 44px;
+  padding: 0 1.1rem;
 }
+
+.botaoSecundario {
+  background-color: #ffffff;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-m);
+  color: var(--primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0 1.1rem;
+}
+
+/* Lista ---------------------------------------------------------------------- */
 
 .lista {
   list-style: none;
@@ -58,58 +126,80 @@
   max-width: 540px;
 }
 
+/* A linha inteira é o botão: alvo grande para dedos pouco precisos. */
 .item {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  min-height: 56px;
   background-color: #ffffff;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-m);
-  padding: 0.9rem 1.1rem;
+  padding: 0.5rem 0.75rem 0.5rem 1.1rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.itemPresente {
+  border-color: var(--success-text);
+}
+
+.itemAusente {
+  border-color: var(--danger);
 }
 
 .nome {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .toggle {
-  border: none;
+  flex-shrink: 0;
   border-radius: var(--radius-pill);
-  padding: 0.4rem 1rem;
-  font-size: 0.85rem;
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  cursor: pointer;
+  color: #ffffff;
   white-space: nowrap;
 }
 
 .togglePresente {
-  background-color: #e8f5e9;
-  color: var(--success);
+  background-color: var(--success-text);
 }
 
 .toggleAusente {
-  background-color: #ffebee;
-  color: var(--danger);
+  background-color: var(--danger);
 }
 
-.rodape {
-  max-width: 540px;
-  margin-top: 1.5rem;
+/* Barra de salvar fixa, acima do menu de baixo --------------------------------- */
+
+.barraSalvar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 4.4rem;
+  z-index: 15;
+  padding: 0.6rem 1rem;
+  background-color: var(--background);
+  border-top: 1px solid var(--border);
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  justify-content: center;
 }
 
 .botaoSalvar {
+  width: 100%;
+  max-width: 540px;
+  min-height: 52px;
   background-color: var(--primary);
   color: #ffffff;
   border: none;
-  border-radius: 10px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
+  border-radius: var(--radius-m);
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -119,10 +209,50 @@
   cursor: default;
 }
 
-.sucesso {
-  color: var(--success);
-  font-size: 0.9rem;
-  font-weight: 600;
+@media (min-width: 768px) {
+  .barraSalvar {
+    left: 220px;
+    bottom: 0;
+  }
+}
+
+/* Sucesso --------------------------------------------------------------------- */
+
+.sucessoGrande {
+  max-width: 540px;
+  margin: 0 0 1rem;
+  padding: 1.25rem;
+  border-radius: var(--radius-m);
+  background-color: var(--success-soft);
+  text-align: center;
+}
+
+.sucessoTitulo {
+  margin: 0 0 0.3rem;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--success-text);
+}
+
+.sucessoTexto {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: var(--success-text);
+}
+
+.botaoVoltarInicio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 1.5rem;
+  border-radius: var(--radius-m);
+  background-color: var(--primary);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .mensagem {
@@ -132,5 +262,7 @@
 
 .mensagemErro {
   font-size: 1rem;
+  font-weight: 600;
   color: var(--danger);
+  max-width: 540px;
 }

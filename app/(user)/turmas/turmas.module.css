@@ -37,13 +37,55 @@
 .acoes {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.25rem;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
 }
 
-.linkFrequencia {
-  display: inline-block;
+.botaoPilula {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1.1rem;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-pill);
+  background-color: #ffffff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.seloHoje,
+.seloFeita {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-pill);
+}
+
+.seloHoje {
+  background-color: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+.seloFeita {
+  background-color: var(--success-soft);
+  color: var(--success-text);
+}
+
+.fazerChamada {
+  display: block;
   margin-top: 0.75rem;
-  font-size: 0.83rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--primary);
 }

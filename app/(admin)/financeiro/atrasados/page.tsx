@@ -2,9 +2,16 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { CirclePlus } from 'lucide-react'
 import { apiGet, apiPost } from '../../../lib/api'
-import { formatarMoeda, formatarData } from '../../../lib/formato'
+import { formatarMoeda, formatarData, formatarMes } from '../../../lib/formato'
+import { descricaoTurmas, mensagemDeErro } from '../../../lib/admin-pagamentos'
 import ConfirmDialog from '../../../components/ConfirmDialog'
+import ModalBase from '../../../components/ModalBase'
+import ModalRegistrarPagamento, {
+  type PagamentoParaRegistrar,
+} from '../../../components/ModalRegistrarPagamento'
+import { useToast } from '../../../components/Toast'
 import base from '../financeiro.module.css'
 import styles from './atrasados.module.css'
 
@@ -23,6 +30,15 @@ type AlunaAtrasada = {
   total: number
   vencimentoMaisAntigo: string
   meses: string[]
+}
+
+type PagamentoDaAluna = {
+  id: string
+  valor: string
+  status: 'PAGA' | 'PENDENTE' | 'CANCELADA'
+  mesReferencia: string
+  vencimento: string
+  matricula: { turmas: { nome: string; projeto: { nome: string } }[] }
 }
 
 type FiltroPresenca = '' | 'nunca' | '30' | '60' | '90'
@@ -54,6 +70,7 @@ function plural(n: number, singular: string, pluralForma: string) {
 }
 
 export default function AtrasadosPorAlunaPage() {
+  const { avisar, toast } = useToast()
   const [alunas, setAlunas] = useState<AlunaAtrasada[]>([])
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [carregando, setCarregando] = useState(true)
@@ -68,6 +85,11 @@ export default function AtrasadosPorAlunaPage() {
   const [inativando, setInativando] = useState(false)
   const [erroInativar, setErroInativar] = useState<string | null>(null)
   const [aviso, setAviso] = useState('')
+  const [versao, setVersao] = useState(0)
+  const [buscandoPagamento, setBuscandoPagamento] = useState<number | null>(null)
+  const [erroRegistro, setErroRegistro] = useState('')
+  const [escolhendo, setEscolhendo] = useState<{ nome: string; itens: PagamentoDaAluna[] } | null>(null)
+  const [pagamentoSelecionado, setPagamentoSelecionado] = useState<PagamentoParaRegistrar | null>(null)
 
   useEffect(() => {
     apiGet<Projeto[]>('/projetos').then(setProjetos).catch(() => {})
@@ -80,9 +102,9 @@ export default function AtrasadosPorAlunaPage() {
         setAlunas(dados)
         setErro('')
       })
-      .catch(() => setErro('Não foi possível carregar os atrasados. Tente de novo.'))
+      .catch((e) => setErro(mensagemDeErro(e, 'Não foi possível carregar os atrasados. Tente de novo.')))
       .finally(() => setCarregando(false))
-  }, [projetoFiltro])
+  }, [projetoFiltro, versao])
 
   function trocarProjeto(valor: string) {
     setCarregando(true)
@@ -150,6 +172,42 @@ export default function AtrasadosPorAlunaPage() {
       `(${formatarMoeda(valor)}) ${mensalidades === 1 ? 'será cancelada' : 'serão canceladas'} ` +
       `e não ${mensalidades === 1 ? 'será mais cobrada' : 'serão mais cobradas'}.`
     )
+  }
+
+  function abrirRegistro(item: PagamentoDaAluna, nome: string) {
+    setPagamentoSelecionado({
+      id: item.id,
+      valor: item.valor,
+      nome,
+      descricao: `${formatarMes(item.mesReferencia)} — ${descricaoTurmas(item.matricula.turmas)}`,
+    })
+  }
+
+  // A lista de atrasados é por aluna; o pagamento é por cobrança. Busca as cobranças
+  // vencidas dela: se houver uma só, já abre o registro; se houver várias, a pessoa escolhe.
+  async function registrarPagamento(aluna: AlunaAtrasada) {
+    setBuscandoPagamento(aluna.matriculaId)
+    setErroRegistro('')
+    try {
+      const todos = await apiGet<PagamentoDaAluna[]>(`/pagamentos?usuarioId=${aluna.usuario.id}`)
+      const agora = Date.now()
+      const vencidos = todos
+        .filter((p) => p.status === 'PENDENTE' && new Date(p.vencimento).getTime() < agora)
+        .sort((a, b) => new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime())
+
+      if (vencidos.length === 0) {
+        setErroRegistro(`Nenhuma cobrança vencida encontrada para ${aluna.usuario.nome}. A lista foi atualizada.`)
+        setVersao((v) => v + 1)
+      } else if (vencidos.length === 1) {
+        abrirRegistro(vencidos[0], aluna.usuario.nome)
+      } else {
+        setEscolhendo({ nome: aluna.usuario.nome, itens: vencidos })
+      }
+    } catch (e) {
+      setErroRegistro(mensagemDeErro(e, 'Não foi possível buscar as cobranças dessa aluna. Tente de novo.'))
+    } finally {
+      setBuscandoPagamento(null)
+    }
   }
 
   async function inativar() {
@@ -240,6 +298,12 @@ export default function AtrasadosPorAlunaPage() {
           </p>
         )}
 
+        {erroRegistro && (
+          <p className={base.mensagemErro} role="alert">
+            {erroRegistro}
+          </p>
+        )}
+
         {carregando && <p className={base.mensagem}>Carregando...</p>}
         {!carregando && erro && <p className={base.erro}>{erro}</p>}
 
@@ -296,9 +360,25 @@ export default function AtrasadosPorAlunaPage() {
                           : `Nunca veio · matriculada em ${formatarData(aluna.dataInicio)}`}
                       </span>
                     </div>
-                    <button className={styles.botaoInativar} onClick={() => setConfirmando([aluna.matriculaId])}>
-                      Inativar
-                    </button>
+                    <div className={styles.acoes}>
+                      <button
+                        type="button"
+                        className={styles.botaoRegistrar}
+                        onClick={() => registrarPagamento(aluna)}
+                        disabled={buscandoPagamento === aluna.matriculaId}
+                      >
+                        <CirclePlus size={18} aria-hidden="true" />
+                        {buscandoPagamento === aluna.matriculaId ? 'Buscando...' : 'Registrar pagamento'}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.botaoInativar}
+                        onClick={() => setConfirmando([aluna.matriculaId])}
+                        aria-label={`Inativar ${aluna.usuario.nome}`}
+                      >
+                        Inativar
+                      </button>
+                    </div>
                   </li>
                 )
               })}
@@ -306,6 +386,44 @@ export default function AtrasadosPorAlunaPage() {
           </>
         )}
       </div>
+
+      {escolhendo && (
+        <ModalBase titulo={`Registrar pagamento — ${escolhendo.nome}`} onFechar={() => setEscolhendo(null)} sujo={false}>
+          <p className={styles.explicacaoModal}>Esta aluna tem mais de uma cobrança vencida. Escolha qual registrar:</p>
+          <ul className={styles.listaEscolha}>
+            {escolhendo.itens.map((item) => (
+              <li key={item.id} className={styles.itemEscolha}>
+                <div>
+                  <strong>{formatarMes(item.mesReferencia)}</strong>
+                  <span className={base.detalhe}>
+                    {descricaoTurmas(item.matricula.turmas)} · venceu em {formatarData(item.vencimento)}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.botaoRegistrar}
+                  onClick={() => {
+                    const nome = escolhendo.nome
+                    setEscolhendo(null)
+                    abrirRegistro(item, nome)
+                  }}
+                >
+                  {formatarMoeda(item.valor)} · Registrar
+                </button>
+              </li>
+            ))}
+          </ul>
+        </ModalBase>
+      )}
+
+      <ModalRegistrarPagamento
+        pagamento={pagamentoSelecionado}
+        onFechar={() => setPagamentoSelecionado(null)}
+        onRegistrado={() => {
+          avisar('Pagamento registrado')
+          setVersao((v) => v + 1)
+        }}
+      />
 
       <ConfirmDialog
         aberto={confirmando !== null}
@@ -321,6 +439,7 @@ export default function AtrasadosPorAlunaPage() {
           setErroInativar(null)
         }}
       />
+      {toast}
     </div>
   )
 }

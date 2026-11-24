@@ -10,7 +10,7 @@
   align-items: center;
   gap: 1rem;
   margin-bottom: 1.5rem;
-  max-width: 560px;
+  max-width: 1100px;
 }
 
 .titulo {
@@ -53,7 +53,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  max-width: 560px;
+  max-width: 720px;
 }
 
 .item {
@@ -197,7 +197,8 @@
 }
 
 .painelDia {
-  margin-top: 0.5rem;
+  margin-top: 0;
+  min-width: 0;
 }
 
 .toggle {
@@ -221,7 +222,7 @@
 }
 
 .rodapeDia {
-  max-width: 560px;
+  max-width: 720px;
   margin-top: 1rem;
   display: flex;
   align-items: center;
@@ -262,4 +263,142 @@
 .mensagemErro {
   font-size: 1rem;
   color: var(--danger);
+}
+
+/* Lançamento no topo; calendário e resumo ao lado no computador */
+.corpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  max-width: 1100px;
+}
+
+@media (min-width: 1024px) {
+  .corpo {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    align-items: start;
+  }
+}
+
+.colunaLateral .lista {
+  max-width: none;
+}
+
+.colunaLateral .tituloSecao:first-child {
+  margin-top: 0;
+}
+
+.cabecalhoDia {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.tituloDia {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+.etiquetaDia {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-pill);
+}
+
+.etiquetaComRegistro {
+  color: var(--success-text, #1f6b43);
+  background-color: var(--success-soft);
+}
+
+.etiquetaSemRegistro {
+  color: var(--warning-text, #8a5a00);
+  background-color: var(--warning-soft);
+}
+
+.acoesEmMassa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.botaoMassa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0.5rem 0.9rem;
+  background-color: #ffffff;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-s);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.botaoMassa:hover {
+  background-color: var(--primary-soft);
+}
+
+.contagemMarcadas {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.opcoes {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.opcao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 44px;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background-color: #ffffff;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.opcaoPresente {
+  background-color: var(--success-soft);
+  border-color: var(--success);
+  color: var(--success-text, #1f6b43);
+}
+
+.opcaoAusente {
+  background-color: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.celulaHoje {
+  font-weight: 800;
+  box-shadow: inset 0 0 0 2px var(--primary-light);
+}
+
+.aviso {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--warning-text, #8a5a00);
+}
+
+.sucesso {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }

@@ -5,6 +5,7 @@ import { Camera, X } from 'lucide-react'
 import { apiPatch, apiDelete } from '../lib/api'
 import { redimensionarImagem } from '../lib/imagem'
 import Avatar from './Avatar'
+import ConfirmDialog from './ConfirmDialog'
 import styles from './FotoPerfil.module.css'
 
 type Props = {
@@ -19,6 +20,7 @@ export default function FotoPerfil({ nome, fotoUrl, aoMudar }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
+  const [confirmandoRemocao, setConfirmandoRemocao] = useState(false)
 
   async function escolherArquivo(evento: React.ChangeEvent<HTMLInputElement>) {
     const arquivo = evento.target.files?.[0]
@@ -54,8 +56,10 @@ export default function FotoPerfil({ nome, fotoUrl, aoMudar }: Props) {
     setEnviando(true)
     try {
       await apiDelete('/me/foto')
+      setConfirmandoRemocao(false)
       aoMudar(null)
     } catch {
+      setConfirmandoRemocao(false)
       setErro('Não foi possível remover sua foto.')
     } finally {
       setEnviando(false)
@@ -74,7 +78,7 @@ export default function FotoPerfil({ nome, fotoUrl, aoMudar }: Props) {
           disabled={enviando}
           onClick={() => inputRef.current?.click()}
         >
-          <Camera size={16} />
+          <Camera size={20} />
         </button>
 
         {fotoUrl && !enviando && (
@@ -82,9 +86,9 @@ export default function FotoPerfil({ nome, fotoUrl, aoMudar }: Props) {
             type="button"
             className={styles.botaoRemover}
             aria-label="Remover foto de perfil"
-            onClick={removerFoto}
+            onClick={() => setConfirmandoRemocao(true)}
           >
-            <X size={14} />
+            <X size={18} />
           </button>
         )}
       </div>
@@ -99,6 +103,17 @@ export default function FotoPerfil({ nome, fotoUrl, aoMudar }: Props) {
 
       {enviando && <span className={styles.status}>Enviando...</span>}
       {erro && <span className={styles.erro}>{erro}</span>}
+
+      <ConfirmDialog
+        aberto={confirmandoRemocao}
+        titulo="Remover sua foto?"
+        mensagem="Vamos voltar a mostrar as iniciais do seu nome no lugar da foto."
+        confirmarLabel="Remover"
+        carregandoLabel="Removendo..."
+        carregando={enviando}
+        onConfirmar={removerFoto}
+        onCancelar={() => setConfirmandoRemocao(false)}
+      />
     </div>
   )
 }
