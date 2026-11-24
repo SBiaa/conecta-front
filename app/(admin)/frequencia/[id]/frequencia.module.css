@@ -1,120 +1,115 @@
+/* Chamada da turma: calendário e resumo numa coluna à esquerda, a chamada
+   do dia ocupando o resto da largura (alunas em 2 colunas no computador). */
+
 .pagina {
   min-height: 100vh;
-  padding: 2rem;
+  padding: 1.75rem 2.5rem 2.5rem;
   background-color: var(--background);
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
 }
 
 .header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   gap: 1rem;
-  margin-bottom: 1.5rem;
-  max-width: 1100px;
+}
+
+.headerTexto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.trilha {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.trilha a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .titulo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary);
+  font-size: 1.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
+  line-height: 1.15;
+}
+
+.subtituloTurma {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-secondary);
 }
 
 .botaoVoltar {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1.1rem;
   background-color: #ffffff;
-  color: var(--primary);
-  border: 1px solid var(--primary);
-  border-radius: var(--radius-s);
-  padding: 0.6rem 1rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
-  transition: background-color 0.2s;
 }
 
 .botaoVoltar:hover {
   background-color: var(--primary-soft);
+  border-color: var(--primary);
 }
 
-.tituloSecao {
-  font-size: 0.85rem;
-  font-weight: 700;
+.mensagem {
+  font-size: 1rem;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin: 1.5rem 0 0.75rem;
 }
 
-.lista {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.mensagemErro {
+  font-size: 0.95rem;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.corpo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.colunaLateral {
+  flex: 0 0 300px;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  max-width: 720px;
+  gap: 1.25rem;
 }
 
-.item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+.cartao {
   background-color: #ffffff;
+  border: 1px solid var(--border);
   border-radius: var(--radius-m);
-  padding: 0.9rem 1.1rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
-}
-
-.nome {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(11, 22, 32, .04), 0 8px 24px rgba(11, 22, 32, .06);
+  padding: 1rem;
 }
 
 .detalhe {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-secondary);
   display: block;
-  margin-top: 0.15rem;
 }
 
-.percentual {
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 0.3rem 0.8rem;
-  border-radius: var(--radius-pill);
-  white-space: nowrap;
-}
-
-.percentualOk {
-  color: var(--success);
-  background-color: #e8f5e9;
-}
-
-.percentualAtencao {
-  color: var(--warning);
-  background-color: #fff3e0;
-}
-
-.percentualCritico {
-  color: var(--danger);
-  background-color: #ffebee;
-}
-
-.percentualSemDados {
-  color: var(--text-secondary);
-  background-color: var(--border);
-}
-
-.calendario {
-  max-width: 340px;
-  background-color: #ffffff;
-  border-radius: var(--radius-m);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
-  padding: 1rem;
-}
+/* -- calendário -- */
 
 .calendarioHeader {
   display: flex;
@@ -124,21 +119,27 @@
 }
 
 .nomeMes {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
 .botaoMes {
-  background: none;
-  border: none;
-  color: var(--primary);
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
+}
+
+.botaoMes:hover {
+  background-color: var(--primary-soft);
 }
 
 .diasSemana {
@@ -146,6 +147,7 @@
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
   font-size: 0.75rem;
+  font-weight: 800;
   color: var(--text-secondary);
   margin-bottom: 0.4rem;
 }
@@ -153,90 +155,343 @@
 .grade {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.25rem;
+  gap: 4px;
 }
 
 .celulaVazia {
-  aspect-ratio: 1;
+  height: 34px;
 }
 
 .celula {
-  aspect-ratio: 1;
-  border: none;
-  background: none;
-  border-radius: var(--radius-s);
+  height: 34px;
+  border: 2px solid transparent;
+  background-color: #ffffff;
+  border-radius: 9px;
+  font-family: inherit;
   font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text-primary);
   cursor: pointer;
-  position: relative;
 }
 
 .celula:hover {
   background-color: var(--primary-soft);
 }
 
-.celulaComRegistro::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background-color: var(--primary);
+.celulaComRegistro {
+  background-color: var(--success-soft);
+  color: var(--success-text);
 }
 
-.celulaSelecionada {
-  background-color: var(--primary);
-  color: #ffffff;
+.celulaPendente {
+  background-color: var(--warning-soft);
+  color: var(--warning-text);
 }
 
-.celulaSelecionada.celulaComRegistro::after {
-  background-color: #ffffff;
+.celulaHoje {
+  font-weight: 800;
+  border-color: var(--border-strong);
 }
 
-.painelDia {
-  margin-top: 0;
+.celulaSelecionada,
+.celulaSelecionada.celulaHoje {
+  border-color: var(--primary);
+  font-weight: 800;
+}
+
+.legenda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.legenda > span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.amostra {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.amostraRegistro { background-color: var(--success-soft); }
+.amostraPendente { background-color: var(--warning-soft); }
+.amostraSelecionado { border: 2px solid var(--primary); }
+
+/* -- resumo -- */
+
+.resumoTopo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.tituloCartao {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.media {
+  font-size: 0.82rem;
+  font-weight: 800;
+  background: none !important;
+}
+
+.listaResumo {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+}
+
+.itemResumo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #eef2f1;
+}
+
+.itemResumoTexto {
+  flex: 1;
   min-width: 0;
 }
 
-.toggle {
-  border: none;
-  border-radius: var(--radius-pill);
-  padding: 0.4rem 1rem;
-  font-size: 0.85rem;
+.nomeResumo {
+  display: block;
   font-weight: 700;
-  cursor: pointer;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.percentual {
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
   white-space: nowrap;
 }
 
-.togglePresente {
-  background-color: #e8f5e9;
-  color: var(--success);
+.percentualOk {
+  color: var(--success-text);
+  background-color: var(--success-soft);
 }
 
-.toggleAusente {
-  background-color: #ffebee;
+.percentualAtencao {
+  color: var(--warning-text);
+  background-color: var(--warning-soft);
+}
+
+.percentualCritico {
   color: var(--danger);
+  background-color: var(--danger-soft);
+}
+
+.percentualSemDados {
+  color: var(--text-secondary);
+  background-color: #eef2f1;
+}
+
+.botaoLink {
+  margin-top: 0.5rem;
+  width: 100%;
+  min-height: 40px;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: var(--primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.botaoLink:hover {
+  background-color: var(--primary-soft);
+}
+
+/* -- chamada do dia -- */
+
+.painelDia {
+  flex: 1 1 480px;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.cabecalhoDia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.cabecalhoDiaTitulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.tituloDia {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.etiquetaDia {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+}
+
+.etiquetaComRegistro {
+  color: var(--success-text);
+  background-color: var(--success-soft);
+}
+
+.etiquetaSemRegistro {
+  color: var(--warning-text);
+  background-color: var(--warning-soft);
+}
+
+.acoesEmMassa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.botaoMassa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 40px;
+  padding: 0 0.9rem;
+  background-color: #ffffff;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.botaoMassa:hover {
+  background-color: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.mensagemPainel {
+  padding: 1rem 1.25rem;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.listaChamada {
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 6px 1rem;
+}
+
+.itemChamada {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 10px;
+}
+
+.itemPresente {
+  background-color: #f2faf5;
+}
+
+.itemAusente {
+  background-color: #fdf3f2;
+}
+
+.nomeChamada {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opcoes {
+  display: flex;
+  gap: 4px;
+}
+
+.opcao {
+  width: 44px;
+  height: 40px;
+  border-radius: 9px;
+  border: 2px solid var(--border-strong);
+  background-color: #ffffff;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.opcaoP { color: var(--success-text); }
+.opcaoF { color: var(--danger); }
+
+.opcaoPresente {
+  background-color: var(--success);
+  border-color: var(--success);
+  color: #ffffff;
+}
+
+.opcaoAusente {
+  background-color: var(--danger);
+  border-color: var(--danger);
+  color: #ffffff;
 }
 
 .rodapeDia {
-  max-width: 720px;
-  margin-top: 1rem;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
+  gap: 0.9rem;
+  padding: 0.9rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background-color: #f7faf9;
 }
 
 .botaoSalvar {
+  min-height: 46px;
+  padding: 0 1.5rem;
   background-color: var(--primary);
   color: #ffffff;
   border: none;
-  border-radius: 10px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
-  font-weight: 700;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.975rem;
+  font-weight: 800;
   cursor: pointer;
 }
 
@@ -249,156 +504,46 @@
   cursor: default;
 }
 
-.sucesso {
-  color: var(--success);
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.mensagem {
-  font-size: 1rem;
-  color: var(--text-secondary);
-}
-
-.mensagemErro {
-  font-size: 1rem;
-  color: var(--danger);
-}
-
-/* Lançamento no topo; calendário e resumo ao lado no computador */
-.corpo {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1.5rem;
-  max-width: 1100px;
-}
-
-@media (min-width: 1024px) {
-  .corpo {
-    grid-template-columns: minmax(0, 1fr) 340px;
-    align-items: start;
-  }
-}
-
-.colunaLateral .lista {
-  max-width: none;
-}
-
-.colunaLateral .tituloSecao:first-child {
-  margin-top: 0;
-}
-
-.cabecalhoDia {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-bottom: 0.75rem;
-}
-
-.tituloDia {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin: 0;
-}
-
-.etiquetaDia {
-  font-size: 0.8rem;
-  font-weight: 700;
-  padding: 0.2rem 0.65rem;
-  border-radius: var(--radius-pill);
-}
-
-.etiquetaComRegistro {
-  color: var(--success-text, #1f6b43);
-  background-color: var(--success-soft);
-}
-
-.etiquetaSemRegistro {
-  color: var(--warning-text, #8a5a00);
-  background-color: var(--warning-soft);
-}
-
-.acoesEmMassa {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.botaoMassa {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 44px;
-  padding: 0.5rem 0.9rem;
-  background-color: #ffffff;
-  color: var(--primary);
-  border: 1px solid var(--primary);
-  border-radius: var(--radius-s);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.botaoMassa:hover {
-  background-color: var(--primary-soft);
-}
-
 .contagemMarcadas {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  margin-left: auto;
-}
-
-.opcoes {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.opcao {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  min-height: 44px;
-  padding: 0.4rem 0.85rem;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-pill);
-  background-color: #ffffff;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  cursor: pointer;
-}
-
-.opcaoPresente {
-  background-color: var(--success-soft);
-  border-color: var(--success);
-  color: var(--success-text, #1f6b43);
-}
-
-.opcaoAusente {
-  background-color: var(--danger-soft);
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
-.celulaHoje {
-  font-weight: 800;
-  box-shadow: inset 0 0 0 2px var(--primary-light);
+  color: var(--text-secondary);
 }
 
 .aviso {
   font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--warning-text, #8a5a00);
+  font-weight: 700;
+  color: var(--warning-text);
 }
 
 .sucesso {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+  color: var(--success-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+@media (max-width: 767px) {
+  .pagina {
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  .titulo {
+    font-size: 1.55rem;
+  }
+
+  .colunaLateral {
+    flex-basis: 100%;
+  }
+
+  /* No celular a chamada vem primeiro: é o que se faz na beira da piscina. */
+  .painelDia {
+    order: -1;
+  }
+
+  .listaChamada {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

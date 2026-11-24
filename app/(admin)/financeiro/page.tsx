@@ -269,257 +269,285 @@ export default function FinanceiroPage() {
     })
   })
 
+  const totalAtrasado = atrasados.reduce((soma, item) => soma + Number(item.valor), 0)
+  const percentualRecebido = totalGeral > 0 ? Math.round((totalRecebido / totalGeral) * 100) : 0
+  const maiorForma = Math.max(1, ...Array.from(porFormaPagamento.values()).map((f) => f.total))
+  const mostrarNumeros = !carregandoPagamentos && !erroPagamentos
+
   return (
     <div className={styles.pagina}>
       <div className={styles.cabecalho}>
-        <h1 className={styles.titulo}>Financeiro</h1>
+        <div className={styles.tituloComMes}>
+          <h1 className={styles.titulo}>Financeiro</h1>
+          <span className={styles.mesTitulo}>{formatarMes(mesFiltro)}</span>
+        </div>
         <button type="button" className={styles.botaoGerar} onClick={abrirModalGerar}>
           Gerar mensalidades
         </button>
       </div>
 
-      {!carregandoAtrasados && atrasados.length > 0 && (
-        <Link href="/financeiro/atrasados" className={styles.avisoAtrasados}>
-          <TriangleAlert size={18} aria-hidden="true" />
-          <span>
-            <strong>
-              {atrasados.length} {atrasados.length === 1 ? 'pagamento atrasado' : 'pagamentos atrasados'}
-            </strong>{' '}
-            · ver e cobrar
+      <div className={styles.numerosTopo}>
+        <div className={styles.numeroCartao}>
+          <span className={styles.cardLabel}>Recebido</span>
+          <span className={`${styles.numeroGrande} ${styles.valorPositivo}`}>
+            {mostrarNumeros ? formatarMoeda(totalRecebido) : '—'}
+          </span>
+          <span className={styles.numeroDetalhe}>{pagas.length} pagas</span>
+        </div>
+        <div className={styles.numeroCartao}>
+          <span className={styles.cardLabel}>Pendente</span>
+          <span className={`${styles.numeroGrande} ${styles.valorAtencao}`}>
+            {mostrarNumeros ? formatarMoeda(totalPendente) : '—'}
+          </span>
+          <span className={styles.numeroDetalhe}>{pendentes.length} pendentes</span>
+        </div>
+        <div className={styles.numeroCartao}>
+          <span className={styles.cardLabel}>Total do mês</span>
+          <span className={styles.numeroGrande}>{mostrarNumeros ? formatarMoeda(totalGeral) : '—'}</span>
+          <span
+            className={styles.barraRecebido}
+            role="img"
+            aria-label={`${percentualRecebido}% do total já recebido`}
+          >
+            <span style={{ width: `${percentualRecebido}%` }} />
+          </span>
+        </div>
+        <Link
+          href="/financeiro/atrasados"
+          className={`${styles.numeroCartao} ${atrasados.length > 0 ? styles.numeroAtrasados : ''}`}
+        >
+          <span className={styles.cardLabel}>
+            {atrasados.length > 0 && <TriangleAlert size={14} aria-hidden="true" />} Atrasados
+          </span>
+          <span className={styles.numeroGrande}>
+            {carregandoAtrasados ? '—' : formatarMoeda(totalAtrasado)}
+          </span>
+          <span className={styles.numeroDetalhe}>
+            {atrasados.length === 0
+              ? 'Nenhum atrasado'
+              : `${atrasados.length} ${atrasados.length === 1 ? 'cobrança' : 'cobranças'} · ver e cobrar →`}
           </span>
         </Link>
-      )}
+      </div>
 
-      <div className={`${styles.card} ${styles.cardDestaque}`}>
-        <h2 className={styles.subtitulo}>Pagamentos de {formatarMes(mesFiltro)}</h2>
-
-        <div className={styles.filtros}>
-          <div className={styles.campo}>
-            <label htmlFor="mesFiltro">Mês</label>
-            <input
-              type="month"
-              id="mesFiltro"
-              value={mesFiltro}
-              onChange={(evento) => evento.target.value && setMesFiltro(evento.target.value)}
-            />
-          </div>
-
-          <div className={styles.campo}>
-            <label htmlFor="projetoIdFiltro">Projeto</label>
-            <select
-              id="projetoIdFiltro"
-              value={projetoIdFiltro}
-              onChange={(evento) => setProjetoIdFiltro(evento.target.value)}
-            >
-              <option value="">Todos</option>
-              {projetos.map((projeto) => (
-                <option key={projeto.id} value={projeto.id}>
-                  {projeto.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.campo}>
-            <label htmlFor="statusFiltro">Status</label>
-            <select
-              id="statusFiltro"
-              value={statusFiltro}
-              onChange={(evento) => setStatusFiltro(evento.target.value)}
-            >
-              <option value="">Todos</option>
-              <option value="PENDENTE">Pendente</option>
-              <option value="PAGA">Paga</option>
-              <option value="CANCELADA">Cancelada</option>
-            </select>
-          </div>
-
-          <div className={`${styles.campo} ${styles.campoBusca}`}>
-            <label htmlFor="nomeFiltro">Buscar neste mês</label>
-            <input
-              type="search"
-              id="nomeFiltro"
-              placeholder="Nome da aluna (só neste mês)"
-              value={nomeFiltro}
-              onChange={(evento) => setNomeFiltro(evento.target.value)}
-            />
-          </div>
-        </div>
-
-        {!carregandoPagamentos && !erroPagamentos && pagamentosFiltrados.length > 0 && (
-          <>
-            <div className={styles.faixaResumo}>
-              <div className={styles.numeroResumo}>
-                <span className={styles.cardLabel}>Recebido</span>
-                <span className={`${styles.numeroValor} ${styles.valorPositivo}`}>
-                  {formatarMoeda(totalRecebido)}
-                </span>
-                <span className={styles.numeroDetalhe}>{pagas.length} pagas</span>
-              </div>
-              <div className={styles.numeroResumo}>
-                <span className={styles.cardLabel}>Pendente</span>
-                <span className={`${styles.numeroValor} ${styles.valorAtencao}`}>
-                  {formatarMoeda(totalPendente)}
-                </span>
-                <span className={styles.numeroDetalhe}>{pendentes.length} pendentes</span>
-              </div>
-              <div className={styles.numeroResumo}>
-                <span className={styles.cardLabel}>Total do mês</span>
-                <span className={styles.numeroValor}>{formatarMoeda(totalGeral)}</span>
-                <span className={styles.numeroDetalhe}>{pagamentosFiltrados.length} cobranças</span>
-              </div>
+      <div className={styles.corpoFinanceiro}>
+        <section className={`${styles.card} ${styles.cardTabela}`} aria-label={`Pagamentos de ${formatarMes(mesFiltro)}`}>
+          <div className={styles.barraFiltros}>
+            <div className={`${styles.campo} ${styles.campoBusca}`}>
+              <label htmlFor="nomeFiltro">Buscar neste mês</label>
+              <input
+                type="search"
+                id="nomeFiltro"
+                placeholder="Nome da aluna"
+                value={nomeFiltro}
+                onChange={(evento) => setNomeFiltro(evento.target.value)}
+              />
             </div>
 
-            <details className={styles.detalhesMes}>
-              <summary>Recebido por forma de pagamento e caixa do mês</summary>
+            <div className={styles.campo}>
+              <label htmlFor="mesFiltro">Mês</label>
+              <input
+                type="month"
+                id="mesFiltro"
+                value={mesFiltro}
+                onChange={(evento) => evento.target.value && setMesFiltro(evento.target.value)}
+              />
+            </div>
 
-              <div className={styles.resumoFormas}>
-                <span className={styles.cardLabel}>Recebido por forma de pagamento</span>
-                {porFormaPagamento.size === 0 && (
-                  <p className={styles.mensagem}>Nenhum pagamento pago neste filtro</p>
-                )}
-                {porFormaPagamento.size > 0 && (
-                  <ul className={styles.listaFormas}>
-                    {Array.from(porFormaPagamento.entries()).map(([forma, { total, quantidade }]) => (
-                      <li key={forma} className={styles.linhaForma}>
-                        <span>{LABELS_FORMA_PAGAMENTO[forma as FormaPagamento] ?? forma}</span>
-                        <span>
-                          {forma === 'ABONADO'
-                            ? `${quantidade} aluna${quantidade === 1 ? '' : 's'}`
-                            : formatarMoeda(total)}
+            <div className={styles.campo}>
+              <label htmlFor="projetoIdFiltro">Projeto</label>
+              <select
+                id="projetoIdFiltro"
+                value={projetoIdFiltro}
+                onChange={(evento) => setProjetoIdFiltro(evento.target.value)}
+              >
+                <option value="">Todos</option>
+                {projetos.map((projeto) => (
+                  <option key={projeto.id} value={projeto.id}>
+                    {projeto.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.campo}>
+              <span className={styles.rotuloGrupo} id="rotuloStatus">Status</span>
+              <div className={styles.grupoStatus} role="group" aria-labelledby="rotuloStatus">
+                {[
+                  ['', 'Todos'],
+                  ['PENDENTE', 'Pendentes'],
+                  ['PAGA', 'Pagas'],
+                  ['CANCELADA', 'Canceladas'],
+                ].map(([valor, rotulo]) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    aria-pressed={statusFiltro === valor}
+                    className={`${styles.opcaoStatus} ${statusFiltro === valor ? styles.opcaoStatusAtiva : ''}`}
+                    onClick={() => setStatusFiltro(valor)}
+                  >
+                    {rotulo}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {carregandoPagamentos && <p className={styles.mensagemTabela}>Carregando...</p>}
+
+          {!carregandoPagamentos && erroPagamentos && (
+            <div className={`${styles.estadoErro} ${styles.mensagemTabela}`} role="alert">
+              <p>{erroPagamentos}</p>
+              <button type="button" className={styles.botaoSecundario} onClick={() => buscarPagamentos()}>
+                Tentar de novo
+              </button>
+            </div>
+          )}
+
+          {!carregandoPagamentos && !erroPagamentos && pagamentosFiltrados.length === 0 && (
+            <p className={styles.mensagemTabela}>Nenhum pagamento neste filtro</p>
+          )}
+
+          {!carregandoPagamentos && !erroPagamentos && pagamentosFiltrados.length > 0 && (
+            <>
+              <div className={styles.cabecalhoLinhas} aria-hidden="true">
+                <span>Aluna</span>
+                <span>Turma</span>
+                <span>Valor</span>
+                <span>Status</span>
+                <span>Ações</span>
+              </div>
+              <ul className={`${styles.lista} ${styles.listaTabela}`}>
+                {pagamentosFiltrados.map((pagamento) => (
+                  <li key={pagamento.id} className={styles.linhaPagamento}>
+                    <div className={styles.colNome}>
+                      <span className={styles.nomeUsuario}>
+                        {pagamento.matricula.usuario.nome}
+                        {pagamento.tipo === 'INSCRICAO' && <span className={styles.badgeTipo}>Inscrição</span>}
+                      </span>
+                      <span className={styles.detalhe}>
+                        {[
+                          pagamento.formaPagamento && LABELS_FORMA_PAGAMENTO[pagamento.formaPagamento],
+                          pagamento.status === 'PAGA' && pagamento.dataPagamento
+                            ? `Pago em ${formatarData(pagamento.dataPagamento)}`
+                            : pagamento.status === 'PENDENTE'
+                              ? `Vence em ${formatarData(pagamento.vencimento)}`
+                              : null,
+                          pagamento.editadoEm ? `Corrigido em ${formatarData(pagamento.editadoEm)}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    </div>
+                    <span className={`${styles.detalhe} ${styles.colTurma}`}>
+                      {descricaoTurmas(pagamento.matricula.turmas)}
+                    </span>
+                    <span className={styles.valorPagamento}>{formatarMoeda(Number(pagamento.valor))}</span>
+                    <span className={styles.colStatus}>
+                      {pagamento.status === 'PAGA' && (
+                        <span className={`${styles.status} ${styles.statusPaga}`}>Paga</span>
+                      )}
+                      {pagamento.status === 'CANCELADA' && (
+                        <span
+                          className={`${styles.status} ${styles.statusCancelada}`}
+                          title="Matrícula encerrada: esta cobrança não é mais cobrada"
+                        >
+                          Cancelada
                         </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {resumo && (
-                <div className={styles.resumoFormas}>
-                  <span className={styles.cardLabel}>Caixa do mês (tudo que entrou e saiu)</span>
-                  <ul className={styles.listaFormas}>
-                    <li className={styles.linhaForma}>
-                      <span>Mensalidades recebidas</span>
-                      <span>{formatarMoeda(resumo.entradas.mensalidades)}</span>
-                    </li>
-                    <li className={styles.linhaForma}>
-                      <span>Inscrições recebidas</span>
-                      <span>{formatarMoeda(resumo.entradas.inscricoes)}</span>
-                    </li>
-                    <li className={styles.linhaForma}>
-                      <span>Vendas</span>
-                      <span>{formatarMoeda(resumo.entradas.vendas)}</span>
-                    </li>
-                    <li className={styles.linhaForma}>
-                      <span>Gastos</span>
-                      <span className={styles.valorNegativo}>− {formatarMoeda(resumo.saidas.total)}</span>
-                    </li>
-                    <li className={`${styles.linhaForma} ${styles.linhaSaldo}`}>
-                      <span>Saldo</span>
-                      <span className={resumo.saldo < 0 ? styles.valorNegativo : styles.valorPositivo}>
-                        {formatarMoeda(resumo.saldo)}
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              )}
-            </details>
-          </>
-        )}
-
-        {carregandoPagamentos && <p className={styles.mensagem}>Carregando...</p>}
-
-        {!carregandoPagamentos && erroPagamentos && (
-          <div className={styles.estadoErro} role="alert">
-            <p>{erroPagamentos}</p>
-            <button type="button" className={styles.botaoSecundario} onClick={() => buscarPagamentos()}>
-              Tentar de novo
-            </button>
-          </div>
-        )}
-
-        {!carregandoPagamentos && !erroPagamentos && pagamentosFiltrados.length === 0 && (
-          <p className={styles.mensagem}>Nenhum pagamento neste filtro</p>
-        )}
-
-        {!carregandoPagamentos && !erroPagamentos && pagamentosFiltrados.length > 0 && (
-          <>
-            <div className={styles.cabecalhoLinhas} aria-hidden="true">
-              <span>Aluna</span>
-              <span>Turma</span>
-              <span>Valor</span>
-              <span>Status</span>
-              <span>Ações</span>
-            </div>
-            <ul className={styles.lista}>
-              {pagamentosFiltrados.map((pagamento) => (
-                <li key={pagamento.id} className={styles.linhaPagamento}>
-                  <div className={styles.colNome}>
-                    <span className={styles.nomeUsuario}>
-                      {pagamento.matricula.usuario.nome}
-                      {pagamento.tipo === 'INSCRICAO' && <span className={styles.badgeTipo}>Inscrição</span>}
+                      )}
+                      {pagamento.status === 'PENDENTE' && (
+                        <span className={`${styles.status} ${styles.statusPendente}`}>Pendente</span>
+                      )}
                     </span>
-                    <span className={styles.detalhe}>
-                      {[
-                        pagamento.formaPagamento && LABELS_FORMA_PAGAMENTO[pagamento.formaPagamento],
-                        pagamento.status === 'PAGA' && pagamento.dataPagamento
-                          ? `Pago em ${formatarData(pagamento.dataPagamento)}`
-                          : pagamento.status === 'PENDENTE'
-                            ? `Vence em ${formatarData(pagamento.vencimento)}`
-                            : null,
-                        pagamento.editadoEm ? `Corrigido em ${formatarData(pagamento.editadoEm)}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </span>
-                  </div>
-                  <span className={`${styles.detalhe} ${styles.colTurma}`}>
-                    {descricaoTurmas(pagamento.matricula.turmas)}
-                  </span>
-                  <span className={styles.valorPagamento}>{formatarMoeda(Number(pagamento.valor))}</span>
-                  <span className={styles.colStatus}>
-                    {pagamento.status === 'PAGA' && (
-                      <span className={`${styles.status} ${styles.statusPaga}`}>Paga</span>
-                    )}
-                    {pagamento.status === 'CANCELADA' && (
-                      <span
-                        className={`${styles.status} ${styles.statusCancelada}`}
-                        title="Matrícula encerrada: esta cobrança não é mais cobrada"
-                      >
-                        Cancelada
-                      </span>
-                    )}
-                    {pagamento.status === 'PENDENTE' && (
-                      <span className={`${styles.status} ${styles.statusPendente}`}>Pendente</span>
-                    )}
-                  </span>
-                  <div className={styles.acoesItem}>
-                    {pagamento.status === 'PENDENTE' && (
+                    <div className={styles.acoesItem}>
+                      {pagamento.status === 'PENDENTE' && (
+                        <button
+                          type="button"
+                          className={styles.botaoRegistrarTexto}
+                          onClick={() => abrirModalRegistro(pagamento)}
+                          aria-label={`Registrar pagamento de ${pagamento.matricula.usuario.nome}`}
+                        >
+                          <CirclePlus size={18} aria-hidden="true" />
+                          Registrar
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className={styles.botaoRegistrarTexto}
-                        onClick={() => abrirModalRegistro(pagamento)}
-                        aria-label={`Registrar pagamento de ${pagamento.matricula.usuario.nome}`}
+                        className={styles.botaoRegistrar}
+                        onClick={() => abrirModalEdicao(pagamento)}
+                        aria-label={`Corrigir pagamento de ${pagamento.matricula.usuario.nome}`}
+                        title="Corrigir pagamento"
                       >
-                        <CirclePlus size={18} aria-hidden="true" />
-                        Registrar
+                        <Pencil size={18} aria-hidden="true" />
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      className={styles.botaoRegistrar}
-                      onClick={() => abrirModalEdicao(pagamento)}
-                      aria-label={`Corrigir pagamento de ${pagamento.matricula.usuario.nome}`}
-                      title="Corrigir pagamento"
-                    >
-                      <Pencil size={18} aria-hidden="true" />
-                    </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <p className={styles.rodapeTabela}>
+                {pagamentosFiltrados.length} {pagamentosFiltrados.length === 1 ? 'cobrança' : 'cobranças'} em{' '}
+                {formatarMes(mesFiltro)}
+              </p>
+            </>
+          )}
+        </section>
+
+        <aside className={styles.colunaResumo}>
+          <section className={`${styles.card} ${styles.cardLateral}`} aria-label="Recebido por forma de pagamento">
+            <h2 className={styles.tituloLateral}>Recebido por forma</h2>
+            {porFormaPagamento.size === 0 && <p className={styles.mensagem}>Nenhum pagamento pago neste filtro</p>}
+            {Array.from(porFormaPagamento.entries())
+              .sort((a, b) => b[1].total - a[1].total)
+              .map(([forma, { total, quantidade }]) => (
+                <div key={forma} className={styles.formaLinha}>
+                  <div className={styles.formaTexto}>
+                    <span>{LABELS_FORMA_PAGAMENTO[forma as FormaPagamento] ?? forma}</span>
+                    <strong>
+                      {forma === 'ABONADO'
+                        ? `${quantidade} aluna${quantidade === 1 ? '' : 's'}`
+                        : formatarMoeda(total)}
+                    </strong>
                   </div>
-                </li>
+                  {forma !== 'ABONADO' && (
+                    <span className={styles.formaBarra} aria-hidden="true">
+                      <span style={{ width: `${Math.round((total / maiorForma) * 100)}%` }} />
+                    </span>
+                  )}
+                </div>
               ))}
-            </ul>
-          </>
-        )}
+          </section>
+
+          {resumo && (
+            <section className={`${styles.card} ${styles.cardLateral}`} aria-label="Caixa do mês">
+              <h2 className={styles.tituloLateral}>Caixa do mês</h2>
+              <ul className={styles.listaFormas}>
+                <li className={styles.linhaForma}>
+                  <span>Mensalidades</span>
+                  <span>{formatarMoeda(resumo.entradas.mensalidades)}</span>
+                </li>
+                <li className={styles.linhaForma}>
+                  <span>Inscrições</span>
+                  <span>{formatarMoeda(resumo.entradas.inscricoes)}</span>
+                </li>
+                <li className={styles.linhaForma}>
+                  <span>Vendas</span>
+                  <span>{formatarMoeda(resumo.entradas.vendas)}</span>
+                </li>
+                <li className={styles.linhaForma}>
+                  <span>Gastos</span>
+                  <span className={styles.valorNegativo}>− {formatarMoeda(resumo.saidas.total)}</span>
+                </li>
+                <li className={`${styles.linhaForma} ${styles.linhaSaldo}`}>
+                  <span>Saldo</span>
+                  <span className={resumo.saldo < 0 ? styles.valorNegativo : styles.valorPositivo}>
+                    {formatarMoeda(resumo.saldo)}
+                  </span>
+                </li>
+              </ul>
+              <span className={styles.numeroDetalhe}>Tudo que entrou e saiu no mês, de todos os projetos</span>
+            </section>
+          )}
+        </aside>
       </div>
 
       {modalGerarAberto && (
