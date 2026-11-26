@@ -2,23 +2,22 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import {
-  Users,
-  FolderKanban,
-  Wallet,
-  DollarSign,
-  Clock,
-  AlertCircle,
-  FolderOpen,
-  Waves,
-} from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { getUsuario } from '../../lib/auth'
 import { apiGet } from '../../lib/api'
+import {
+  diaSemanaHoje,
+  extrairHora,
+  faixaPresenca,
+  hojeISO,
+  type ResumoFrequencia,
+} from '../../lib/frequencia-resumo'
 import styles from './inicio-admin.module.css'
 
-type Usuario = {
-  nome: string
-}
+// Home da coordenação: o que importa hoje (dinheiro, chamadas, quem precisa
+// de atenção) numa tela só, sem precisar rolar.
+
+type Usuario = { nome: string }
 
 type Pagamento = {
   id: number
@@ -29,6 +28,8 @@ type Pagamento = {
 type PagamentoAtrasado = {
   id: number
   valor: string
+  mesReferencia: string
+  matricula: { usuario: { nome: string } }
 }
 
 type Projeto = {
@@ -38,390 +39,379 @@ type Projeto = {
   alunasAtivas: number
 }
 
-type Associado = {
-  id: number
-}
+type Associado = { id: string }
 
 type Turma = {
   id: number
   nome: string
+  projetoId: number
   dias: string[]
   horario: string | null
   ativas: number
-  inativas: number
-  professor: { id: string; nome: string } | null
-  projeto: { nome: string }
+  projeto: { nome: string } | null
 }
 
-type ValorCard = number | 'erro'
+type Devedora = { nome: string; total: number; meses: string[] }
 
-const DIAS_ORDEM = ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO', 'DOMINGO']
+const CORES_PROJETO = [
+  'var(--accent-hidro)',
+  'var(--accent-corpo)',
+  'var(--accent-corpo-2)',
+  'var(--accent-cinema)',
+  'var(--accent-cinema-2)',
+]
 
-const DIAS_LABELS: Record<string, string> = {
-  SEGUNDA: 'Seg',
-  TERCA: 'Ter',
-  QUARTA: 'Qua',
-  QUINTA: 'Qui',
-  SEXTA: 'Sex',
-  SABADO: 'Sáb',
-  DOMINGO: 'Dom',
-}
-
-const HORAS_PADRAO = [8, 9, 10, 11, 14, 15, 16, 17, 18, 19]
-
-function formatarHora(hora: number): string {
-  return `${String(hora).padStart(2, '0')}h`
-}
-
-function extrairHora(horario: string | null): number | null {
-  if (!horario) return null
-  const match = horario.match(/\d{1,2}/)
-  if (!match) return null
-  const hora = Number(match[0])
-  return hora >= 0 && hora <= 23 ? hora : null
-}
-
-type Resumo = {
-  recebidoMes: ValorCard
-  pendenteMes: ValorCard
-  atrasadosQtd: ValorCard
-  atrasadosTotal: ValorCard
-  projetosAtivos: ValorCard
-  totalAssociados: ValorCard
-  totalAlunasAtivas: ValorCard
-}
+const MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
 function moeda(valor: number) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-function valorOuErro(val: ValorCard, formatar: (n: number) => string) {
-  return val === 'erro' ? '—' : formatar(val)
+function mesCurto(mesReferencia: string) {
+  const [ano, mes] = mesReferencia.split('-')
+  return `${MESES_CURTOS[Number(mes) - 1]}/${ano}`
 }
 
+function saudacaoDoHorario() {
+  const hora = new Date().getHours()
+  if (hora < 12) return 'Bom dia'
+  if (hora < 18) return 'Boa tarde'
+  return 'Boa noite'
+}
+
+const QTD_LISTA_LATERAL = 5
+
 export default function InicioAdminPage() {
-  const [usuario] = useState<Usuario | null>(() =>
-    typeof window !== 'undefined' ? getUsuario() : null
-  )
-  const [resumo, setResumo] = useState<Resumo | null>(null)
-  const [projetoHidroId, setProjetoHidroId] = useState<number | null>(null)
-  const [projetos, setProjetos] = useState<Projeto[]>([])
-  const [turmas, setTurmas] = useState<Turma[]>([])
-  const [carregandoTurmas, setCarregandoTurmas] = useState(true)
+  const [usuario] = useState<Usuario | null>(() => (typeof window !== 'undefined' ? getUsuario() : null))
+  const [pagamentosMes, setPagamentosMes] = useState<Pagamento[] | null>(null)
+  const [atrasados, setAtrasados] = useState<PagamentoAtrasado[] | null>(null)
+  const [projetos, setProjetos] = useState<Projeto[] | null>(null)
+  const [totalAssociados, setTotalAssociados] = useState<number | null>(null)
+  const [turmas, setTurmas] = useState<Turma[] | null>(null)
+  const [frequencia, setFrequencia] = useState<ResumoFrequencia | null>(null)
 
-  useEffect(() => {
-    apiGet<Turma[]>('/turmas')
-      .then(setTurmas)
-      .catch(() => setTurmas([]))
-      .finally(() => setCarregandoTurmas(false))
+  const hoje = useMemo(() => hojeISO(), [])
+  const diaHoje = useMemo(() => diaSemanaHoje(), [])
+  const dataExtenso = useMemo(() => {
+    const texto = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+    return texto.charAt(0).toUpperCase() + texto.slice(1)
   }, [])
 
   useEffect(() => {
-    const mes = new Date().toISOString().slice(0, 7)
+    const mes = hoje.slice(0, 7)
+    apiGet<Pagamento[]>(`/pagamentos?mes=${mes}`).then(setPagamentosMes).catch(() => setPagamentosMes([]))
+    apiGet<PagamentoAtrasado[]>('/pagamentos/atrasados').then(setAtrasados).catch(() => setAtrasados([]))
+    apiGet<Projeto[]>('/projetos').then(setProjetos).catch(() => setProjetos([]))
+    apiGet<Associado[]>('/usuarios?papel=ASSOCIADO')
+      .then((lista) => setTotalAssociados(lista.length))
+      .catch(() => setTotalAssociados(null))
+    apiGet<Turma[]>('/turmas').then(setTurmas).catch(() => setTurmas([]))
+    apiGet<ResumoFrequencia>(`/turmas/frequencia-resumo?hoje=${hoje}`)
+      .then(setFrequencia)
+      .catch(() => setFrequencia(null))
+  }, [hoje])
 
-    Promise.allSettled([
-      apiGet<Pagamento[]>(`/pagamentos?mes=${mes}`),
-      apiGet<PagamentoAtrasado[]>('/pagamentos/atrasados'),
-      apiGet<Projeto[]>('/projetos'),
-      apiGet<Associado[]>('/usuarios?papel=ASSOCIADO'),
-    ]).then(([pagamentosRes, atrasadosRes, projetosRes, associadosRes]) => {
-      if (projetosRes.status === 'fulfilled') {
-        const hidro = projetosRes.value.find((p) => p.nome === 'Viva Bem com Hidro')
-        setProjetoHidroId(hidro?.id ?? null)
-        setProjetos(projetosRes.value)
-      }
+  // -- dinheiro --
+  const recebido = (pagamentosMes ?? []).filter((p) => p.status === 'PAGA').reduce((s, p) => s + Number(p.valor), 0)
+  const pendente = (pagamentosMes ?? [])
+    .filter((p) => p.status === 'PENDENTE')
+    .reduce((s, p) => s + Number(p.valor), 0)
+  const previsto = recebido + pendente
+  const percentualRecebido = previsto > 0 ? Math.round((recebido / previsto) * 100) : 0
+  const totalAtrasado = (atrasados ?? []).reduce((s, p) => s + Number(p.valor), 0)
+  const nomeMes = new Date().toLocaleDateString('pt-BR', { month: 'long' })
 
-      let recebidoMes: ValorCard = 'erro'
-      let pendenteMes: ValorCard = 'erro'
-      if (pagamentosRes.status === 'fulfilled') {
-        recebidoMes = pagamentosRes.value
-          .filter((p) => p.status === 'PAGA')
-          .reduce((acc, p) => acc + Number(p.valor), 0)
-        pendenteMes = pagamentosRes.value
-          .filter((p) => p.status === 'PENDENTE')
-          .reduce((acc, p) => acc + Number(p.valor), 0)
-      }
+  // Uma linha por aluna, somando os meses em atraso — quem deve mais primeiro.
+  const devedoras = useMemo(() => {
+    const porNome = new Map<string, Devedora>()
+    for (const p of atrasados ?? []) {
+      const nome = p.matricula.usuario.nome
+      const atual = porNome.get(nome) ?? { nome, total: 0, meses: [] }
+      atual.total += Number(p.valor)
+      atual.meses.push(p.mesReferencia)
+      porNome.set(nome, atual)
+    }
+    return Array.from(porNome.values()).sort((a, b) => b.total - a.total)
+  }, [atrasados])
 
-      let atrasadosQtd: ValorCard = 'erro'
-      let atrasadosTotal: ValorCard = 'erro'
-      if (atrasadosRes.status === 'fulfilled') {
-        atrasadosQtd = atrasadosRes.value.length
-        atrasadosTotal = atrasadosRes.value.reduce((acc, p) => acc + Number(p.valor), 0)
-      }
+  // -- turmas e chamadas --
+  const freqPorTurma = useMemo(
+    () => new Map((frequencia?.turmas ?? []).map((t) => [t.turmaId, t])),
+    [frequencia]
+  )
 
-      const projetosAtivos: ValorCard =
-        projetosRes.status === 'fulfilled'
-          ? projetosRes.value.filter((p) => p.ativo).length
-          : 'erro'
+  const corPorProjeto = useMemo(() => {
+    const mapa = new Map<number, string>()
+    ;(projetos ?? []).forEach((p, i) => mapa.set(p.id, CORES_PROJETO[i % CORES_PROJETO.length]))
+    return mapa
+  }, [projetos])
 
-      const totalAssociados: ValorCard =
-        associadosRes.status === 'fulfilled' ? associadosRes.value.length : 'erro'
+  const horaAgora = new Date().getHours()
+  const aulasHoje = useMemo(
+    () =>
+      (turmas ?? [])
+        .filter((t) => t.dias?.includes(diaHoje))
+        .sort((a, b) => (extrairHora(a.horario) ?? 99) - (extrairHora(b.horario) ?? 99)),
+    [turmas, diaHoje]
+  )
+  function statusAula(turma: Turma): 'feita' | 'pendente' | 'depois' {
+    if (freqPorTurma.get(turma.id)?.chamadaHoje) return 'feita'
+    const hora = extrairHora(turma.horario)
+    if (hora !== null && hora > horaAgora) return 'depois'
+    return 'pendente'
+  }
+  const chamadasFeitas = aulasHoje.filter((t) => statusAula(t) === 'feita').length
+  const chamadasPendentes = aulasHoje.filter((t) => statusAula(t) === 'pendente').length
 
-      const totalAlunasAtivas: ValorCard =
-        projetosRes.status === 'fulfilled'
-          ? projetosRes.value.reduce((acc, p) => acc + p.alunasAtivas, 0)
-          : 'erro'
-
-      setResumo({
-        recebidoMes,
-        pendenteMes,
-        atrasadosQtd,
-        atrasadosTotal,
-        projetosAtivos,
-        totalAssociados,
-        totalAlunasAtivas,
+  // -- projetos --
+  const cartoesProjetos = useMemo(() => {
+    return (projetos ?? [])
+      .filter((p) => p.ativo !== false)
+      .map((p) => {
+        const turmasDoProjeto = (turmas ?? []).filter((t) => t.projetoId === p.id)
+        const presencas = turmasDoProjeto
+          .map((t) => freqPorTurma.get(t.id)?.percentualPresenca)
+          .filter((v): v is number => typeof v === 'number')
+        const presenca = presencas.length
+          ? Math.round(presencas.reduce((s, v) => s + v, 0) / presencas.length)
+          : null
+        return { ...p, qtdTurmas: turmasDoProjeto.length, presenca }
       })
-    })
-  }, [])
+      .sort((a, b) => b.alunasAtivas - a.alunasAtivas)
+  }, [projetos, turmas, freqPorTurma])
 
-  const carregando = resumo === null
-
-  const turmasNaGrade = useMemo(
-    () => turmas.filter((turma) => turma.dias?.length && extrairHora(turma.horario) !== null),
-    [turmas]
-  )
-  const turmasForaDaGrade = useMemo(
-    () => turmas.filter((turma) => !turma.dias?.length || extrairHora(turma.horario) === null),
-    [turmas]
-  )
-
-  const diasComTurma = useMemo(
-    () => DIAS_ORDEM.filter((dia) => turmasNaGrade.some((turma) => turma.dias.includes(dia))),
-    [turmasNaGrade]
-  )
-
-  const horasComTurma = useMemo(() => {
-    const presentes = turmasNaGrade.map((turma) => extrairHora(turma.horario) as number)
-    return Array.from(new Set([...HORAS_PADRAO, ...presentes])).sort((a, b) => a - b)
-  }, [turmasNaGrade])
+  const totalAlunasAtivas = (projetos ?? []).reduce((s, p) => s + p.alunasAtivas, 0)
+  const projetosAtivos = (projetos ?? []).filter((p) => p.ativo !== false).length
 
   return (
     <div className={styles.pagina}>
-
       <header className={styles.topo}>
-        <h1 className={styles.saudacao}>Olá, {usuario?.nome ?? '...'} 👋</h1>
-        <p className={styles.subtituloSaudacao}>Aqui está o resumo da sua ONG hoje.</p>
+        <div>
+          <h1 className={styles.saudacao}>
+            {saudacaoDoHorario()}
+            {usuario?.nome ? `, ${usuario.nome.split(' ')[0]}` : ''}
+          </h1>
+          <span className={styles.data}>{dataExtenso}</span>
+        </div>
+        <div className={styles.acoes}>
+          <Link href="/matriculas/nova" className={styles.botaoPrimario}>
+            <Plus size={18} aria-hidden="true" /> Nova matrícula
+          </Link>
+          <Link href="/associados/novo" className={styles.botaoSecundario}>
+            Novo associado
+          </Link>
+        </div>
       </header>
 
-      <div className={styles.acoes}>
-        <Link href="/matriculas/nova" className={styles.botaoPrimario}>
-          Nova aluna
+      <div className={styles.numeros}>
+        <Link href="/financeiro" className={styles.numero}>
+          <span className={styles.numeroRotulo}>Recebido em {nomeMes}</span>
+          <span className={`${styles.numeroValor} ${styles.textoOk}`}>
+            {pagamentosMes === null ? '…' : moeda(recebido)}
+          </span>
+          {pagamentosMes !== null && previsto > 0 && (
+            <>
+              <span className={styles.barra} aria-hidden="true">
+                <span style={{ width: `${percentualRecebido}%` }} />
+              </span>
+              <span className={styles.numeroDetalhe}>
+                {percentualRecebido}% do previsto · faltam {moeda(pendente)}
+              </span>
+            </>
+          )}
         </Link>
-        <Link href="/associados/novo" className={styles.botaoSecundario}>
-          Novo associado
+
+        <Link
+          href="/financeiro/atrasados"
+          className={`${styles.numero} ${totalAtrasado > 0 ? styles.numeroAlerta : ''}`}
+        >
+          <span className={styles.numeroRotulo}>Atrasadas</span>
+          <span className={styles.numeroValor}>{atrasados === null ? '…' : moeda(totalAtrasado)}</span>
+          <span className={styles.numeroDetalhe}>
+            {atrasados === null
+              ? ''
+              : atrasados.length === 0
+              ? 'Nenhuma mensalidade atrasada'
+              : `${atrasados.length} ${atrasados.length === 1 ? 'mensalidade' : 'mensalidades'} · ver quem →`}
+          </span>
+        </Link>
+
+        <Link href="/associados" className={styles.numero}>
+          <span className={styles.numeroRotulo}>Alunas ativas</span>
+          <span className={styles.numeroValor}>{projetos === null ? '…' : totalAlunasAtivas}</span>
+          <span className={styles.numeroDetalhe}>
+            em {projetosAtivos} {projetosAtivos === 1 ? 'projeto' : 'projetos'}
+            {totalAssociados !== null && ` · ${totalAssociados} associados`}
+          </span>
+        </Link>
+
+        <Link href="/frequencia" className={styles.numero}>
+          <span className={styles.numeroRotulo}>Chamadas de hoje</span>
+          <span className={styles.numeroValor}>
+            {turmas === null ? '…' : aulasHoje.length === 0 ? '—' : `${chamadasFeitas} de ${aulasHoje.length}`}
+          </span>
+          <span className={`${styles.numeroDetalhe} ${chamadasPendentes > 0 ? styles.textoAviso : ''}`}>
+            {turmas === null
+              ? ''
+              : aulasHoje.length === 0
+              ? 'Nenhuma aula hoje'
+              : chamadasPendentes > 0
+              ? `${chamadasPendentes} ${chamadasPendentes === 1 ? 'pendente' : 'pendentes'}`
+              : 'Nada pendente até agora'}
+          </span>
         </Link>
       </div>
 
-      <section className={styles.secao}>
-        <h2 className={styles.tituloSecao}>Resumo do mês</h2>
-        <div className={styles.resumoGrid}>
-
-          <div className={`${styles.resumoCard} ${styles.resumoSuccess}`}>
-            <div className={styles.iconeWrap}>
-              <DollarSign size={20} />
+      <div className={styles.corpo}>
+        <div className={styles.colunaPrincipal}>
+          <section className={`${styles.cartao} ${styles.semPadding}`} aria-label="Aulas de hoje">
+            <div className={styles.topoCartao}>
+              <h2 className={styles.tituloCartao}>Aulas de hoje</h2>
+              <Link href="/frequencia" className={styles.linkAcao}>
+                Ver frequência →
+              </Link>
             </div>
-            <span className={styles.resumoValor}>
-              {carregando ? '...' : valorOuErro(resumo.recebidoMes, moeda)}
-            </span>
-            <span className={styles.resumoLabel}>Recebido no mês</span>
-          </div>
-
-          <div className={`${styles.resumoCard} ${styles.resumoWarning}`}>
-            <div className={styles.iconeWrap}>
-              <Clock size={20} />
-            </div>
-            <span className={styles.resumoValor}>
-              {carregando ? '...' : valorOuErro(resumo.pendenteMes, moeda)}
-            </span>
-            <span className={styles.resumoLabel}>Pendente no mês</span>
-          </div>
-
-          <Link
-            href="/financeiro/atrasados"
-            className={`${styles.resumoCard} ${styles.resumoDanger} ${styles.resumoCardLink}`}
-            title="Ver quem está com mensalidade atrasada"
-          >
-            <div className={styles.iconeWrap}>
-              <AlertCircle size={20} />
-            </div>
-            <span className={styles.resumoValor}>
-              {carregando
-                ? '...'
-                : resumo.atrasadosQtd === 'erro'
-                ? '—'
-                : `${resumo.atrasadosQtd} · ${typeof resumo.atrasadosTotal === 'number' ? moeda(resumo.atrasadosTotal) : '—'}`}
-            </span>
-            <span className={styles.resumoLabel}>Mensalidades atrasadas</span>
-            <span className={styles.resumoLinkTexto}>Ver por aluna →</span>
-          </Link>
-
-          <div className={`${styles.resumoCard} ${styles.resumoPrimary}`}>
-            <div className={styles.iconeWrap}>
-              <FolderOpen size={20} />
-            </div>
-            <span className={styles.resumoValor}>
-              {carregando ? '...' : valorOuErro(resumo.projetosAtivos, String)}
-            </span>
-            <span className={styles.resumoLabel}>Projetos ativos</span>
-          </div>
-
-          <div className={`${styles.resumoCard} ${styles.resumoPrimary}`}>
-            <div className={styles.iconeWrap}>
-              <Users size={20} />
-            </div>
-            <span className={styles.resumoValor}>
-              {carregando ? '...' : valorOuErro(resumo.totalAssociados, String)}
-            </span>
-            <span className={styles.resumoLabel}>Total de associados</span>
-          </div>
-
-          <div className={`${styles.resumoCard} ${styles.resumoSuccess}`}>
-            <div className={styles.iconeWrap}>
-              <Users size={20} />
-            </div>
-            <span className={styles.resumoValor}>
-              {carregando ? '...' : valorOuErro(resumo.totalAlunasAtivas, String)}
-            </span>
-            <span className={styles.resumoLabel}>Alunas ativas</span>
-          </div>
-
-        </div>
-      </section>
-
-      <section className={styles.secao}>
-        <h2 className={styles.tituloSecao}>Alunas ativas por projeto</h2>
-
-        {carregando && <p className={styles.mensagemTurmas}>Carregando...</p>}
-
-        {!carregando && projetos.length === 0 && (
-          <p className={styles.mensagemTurmas}>Nenhum projeto cadastrado</p>
-        )}
-
-        {!carregando && projetos.length > 0 && (
-          <ul className={styles.lista}>
-            {[...projetos]
-              .sort((a, b) => b.alunasAtivas - a.alunasAtivas)
-              .map((projeto) => (
-                <li key={projeto.id}>
-                  <Link href={`/projetos/${projeto.id}/turmas`} className={styles.item}>
-                    <span className={styles.nome}>{projeto.nome}</span>
-                    <span className={styles.contagem}>
-                      {projeto.alunasAtivas} aluna{projeto.alunasAtivas === 1 ? '' : 's'} ativa
-                      {projeto.alunasAtivas === 1 ? '' : 's'}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-          </ul>
-        )}
-      </section>
-
-      <section className={styles.secao}>
-        <h2 className={styles.tituloSecao}>Acesso rápido</h2>
-        <div className={styles.cards}>
-          <Link href="/associados" className={styles.card}>
-            <Users size={26} />
-            <span>Associados</span>
-          </Link>
-          <Link href="/projetos" className={styles.card}>
-            <FolderKanban size={26} />
-            <span>Projetos</span>
-          </Link>
-          <Link href="/financeiro" className={styles.card}>
-            <Wallet size={26} />
-            <span>Financeiro</span>
-          </Link>
-          {projetoHidroId !== null && (
-            <Link href={`/projetos/${projetoHidroId}/turmas`} className={styles.card}>
-              <Waves size={26} />
-              <span>Viva Bem com Hidro</span>
-            </Link>
-          )}
-        </div>
-      </section>
-
-      <section className={styles.secao}>
-        <h2 className={styles.tituloSecao}>Turmas</h2>
-
-        {carregandoTurmas && <p className={styles.mensagemTurmas}>Carregando...</p>}
-
-        {!carregandoTurmas && turmas.length === 0 && (
-          <p className={styles.mensagemTurmas}>Nenhuma turma cadastrada</p>
-        )}
-
-        {!carregandoTurmas && turmas.length > 0 && (
-          <>
-            {diasComTurma.length > 0 && (
-              <div className={styles.gradeWrapper}>
-                <div
-                  className={styles.grade}
-                  style={{ gridTemplateColumns: `4rem repeat(${diasComTurma.length}, minmax(7rem, 1fr))` }}
-                >
-                  <div className={styles.gradeCantoVazio} />
-                  {diasComTurma.map((dia) => (
-                    <div key={dia} className={styles.gradeDiaHeader}>
-                      {DIAS_LABELS[dia]}
-                    </div>
-                  ))}
-
-                  {horasComTurma.map((hora) => (
-                    <div key={hora} className={styles.gradeLinha} style={{ display: 'contents' }}>
-                      <div className={styles.gradeHoraLabel}>{formatarHora(hora)}</div>
-                      {diasComTurma.map((dia) => {
-                        const turmasCelula = turmasNaGrade.filter(
-                          (turma) => extrairHora(turma.horario) === hora && turma.dias.includes(dia)
-                        )
-                        return (
-                          <div key={dia} className={styles.gradeCelula}>
-                            {turmasCelula.map((turma) => (
-                              <Link
-                                key={turma.id}
-                                href={`/turmas/${turma.id}/alunas`}
-                                className={styles.gradeTurma}
-                                title={turma.projeto.nome}
-                              >
-                                <span className={styles.gradeTurmaNome}>{turma.nome}</span>
-                                <span className={styles.gradeTurmaContagem}>
-                                  {turma.ativas} ativas · {turma.inativas} inativas
-                                </span>
-                              </Link>
-                            ))}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {turmas === null && <p className={styles.mensagem}>Carregando...</p>}
+            {turmas !== null && aulasHoje.length === 0 && (
+              <p className={styles.mensagem}>Nenhuma turma tem aula hoje.</p>
             )}
-
-            {turmasForaDaGrade.length > 0 && (
-              <div className={styles.semHorario}>
-                {diasComTurma.length > 0 && (
-                  <h3 className={styles.subtitulo}>Sem horário definido</h3>
-                )}
-                <ul className={styles.lista}>
-                  {turmasForaDaGrade.map((turma) => (
-                    <li key={turma.id}>
-                      <Link href={`/turmas/${turma.id}/alunas`} className={styles.item}>
-                        <span className={styles.turmaProjeto}>{turma.projeto.nome}</span>
-                        <span className={styles.nome}>{turma.nome}</span>
-                        <span className={styles.detalhe}>
-                          {turma.professor ? `Professora: ${turma.professor.nome}` : 'Sem professora'}
+            {aulasHoje.length > 0 && (
+              <ul className={styles.listaAulas}>
+                {aulasHoje.map((turma) => {
+                  const status = statusAula(turma)
+                  return (
+                    <li key={turma.id} className={styles.aula}>
+                      <span className={styles.aulaHora}>{turma.horario || '—'}</span>
+                      <span
+                        className={styles.aulaCor}
+                        style={{ backgroundColor: corPorProjeto.get(turma.projetoId) }}
+                        aria-hidden="true"
+                      />
+                      <div className={styles.aulaTexto}>
+                        <span className={styles.forte}>{turma.nome}</span>
+                        <span className={styles.suave}>
+                          {turma.projeto?.nome} · {turma.ativas} alunas
                         </span>
-                        <span className={styles.contagem}>
-                          {turma.ativas} ativas · {turma.inativas} inativas
-                        </span>
+                      </div>
+                      <span className={`${styles.etiqueta} ${styles[`etiqueta_${status}`]}`}>
+                        {status === 'feita' ? 'Chamada feita' : status === 'pendente' ? 'Pendente' : 'Mais tarde'}
+                      </span>
+                      <Link
+                        href={`/frequencia/${turma.id}`}
+                        className={status === 'pendente' ? styles.botaoChamada : styles.botaoChamadaLeve}
+                      >
+                        {status === 'feita' ? 'Ver chamada' : 'Fazer chamada'}
                       </Link>
                     </li>
-                  ))}
-                </ul>
-              </div>
+                  )
+                })}
+              </ul>
             )}
-          </>
-        )}
-      </section>
+          </section>
 
+          <section aria-label="Projetos" className={styles.secaoProjetos}>
+            <h2 className={styles.tituloCartao}>Projetos</h2>
+            {projetos === null && <p className={styles.mensagem}>Carregando...</p>}
+            {projetos !== null && cartoesProjetos.length === 0 && (
+              <p className={styles.mensagem}>Nenhum projeto cadastrado</p>
+            )}
+            <div className={styles.gradeProjetos}>
+              {cartoesProjetos.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/projetos/${p.id}/turmas`}
+                  className={styles.projeto}
+                  style={{ borderTopColor: corPorProjeto.get(p.id) }}
+                >
+                  <span className={styles.forte}>{p.nome}</span>
+                  <div className={styles.projetoNumeros}>
+                    <span className={styles.projetoAlunas}>{p.alunasAtivas}</span>
+                    <span className={styles.suave}>
+                      {p.qtdTurmas} {p.qtdTurmas === 1 ? 'turma' : 'turmas'}
+                    </span>
+                  </div>
+                  <span className={styles.suave}>
+                    {p.alunasAtivas === 1 ? 'aluna ativa' : 'alunas ativas'} · presença{' '}
+                    <strong className={styles[`faixa_${faixaPresenca(p.presenca)}`]}>
+                      {p.presenca === null ? '—' : `${p.presenca}%`}
+                    </strong>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <aside className={styles.colunaLateral}>
+          <section className={styles.cartao} aria-label="Mensalidades atrasadas">
+            <div className={styles.topoCartaoSimples}>
+              <h2 className={styles.tituloCartao}>Mensalidades atrasadas</h2>
+              {devedoras.length > 0 && (
+                <Link href="/financeiro/atrasados" className={styles.linkAcao}>
+                  Ver todas ({devedoras.length})
+                </Link>
+              )}
+            </div>
+            {atrasados === null && <p className={styles.mensagemLateral}>Carregando...</p>}
+            {atrasados !== null && devedoras.length === 0 && (
+              <p className={styles.mensagemLateral}>Ninguém com mensalidade atrasada.</p>
+            )}
+            {devedoras.length > 0 && (
+              <ul className={styles.listaLateral}>
+                {devedoras.slice(0, QTD_LISTA_LATERAL).map((d) => {
+                  const meses = [...d.meses].sort()
+                  return (
+                    <li key={d.nome}>
+                      <Link href="/financeiro/atrasados" className={styles.itemLateral}>
+                        <div className={styles.aulaTexto}>
+                          <span className={styles.forte}>{d.nome}</span>
+                          <span className={styles.suave}>
+                            {meses.length === 1
+                              ? `1 mês · ${mesCurto(meses[0])}`
+                              : `${meses.length} meses · desde ${mesCurto(meses[0])}`}
+                          </span>
+                        </div>
+                        <span className={styles.valorDevido}>{moeda(d.total)}</span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </section>
+
+          <section className={styles.cartao} aria-label="Faltando muito">
+            <div className={styles.topoCartaoSimples}>
+              <h2 className={styles.tituloCartao}>Faltando muito</h2>
+              <Link href="/frequencia" className={styles.linkAcao}>
+                Ver frequência
+              </Link>
+            </div>
+            <span className={styles.suave}>Presença abaixo de 75% nos últimos 30 dias</span>
+            {!frequencia && <p className={styles.mensagemLateral}>—</p>}
+            {frequencia && frequencia.atencao.length === 0 && (
+              <p className={styles.mensagemLateral}>Nenhuma aluna faltando muito.</p>
+            )}
+            {frequencia && frequencia.atencao.length > 0 && (
+              <ul className={styles.listaLateral}>
+                {frequencia.atencao.slice(0, QTD_LISTA_LATERAL).map((a) => (
+                  <li key={`${a.usuarioId}-${a.turmaId}`}>
+                    <Link href={`/associados/${a.usuarioId}`} className={styles.itemLateral}>
+                      <div className={styles.aulaTexto}>
+                        <span className={styles.forte}>{a.nome}</span>
+                        <span className={styles.suave}>
+                          {a.turmaNome} · {a.faltas} {a.faltas === 1 ? 'falta' : 'faltas'} em {a.total}
+                        </span>
+                      </div>
+                      <span className={styles.pilulaCritica}>{a.percentualPresenca}%</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </aside>
+      </div>
     </div>
   )
 }
