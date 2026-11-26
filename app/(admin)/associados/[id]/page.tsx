@@ -39,6 +39,7 @@ import { buscarValoresDoProjeto, rotuloPlano, type PlanoValor } from '../../../l
 import type { Avaliacao, RegistroSaude, RelatorioDaAluna } from '../../../lib/saude'
 import { estaAtrasado } from '../../../lib/pagamentos'
 import styles from './perfil.module.css'
+import layout from './associado.module.css'
 
 const FLORES = [
   'girassol', 'violeta', 'jasmim', 'margarida', 'orquidea',
@@ -134,6 +135,46 @@ const LABELS_EXAME: Record<string, string> = {
   AGUARDANDO: 'Aguardando',
 }
 
+const LIMITE_PAGAMENTOS = 8
+
+function calcularIdade(dataNascimento: string | null): number | null {
+  if (!dataNascimento) return null
+  const [ano, mes, dia] = dataNascimento.slice(0, 10).split('-').map(Number)
+  if (!ano) return null
+  const hoje = new Date()
+  let idade = hoje.getFullYear() - ano
+  if (hoje.getMonth() + 1 < mes || (hoje.getMonth() + 1 === mes && hoje.getDate() < dia)) idade--
+  return idade >= 0 && idade < 130 ? idade : null
+}
+
+const MESES_CURTOS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+
+function formatarMesCurto(mes: string) {
+  const [ano, mesNumero] = mes.split('-')
+  return `${MESES_CURTOS[Number(mesNumero) - 1]} ${ano}`
+}
+
+// dd/mm — o ano já aparece na coluna do mês.
+function formatarDiaMes(data: string | null) {
+  if (!data) return '—'
+  const [, mes, dia] = data.slice(0, 10).split('-')
+  return `${dia}/${mes}`
+}
+
+function formatarTelefone(telefone: string): string {
+  const d = telefone.replace(/\D/g, '')
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
+  return telefone
+}
+
+// Telefone brasileiro cadastrado sem DDI: o link do WhatsApp precisa do 55.
+function linkWhatsappTelefone(telefone: string): string | null {
+  const digitos = telefone.replace(/\D/g, '')
+  if (digitos.length < 10) return null
+  return `https://wa.me/${digitos.startsWith('55') && digitos.length > 11 ? digitos : `55${digitos}`}`
+}
+
 function formatarMes(mes: string) {
   const [ano, mesNumero] = mes.split('-')
   return `${NOMES_MESES[Number(mesNumero) - 1]} ${ano}`
@@ -175,6 +216,8 @@ export default function PerfilAssociadoPage() {
   // uma avaliação nova é salva.
   const [alturaAluna, setAlturaAluna] = useState<number | null>(null)
   const [versaoSaude, setVersaoSaude] = useState(0)
+  const [filtroPagamentos, setFiltroPagamentos] = useState<'todos' | 'aberto' | 'pagos'>('todos')
+  const [verTodosPagamentos, setVerTodosPagamentos] = useState(false)
   const [avaliacoesAluna, setAvaliacoesAluna] = useState<Avaliacao[]>([])
   const [registrosAluna, setRegistrosAluna] = useState<RegistroSaude[]>([])
   const aoCarregarSaude = useCallback((relatorio: RelatorioDaAluna) => {
@@ -702,42 +745,61 @@ export default function PerfilAssociadoPage() {
   }
 
   const endereco = montarEndereco(associado)
+  const idade = calcularIdade(associado.dataNascimento)
 
   // Em aberto = cobranças pendentes (canceladas não são dívida).
   const pendentesAluna = pagamentos.filter((pagamento) => pagamento.status === 'PENDENTE')
   const totalEmAberto = pendentesAluna.reduce((soma, pagamento) => soma + Number(pagamento.valor), 0)
-  const inicioHoje = new Date().setHours(0, 0, 0, 0)
-  const atrasadasAluna = pendentesAluna.filter(
-    (pagamento) => new Date(pagamento.vencimento).getTime() < inicioHoje
-  ).length
+  const atrasadasAluna = pendentesAluna.filter((pagamento) => estaAtrasado(pagamento)).length
+
+  const anoAtual = String(new Date().getFullYear())
+  const pagoNoAno = pagamentos
+    .filter((p) => p.status === 'PAGA' && (p.dataPagamento ?? '').startsWith(anoAtual))
+    .reduce((soma, p) => soma + Number(p.valor), 0)
+
+  const pagamentosFiltrados = pagamentos.filter((p) =>
+    filtroPagamentos === 'aberto' ? p.status === 'PENDENTE' : filtroPagamentos === 'pagos' ? p.status === 'PAGA' : true
+  )
+  const variasTurmas =
+    new Set(pagamentos.map((p) => p.matricula.turmas.map((t) => t.nome).join(', '))).size > 1
+  const pagamentosVisiveis = verTodosPagamentos ? pagamentosFiltrados : pagamentosFiltrados.slice(0, LIMITE_PAGAMENTOS)
+
+  const matriculasAtivas = associado.matriculas.filter((m) => m.ativa)
+  const resumoMatriculas = matriculasAtivas
+    .map((m) => `${m.turmas[0]?.projeto.nome ?? ''}${m.turmas.length ? `, ${m.turmas.map((t) => t.nome).join(' e ')}` : ''}`)
+    .filter(Boolean)
+    .join(' · ')
+
+  const linkWhatsapp = associado.telefone ? linkWhatsappTelefone(associado.telefone) : null
+
+  function rotuloStatus(pagamento: Pagamento) {
+    if (pagamento.status === 'PAGA') return { texto: 'Paga', classe: styles.statusPaga }
+    if (pagamento.status === 'CANCELADA') return { texto: 'Cancelada', classe: styles.statusCancelada }
+    if (estaAtrasado(pagamento)) return { texto: 'Atrasada', classe: styles.statusAtrasada }
+    return { texto: 'A vencer', classe: styles.statusPendente }
+  }
 
   return (
-    <div className={styles.pagina}>
-      <div className={styles.cabecalho}>
-        <Avatar nome={associado.nome} fotoUrl={associado.fotoUrl} tamanho={64} />
-        <div className={styles.cabecalhoInfo}>
-          <h1 className={styles.titulo}>{associado.nome}</h1>
-          <div className={styles.cabecalhoMeta}>
-            <span className={`${styles.badge} ${associado.status === 'ATIVO' ? styles.badgeAtiva : styles.badgeInativa}`}>
-              {associado.status === 'ATIVO' ? 'Ativo' : 'Inativo'}
-            </span>
-            {carregandoPagamentos ? (
-              <span className={styles.emDia}>Calculando...</span>
-            ) : totalEmAberto > 0 ? (
-              <span className={styles.emAberto}>
-                Em aberto: {formatarMoeda(String(totalEmAberto))}
-                {atrasadasAluna > 0 &&
-                  ` · ${atrasadasAluna} ${atrasadasAluna === 1 ? 'atrasada' : 'atrasadas'}`}
-              </span>
-            ) : (
-              <span className={styles.emDia}>Em dia</span>
-            )}
-          </div>
+    <div className={layout.pagina}>
+      <header className={layout.cabecalho}>
+        <Avatar nome={associado.nome} fotoUrl={associado.fotoUrl} tamanho={56} />
+        <div className={layout.cabecalhoInfo}>
+          <span className={layout.trilha}>
+            <Link href="/associados">Associados</Link> /
+          </span>
+          <h1 className={layout.nome}>{associado.nome}</h1>
+          <p className={layout.resumo}>
+            <strong className={associado.status === 'ATIVO' ? layout.ativa : layout.inativa}>
+              {associado.status === 'ATIVO' ? 'Ativa' : 'Inativa'}
+            </strong>
+            {idade !== null && ` · ${idade} anos`}
+            {resumoMatriculas && ` · ${resumoMatriculas}`}
+          </p>
         </div>
-        <div className={styles.cabecalhoAcoes}>
+        <div className={layout.cabecalhoAcoes}>
           <button
             type="button"
-            className={styles.botaoPrimario}
+            className={layout.botaoPrimario}
             onClick={registrarDoCabecalho}
             disabled={carregandoPagamentos || pendentesAluna.length === 0}
             title={pendentesAluna.length === 0 ? 'Não há cobranças pendentes' : undefined}
@@ -745,410 +807,434 @@ export default function PerfilAssociadoPage() {
             <CirclePlus size={18} aria-hidden="true" />
             Registrar pagamento
           </button>
-          <Link href={`/matriculas/nova?associadoId=${id}`} className={styles.botaoSecundarioLink}>
+          <Link href={`/matriculas/nova?associadoId=${id}`} className={layout.botaoSecundario}>
             Nova matrícula
           </Link>
+          <button type="button" className={layout.botaoSecundario} onClick={abrirModalDados}>
+            <Pencil size={15} aria-hidden="true" />
+            Editar dados
+          </button>
         </div>
-      </div>
+      </header>
 
-      <div className={styles.colunas}>
-      <div className={styles.colunaEsq}>
-      {/* Bloco 1 — Dados pessoais */}
-      <div className={styles.card}>
-        <div className={styles.cabecalhoSecao}>
-          <h2 className={styles.subtitulo}>Dados pessoais</h2>
-          <div className={styles.botoesSenha}>
-            <button className={styles.botaoAlterarSenha} onClick={abrirModalDados}>
-              <Pencil size={14} />
-              Editar dados
-            </button>
-            {!associado.responsavel && (
-              <>
-                <button className={styles.botaoAlterarSenha} onClick={abrirModalSenha}>
-                  <KeyRound size={14} />
-                  Alterar senha
-                </button>
+      <div className={layout.linha}>
+        {/* Pagamentos — o que a coordenação mais consulta, por isso no topo */}
+        <section className={`${layout.cartao} ${layout.cartaoLargo} ${layout.semPadding}`} aria-label="Pagamentos">
+          <div className={layout.topoPagamentos}>
+            <h2 className={layout.tituloCartao}>Pagamentos</h2>
+            {!carregandoPagamentos &&
+              (totalEmAberto > 0 ? (
+                <span className={layout.emAberto}>
+                  {formatarMoeda(String(totalEmAberto))} em aberto
+                  {atrasadasAluna > 0 && ` · ${atrasadasAluna} ${atrasadasAluna === 1 ? 'atrasada' : 'atrasadas'}`}
+                </span>
+              ) : (
+                <span className={layout.emDia}>Em dia</span>
+              ))}
+            <span className={layout.espaco} />
+            <div className={layout.filtro} role="group" aria-label="Mostrar pagamentos">
+              {(
+                [
+                  ['todos', 'Todos'],
+                  ['aberto', 'Em aberto'],
+                  ['pagos', 'Pagos'],
+                ] as const
+              ).map(([valor, rotulo]) => (
                 <button
-                  className={styles.botaoEnviarAcesso}
-                  onClick={abrirAcesso}
-                  disabled={gerandoAcesso}
+                  key={valor}
+                  type="button"
+                  aria-pressed={filtroPagamentos === valor}
+                  className={filtroPagamentos === valor ? layout.filtroAtivo : ''}
+                  onClick={() => setFiltroPagamentos(valor)}
                 >
-                  <MessageCircle size={14} />
-                  {gerandoAcesso ? 'Gerando...' : 'Enviar acesso'}
+                  {rotulo}
                 </button>
-              </>
-            )}
-            <button className={styles.botaoExcluirAssociado} onClick={abrirModalExcluir}>
-              <Trash2 size={14} />
-              Excluir associado
+              ))}
+            </div>
+            <button type="button" className={layout.botaoPequeno} onClick={abrirModalGerar}>
+              Gerar mensalidade
             </button>
           </div>
-        </div>
 
-        {erroAcesso && <p className={styles.erro}>{erroAcesso}</p>}
-
-        {senhaSalva && (
-          <div className={styles.avisoSenha}>
-            <p className={styles.avisoSenhaTexto}>
-              Senha alterada! Nova senha de acesso:{' '}
-              <span className={styles.avisoSenhaValor}>{senhaSalva}</span> — anote e entregue à
-              associada.
+          {carregandoPagamentos && <p className={layout.mensagemCartao}>Carregando pagamentos...</p>}
+          {!carregandoPagamentos && pagamentosFiltrados.length === 0 && (
+            <p className={layout.mensagemCartao}>
+              {pagamentos.length === 0 ? 'Nenhum pagamento encontrado' : 'Nenhum pagamento neste filtro'}
             </p>
-            <div className={styles.avisoSenhaAcoes}>
-              <button type="button" className={styles.avisoSenhaCopiar} onClick={copiarSenhaSalva}>
-                {senhaCopiada ? 'Copiado!' : 'Copiar senha'}
-              </button>
-              <button type="button" className={styles.avisoSenhaDispensar} onClick={dispensarSenhaSalva}>
-                Dispensar
-              </button>
-            </div>
-          </div>
-        )}
+          )}
 
-        {acessoParaEnviar && (
-          <div className={styles.avisoSenha}>
-            <p className={styles.avisoSenhaTexto}>Envie a mensagem abaixo para a associada.</p>
-            <pre className={styles.mensagemAcesso}>
-              {montarMensagemAcesso(
-                acessoParaEnviar,
-                `Olá, ${acessoParaEnviar.nome}! Aqui estão seus dados de acesso à Conecta.`
+          {!carregandoPagamentos && pagamentosFiltrados.length > 0 && (
+            <div className={layout.tabelaRolagem}>
+              <table className={layout.tabela}>
+                <thead>
+                  <tr>
+                    <th>Mês</th>
+                    {variasTurmas && <th>Turma</th>}
+                    <th>Vencimento</th>
+                    <th>Pagamento</th>
+                    <th className={layout.direita}>Valor</th>
+                    <th>Status</th>
+                    <th className={layout.direita}>
+                      <span className={layout.soLeitor}>Ações</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagamentosVisiveis.map((pagamento) => {
+                    const status = rotuloStatus(pagamento)
+                    return (
+                      <tr key={pagamento.id}>
+                        <td className={`${layout.forte} ${layout.semQuebra}`}>{formatarMesCurto(pagamento.mesReferencia)}</td>
+                        {variasTurmas && (
+                          <td className={layout.suave}>{pagamento.matricula.turmas.map((t) => t.nome).join(', ') || '—'}</td>
+                        )}
+                        <td className={`${layout.suave} ${layout.semQuebra}`}>{formatarDiaMes(pagamento.vencimento)}</td>
+                        <td className={`${layout.suave} ${layout.semQuebra}`}>
+                          {pagamento.status === 'PAGA' && pagamento.dataPagamento
+                            ? `${formatarDiaMes(pagamento.dataPagamento)}${
+                                pagamento.formaPagamento ? ` · ${LABELS_FORMA[pagamento.formaPagamento]}` : ''
+                              }`
+                            : '—'}
+                          {pagamento.editadoEm && (
+                            <span className={layout.nota}>Corrigido em {formatarData(pagamento.editadoEm)}</span>
+                          )}
+                        </td>
+                        <td className={`${layout.forte} ${layout.direita} ${layout.semQuebra}`}>
+                          {formatarMoeda(pagamento.valor)}
+                        </td>
+                        <td>
+                          <span
+                            className={`${styles.statusBadge} ${status.classe}`}
+                            title={
+                              pagamento.status === 'CANCELADA'
+                                ? 'Matrícula encerrada: esta cobrança não é mais cobrada'
+                                : undefined
+                            }
+                          >
+                            {status.texto}
+                          </span>
+                        </td>
+                        <td>
+                          <div className={layout.acoesLinha}>
+                            {pagamento.status === 'PENDENTE' && (
+                              <button
+                                type="button"
+                                className={layout.botaoRegistrar}
+                                onClick={() => setPagamentoSelecionado(paraRegistrar(pagamento))}
+                                aria-label={`Registrar pagamento de ${formatarMes(pagamento.mesReferencia)}`}
+                              >
+                                Registrar
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className={layout.botaoIcone}
+                              onClick={() => abrirModalEdicaoPagamento(pagamento)}
+                              title="Corrigir pagamento"
+                              aria-label={`Corrigir pagamento de ${formatarMes(pagamento.mesReferencia)}`}
+                            >
+                              <Pencil size={15} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {!carregandoPagamentos && pagamentos.length > 0 && (
+            <div className={layout.rodapeCartao}>
+              <span>
+                Pago em {anoAtual}: <strong className={layout.ativa}>{formatarMoeda(String(pagoNoAno))}</strong>
+              </span>
+              {pagamentosFiltrados.length > LIMITE_PAGAMENTOS && (
+                <button type="button" className={layout.botaoLink} onClick={() => setVerTodosPagamentos((v) => !v)}>
+                  {verTodosPagamentos ? 'Mostrar só os mais recentes' : `Ver histórico completo (${pagamentosFiltrados.length})`}
+                </button>
               )}
-            </pre>
-            <div className={styles.avisoSenhaAcoes}>
-              <a
-                className={styles.avisoSenhaWhatsapp}
-                href={montarLinkWhatsapp(
+            </div>
+          )}
+        </section>
+
+        {/* Dados pessoais */}
+        <section className={`${layout.cartao} ${layout.cartaoMedio}`} aria-label="Dados pessoais">
+          <h2 className={layout.tituloCartao}>Dados pessoais</h2>
+
+          {erroAcesso && <p className={styles.erro}>{erroAcesso}</p>}
+
+          {senhaSalva && (
+            <div className={styles.avisoSenha}>
+              <p className={styles.avisoSenhaTexto}>
+                Senha alterada! Nova senha de acesso:{' '}
+                <span className={styles.avisoSenhaValor}>{senhaSalva}</span> — anote e entregue à associada.
+              </p>
+              <div className={styles.avisoSenhaAcoes}>
+                <button type="button" className={styles.avisoSenhaCopiar} onClick={copiarSenhaSalva}>
+                  {senhaCopiada ? 'Copiado!' : 'Copiar senha'}
+                </button>
+                <button type="button" className={styles.avisoSenhaDispensar} onClick={dispensarSenhaSalva}>
+                  Dispensar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {acessoParaEnviar && (
+            <div className={styles.avisoSenha}>
+              <p className={styles.avisoSenhaTexto}>Envie a mensagem abaixo para a associada.</p>
+              <pre className={styles.mensagemAcesso}>
+                {montarMensagemAcesso(
                   acessoParaEnviar,
                   `Olá, ${acessoParaEnviar.nome}! Aqui estão seus dados de acesso à Conecta.`
                 )}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Enviar no WhatsApp
-              </a>
-              <button type="button" className={styles.avisoSenhaCopiar} onClick={copiarMensagemAcesso}>
-                {acessoCopiado ? 'Copiado!' : 'Copiar mensagem'}
-              </button>
+              </pre>
+              <div className={styles.avisoSenhaAcoes}>
+                <a
+                  className={styles.avisoSenhaWhatsapp}
+                  href={montarLinkWhatsapp(
+                    acessoParaEnviar,
+                    `Olá, ${acessoParaEnviar.nome}! Aqui estão seus dados de acesso à Conecta.`
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Enviar no WhatsApp
+                </a>
+                <button type="button" className={styles.avisoSenhaCopiar} onClick={copiarMensagemAcesso}>
+                  {acessoCopiado ? 'Copiado!' : 'Copiar mensagem'}
+                </button>
+              </div>
+              <div className={styles.avisoSenhaAcoesSecundarias}>
+                <button type="button" className={styles.avisoSenhaDispensar} onClick={fecharAcesso}>
+                  Dispensar
+                </button>
+              </div>
             </div>
-            <div className={styles.avisoSenhaAcoesSecundarias}>
-              <button type="button" className={styles.avisoSenhaDispensar} onClick={fecharAcesso}>
-                Dispensar
-              </button>
-            </div>
-          </div>
-        )}
+          )}
 
-        <dl className={styles.grade}>
-          <div className={styles.campo}>
-            <dt>CPF</dt>
-            <dd>{associado.cpf || '—'}</dd>
-          </div>
-          <div className={styles.campo}>
-            <dt>Telefone</dt>
-            <dd>{associado.telefone || '—'}</dd>
-          </div>
-          <div className={styles.campo}>
-            <dt>Email</dt>
-            <dd>{associado.email || '—'}</dd>
-          </div>
-          <div className={styles.campo}>
-            <dt>RG</dt>
-            <dd>{associado.rg || '—'}</dd>
-          </div>
-          <div className={styles.campo}>
-            <dt>Status</dt>
-            <dd>{associado.status === 'ATIVO' ? 'Ativo' : 'Inativo'}</dd>
-          </div>
-          <div className={styles.campo}>
-            <dt>Data de nascimento</dt>
-            <dd>{formatarData(associado.dataNascimento)}</dd>
-          </div>
-          <div className={`${styles.campo} ${styles.campoLargo}`}>
-            <dt>Endereço</dt>
-            <dd>{endereco || '—'}</dd>
-          </div>
-          <div className={`${styles.campo} ${styles.campoLargo}`}>
-            <dt>Medicamento</dt>
-            <dd>
-              {associado.tomaMedicamento === true
-                ? `Toma medicamento: ${associado.qualMedicamento || '—'}`
-                : associado.tomaMedicamento === false
-                ? 'Não toma medicamento'
-                : '—'}
-            </dd>
-          </div>
-        </dl>
+          <dl className={layout.dados}>
+            <div>
+              <dt>Telefone</dt>
+              <dd>
+                {associado.telefone ? formatarTelefone(associado.telefone) : '—'}
+                {linkWhatsapp && (
+                  <a href={linkWhatsapp} target="_blank" rel="noopener noreferrer" className={layout.linkWhatsapp}>
+                    WhatsApp
+                  </a>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Nascimento</dt>
+              <dd>
+                {formatarData(associado.dataNascimento)}
+                {idade !== null && <span className={layout.suave}> ({idade} anos)</span>}
+              </dd>
+            </div>
+            <div>
+              <dt>CPF</dt>
+              <dd>{associado.cpf || '—'}</dd>
+            </div>
+            <div>
+              <dt>RG</dt>
+              <dd>{associado.rg || '—'}</dd>
+            </div>
+            <div className={layout.dadoLargo}>
+              <dt>Endereço</dt>
+              <dd>{endereco || '—'}</dd>
+            </div>
+            <div>
+              <dt>Email</dt>
+              <dd className={layout.quebraLonga}>{associado.email || '—'}</dd>
+            </div>
+            <div>
+              <dt>Medicamento</dt>
+              <dd>
+                {associado.tomaMedicamento === true
+                  ? associado.qualMedicamento || 'Toma (não informado qual)'
+                  : associado.tomaMedicamento === false
+                  ? 'Não toma'
+                  : '—'}
+              </dd>
+            </div>
+          </dl>
+
+          {!associado.responsavel && (
+            <div className={layout.acessoApp}>
+              <span className={layout.rotuloAcesso}>Acesso ao app:</span>
+              <button type="button" className={layout.botaoPequeno} onClick={abrirAcesso} disabled={gerandoAcesso}>
+                <MessageCircle size={14} aria-hidden="true" />
+                {gerandoAcesso ? 'Gerando...' : 'Enviar acesso'}
+              </button>
+              <button type="button" className={layout.botaoPequeno} onClick={abrirModalSenha}>
+                <KeyRound size={14} aria-hidden="true" />
+                Alterar senha
+              </button>
+            </div>
+          )}
+        </section>
       </div>
 
-      {/* Bloco 1b — Responsável e dependentes */}
-      <div className={styles.card}>
-        <div className={styles.cabecalhoSecao}>
-          <h2 className={styles.subtitulo}>
-            {associado.responsavel ? 'Responsável' : 'Dependentes'}
-          </h2>
-          {!associado.responsavel && (
-            <Link href={`/associados/novo?responsavel=${id}`} className={styles.botaoNovaMatricula}>
-              Cadastrar dependente
-            </Link>
-          )}
-        </div>
+      <div className={layout.linha}>
+        <div className={`${layout.coluna} ${layout.cartaoMedio}`}>
+          {/* Matrículas */}
+          <section className={layout.cartao} aria-label="Matrículas">
+            <div className={layout.topoCartao}>
+              <h2 className={layout.tituloCartao}>Matrículas</h2>
+              <Link href={`/matriculas/nova?associadoId=${id}`} className={layout.linkAcao}>
+                + Nova matrícula
+              </Link>
+            </div>
 
-        {associado.responsavel ? (
-          <>
-            <p className={styles.avisoSaude}>
-              Este cadastro é de um dependente: não tem login. A cobrança e o acompanhamento ficam com o
-              responsável.
-            </p>
-            <p>
-              <Link href={`/associados/${associado.responsavel.id}`}>{associado.responsavel.nome}</Link>
-              {associado.responsavel.telefone ? ` · ${associado.responsavel.telefone}` : ''}
-            </p>
-            <button
-              type="button"
-              className={styles.botaoAlterarSenha}
-              onClick={async () => {
-                await apiPatch(`/usuarios/${id}`, { responsavelId: null })
-                buscarAssociado()
-              }}
-            >
-              Desvincular do responsável
-            </button>
-          </>
-        ) : (
-          <>
-            {associado.dependentes.length === 0 ? (
-              <p className={styles.avisoSaude}>Nenhum dependente cadastrado.</p>
+            {associado.matriculas.length === 0 ? (
+              <p className={layout.suave}>Nenhuma matrícula</p>
             ) : (
-              <ul>
-                {associado.dependentes.map((d) => (
-                  <li key={d.id}>
-                    <Link href={`/associados/${d.id}`}>{d.nome}</Link>
-                  </li>
-                ))}
+              <ul className={layout.listaMatriculas}>
+                {associado.matriculas.map((matricula) => {
+                  const dias = matricula.turmas
+                    .flatMap((t) => (t.diasContratados.length ? t.diasContratados : t.dias))
+                    .filter((d, i, todos) => todos.indexOf(d) === i)
+                    .map((d) => LABELS_DIA[d] ?? d)
+                  const horarios = matricula.turmas.map((t) => t.horario).filter(Boolean)
+                  const detalhes = [
+                    dias.join(', '),
+                    horarios.join(' · '),
+                    matricula.frequenciaSemanal
+                      ? `${matricula.frequenciaSemanal} ${matricula.frequenciaSemanal === 1 ? 'aula' : 'aulas'}/semana`
+                      : 'Plano pendente de revisão',
+                    matricula.exameMedico ? `exame ${LABELS_EXAME[matricula.exameMedico].toLowerCase()}` : '',
+                  ].filter(Boolean)
+                  return (
+                    <li key={matricula.id} className={layout.matricula}>
+                      <div className={layout.matriculaTexto}>
+                        <span className={layout.forte}>
+                          {matricula.turmas[0]?.projeto.nome ?? '—'} · {matricula.turmas.map((t) => t.nome).join(', ')}
+                        </span>
+                        <span className={layout.suave}>{detalhes.join(' · ')}</span>
+                      </div>
+                      <span className={`${styles.badge} ${matricula.ativa ? styles.badgeAtiva : styles.badgeInativa}`}>
+                        {matricula.ativa ? 'Ativa' : 'Inativa'}
+                      </span>
+                      <button
+                        type="button"
+                        className={layout.botaoIcone}
+                        onClick={() => abrirModalEdicao(matricula)}
+                        title="Editar matrícula"
+                        aria-label="Editar matrícula"
+                      >
+                        <Pencil size={15} aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        className={layout.botaoIcone}
+                        onClick={() => abrirModalExclusao(matricula)}
+                        title="Excluir matrícula"
+                        aria-label="Excluir matrícula"
+                      >
+                        <Trash2 size={15} aria-hidden="true" />
+                      </button>
+                    </li>
+                  )
+                })}
               </ul>
             )}
-            {associado.dependentes.length === 0 && (
-              <VincularResponsavel usuarioId={id} aoVincular={buscarAssociado} />
+          </section>
+
+          {/* Família: responsável ou dependentes */}
+          <section className={layout.cartao} aria-label="Família">
+            <h2 className={layout.tituloCartao}>{associado.responsavel ? 'Responsável' : 'Família'}</h2>
+            {associado.responsavel ? (
+              <>
+                <p className={layout.suave}>
+                  Este cadastro é de um dependente: não tem login. A cobrança e o acompanhamento ficam com o
+                  responsável.
+                </p>
+                <p>
+                  <Link href={`/associados/${associado.responsavel.id}`}>{associado.responsavel.nome}</Link>
+                  {associado.responsavel.telefone ? ` · ${associado.responsavel.telefone}` : ''}
+                </p>
+                <div className={layout.botoesLinha}>
+                  <button
+                    type="button"
+                    className={layout.botaoPequeno}
+                    onClick={async () => {
+                      await apiPatch(`/usuarios/${id}`, { responsavelId: null })
+                      buscarAssociado()
+                    }}
+                  >
+                    Desvincular do responsável
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                {associado.dependentes.length === 0 ? (
+                  <p className={layout.suave}>Nenhum dependente cadastrado.</p>
+                ) : (
+                  <ul className={layout.listaSimples}>
+                    {associado.dependentes.map((d) => (
+                      <li key={d.id}>
+                        <Link href={`/associados/${d.id}`}>{d.nome}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className={layout.botoesLinha}>
+                  <Link href={`/associados/novo?responsavel=${id}`} className={layout.botaoPequeno}>
+                    Cadastrar dependente
+                  </Link>
+                </div>
+                {associado.dependentes.length === 0 && (
+                  <VincularResponsavel usuarioId={id} aoVincular={buscarAssociado} />
+                )}
+              </>
             )}
-          </>
-        )}
-      </div>
+          </section>
 
-      {/* Bloco 2 — Matrículas */}
-      <div className={styles.card}>
-        <div className={styles.cabecalhoSecao}>
-          <h2 className={styles.subtitulo}>Matrículas</h2>
-          <Link href={`/matriculas/nova?associadoId=${id}`} className={styles.botaoNovaMatricula}>
-            Nova matrícula
-          </Link>
-        </div>
-
-        {associado.matriculas.length === 0 ? (
-          <p className={styles.mensagem}>Nenhuma matrícula</p>
-        ) : (
-          <ul className={styles.listaMatriculas}>
-            {associado.matriculas.map((matricula) => (
-              <li key={matricula.id} className={styles.itemMatricula}>
-                <div className={styles.infoMatricula}>
-                  <span className={styles.nomeProjeto}>{matricula.turmas[0]?.projeto.nome ?? '—'}</span>
-                  <span className={styles.nomeTurma}>
-                    {matricula.turmas.map((turma) => turma.nome).join(', ')}
-                  </span>
-                  {matricula.frequenciaSemanal && (
-                    <span className={styles.detalhe}>{matricula.frequenciaSemanal} aulas/semana</span>
-                  )}
-                  {!matricula.frequenciaSemanal && (
-                    <span className={styles.detalhe}>Plano pendente de revisão</span>
-                  )}
-                  {matricula.turmas.some((turma) => turma.horario) && (
-                    <span className={styles.detalhe}>
-                      {matricula.turmas.map((turma) => turma.horario).filter(Boolean).join(' · ')}
-                    </span>
-                  )}
-                  {matricula.turmas.some((turma) => turma.diasContratados.length > 0) && (
-                    <span className={styles.detalhe}>
-                      {matricula.turmas
-                        .map(
-                          (turma) =>
-                            `${turma.nome}: ${turma.diasContratados.map((d) => LABELS_DIA[d] ?? d).join(', ')}`
-                        )
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </span>
-                  )}
-                </div>
-                <div className={styles.badgesMatricula}>
-                  {matricula.exameMedico && (
-                    <span className={`${styles.badge} ${styles[`exame${matricula.exameMedico}`]}`}>
-                      {LABELS_EXAME[matricula.exameMedico]}
-                    </span>
-                  )}
-                  <span className={`${styles.badge} ${matricula.ativa ? styles.badgeAtiva : styles.badgeInativa}`}>
-                    {matricula.ativa ? 'Ativa' : 'Inativa'}
-                  </span>
-                  <div className={styles.acoesMatricula}>
-                    <button
-                      className={styles.botaoEditar}
-                      onClick={() => abrirModalEdicao(matricula)}
-                      title="Editar matrícula"
-                      aria-label="Editar matrícula"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      className={styles.botaoEditar}
-                      onClick={() => abrirModalExclusao(matricula)}
-                      title="Excluir matrícula"
-                      aria-label="Excluir matrícula"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      </div>
-
-      <div className={styles.colunaDir}>
-      {/* Bloco 3 — Extrato de pagamentos */}
-      <div className={styles.card}>
-        <div className={styles.cabecalhoSecao}>
-          <h2 className={styles.subtitulo}>Extrato de pagamentos</h2>
-          <button className={styles.botaoNovaMatricula} onClick={abrirModalGerar}>
-            Gerar mensalidade
+          <button type="button" className={layout.botaoExcluir} onClick={abrirModalExcluir}>
+            <Trash2 size={14} aria-hidden="true" />
+            Excluir associado
           </button>
         </div>
 
-        {carregandoPagamentos && <p className={styles.mensagem}>Carregando pagamentos...</p>}
+        <div className={`${layout.coluna} ${layout.cartaoLargo}`}>
+          {/* Saúde e progresso */}
+          <section className={layout.cartao} aria-label="Saúde e progresso">
+            <h2 className={layout.tituloCartao}>Saúde e progresso</h2>
+            <p className={layout.notaSaude}>
+              Dado de saúde registrado pela professora da turma dela (ou pela coordenação). Use só para
+              acompanhar e adaptar as atividades dela.
+            </p>
 
-        {!carregandoPagamentos && pagamentos.length === 0 && (
-          <p className={styles.mensagem}>Nenhum pagamento encontrado</p>
-        )}
+            <div>
+            <FormularioRegistroSaude
+              caminho={`/usuarios/${id}/registros-saude`}
+              registros={registrosAluna}
+              aoSalvar={() => setVersaoSaude((v) => v + 1)}
+            />
 
-        {!carregandoPagamentos && pagamentos.length > 0 && (
-          <ul className={styles.listaPagamentos}>
-            {pagamentos.map((pagamento) => (
-              <li key={pagamento.id} className={styles.itemPagamento}>
-                <div className={styles.infoPagamento}>
-                  <span className={styles.mesPagamento}>{formatarMes(pagamento.mesReferencia)}</span>
-                  <span className={styles.detalhe}>
-                    {pagamento.matricula.turmas[0]?.projeto.nome ?? '—'} —{' '}
-                    {pagamento.matricula.turmas.map((turma) => turma.nome).join(', ')}
-                  </span>
-                  <span className={styles.detalhe}>
-                    Vencimento: {formatarData(pagamento.vencimento)}
-                    {pagamento.formaPagamento && ` · ${LABELS_FORMA[pagamento.formaPagamento]}`}
-                  </span>
-                  {pagamento.status === 'PAGA' && pagamento.dataPagamento && (
-                    <span className={styles.detalhe}>
-                      Pago em: {formatarData(pagamento.dataPagamento)}
-                    </span>
-                  )}
-                  {pagamento.editadoEm && (
-                    <span className={styles.detalhe}>
-                      Corrigido em: {formatarData(pagamento.editadoEm)}
-                    </span>
-                  )}
-                </div>
-                <div className={styles.acoesPagamento}>
-                  <span className={styles.valorPagamento}>{formatarMoeda(pagamento.valor)}</span>
-                  <span
-                    className={`${styles.statusBadge} ${
-                      pagamento.status === 'PAGA'
-                        ? styles.statusPaga
-                        : pagamento.status === 'CANCELADA'
-                        ? styles.statusCancelada
-                        : estaAtrasado(pagamento)
-                        ? styles.statusAtrasada
-                        : styles.statusPendente
-                    }`}
-                    title={
-                      pagamento.status === 'CANCELADA'
-                        ? 'Matrícula encerrada: esta cobrança não é mais cobrada'
-                        : undefined
-                    }
-                  >
-                    {pagamento.status === 'PAGA'
-                      ? 'Paga'
-                      : pagamento.status === 'CANCELADA'
-                      ? 'Cancelada'
-                      : estaAtrasado(pagamento)
-                      ? 'Atrasada'
-                      : 'Pendente'}
-                  </span>
-                  {pagamento.status === 'PENDENTE' && (
-                    <button
-                      className={styles.botaoRegistrar}
-                      onClick={() => setPagamentoSelecionado(paraRegistrar(pagamento))}
-                      title="Registrar pagamento"
-                      aria-label={`Registrar pagamento de ${formatarMes(pagamento.mesReferencia)}`}
-                    >
-                      <CirclePlus size={20} />
-                    </button>
-                  )}
-                  <button
-                    className={styles.botaoRegistrar}
-                    onClick={() => abrirModalEdicaoPagamento(pagamento)}
-                    title="Corrigir pagamento"
-                    aria-label={`Corrigir pagamento de ${formatarMes(pagamento.mesReferencia)}`}
-                  >
-                    <Pencil size={18} />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+            <FormularioAvaliacao
+              caminho={`/usuarios/${id}/avaliacoes`}
+              alturaAtual={alturaAluna}
+              avaliacoes={avaliacoesAluna}
+              aoSalvar={() => setVersaoSaude((v) => v + 1)}
+            />
 
-      {/* Bloco 3b — Nível na natação (só faz sentido se há matrícula em projeto de natação) */}
-      {associado.matriculas.some((m) =>
-        m.turmas.some((t) => /nata[cç][aã]o/i.test(t.projeto.nome))
-      ) && (
-        <div className={styles.card}>
-          <div className={styles.cabecalhoSecao}>
-            <h2 className={styles.subtitulo}>Nível na natação</h2>
-          </div>
-          <PainelNivelNatacao caminho={`/usuarios/${id}/niveis-natacao`} />
+            <RelatorioSaude key={versaoSaude} caminho={`/usuarios/${id}/saude`} aoCarregar={aoCarregarSaude} />
+            </div>
+          </section>
+
+          {/* Nível na natação (só se há matrícula em projeto de natação) */}
+          {associado.matriculas.some((m) => m.turmas.some((t) => /nata[cç][aã]o/i.test(t.projeto.nome))) && (
+            <section className={layout.cartao} aria-label="Nível na natação">
+              <h2 className={layout.tituloCartao}>Nível na natação</h2>
+              <PainelNivelNatacao caminho={`/usuarios/${id}/niveis-natacao`} />
+            </section>
+          )}
         </div>
-      )}
-
-      {/* Bloco 4 — Saúde e progresso */}
-      <div className={styles.card}>
-        <div className={styles.cabecalhoSecao}>
-          <h2 className={styles.subtitulo}>Saúde e progresso</h2>
-        </div>
-
-        <p className={styles.avisoSaude}>
-          Dado de saúde registrado pela professora da turma dela (ou pela coordenação). Use só para
-          acompanhar e adaptar as atividades dela.
-        </p>
-
-        <FormularioRegistroSaude
-          caminho={`/usuarios/${id}/registros-saude`}
-          registros={registrosAluna}
-          aoSalvar={() => setVersaoSaude((v) => v + 1)}
-        />
-
-        <FormularioAvaliacao
-          caminho={`/usuarios/${id}/avaliacoes`}
-          alturaAtual={alturaAluna}
-          avaliacoes={avaliacoesAluna}
-          aoSalvar={() => setVersaoSaude((v) => v + 1)}
-        />
-
-        <RelatorioSaude
-          key={versaoSaude}
-          caminho={`/usuarios/${id}/saude`}
-          aoCarregar={aoCarregarSaude}
-        />
-      </div>
-
-      </div>
       </div>
 
       {/* Modal editar dados pessoais */}
